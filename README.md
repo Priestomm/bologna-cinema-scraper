@@ -1,6 +1,6 @@
 # Cinema Bologna Bot
 
-![CI](https://github.com/<user>/scraper-cinema-bologna/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/Priestomm/bologna-cinema-scraper/actions/workflows/ci.yml/badge.svg)
 
 Bot Telegram che ogni mattina pubblica la programmazione cinematografica giornaliera di Bologna per quattro circuiti:
 
