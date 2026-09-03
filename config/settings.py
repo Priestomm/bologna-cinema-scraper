@@ -1,4 +1,5 @@
 """Caricamento configurazione da variabili d'ambiente (.env)."""
+
 from __future__ import annotations
 
 import os

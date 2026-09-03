@@ -5,6 +5,7 @@ Uso:
     python main.py --scrape   # esegue solo un ciclo di scraping e termina
     python main.py --broadcast# esegue uno scraping e invia il messaggio (dry-run)
 """
+
 from __future__ import annotations
 
 import argparse

@@ -7,6 +7,7 @@ Endpoints:
   GET /api/history             ultimi N giorni (?days=7)
   GET /api/stats               statistiche generali
 """
+
 from __future__ import annotations
 
 from datetime import date, timedelta
@@ -61,7 +62,9 @@ def get_screenings(
         try:
             target = _parse_date(date)
         except ValueError:
-            raise HTTPException(400, f"Formato data non valido: {date}. Usa YYYY-MM-DD.")
+            raise HTTPException(
+                400, f"Formato data non valido: {date}. Usa YYYY-MM-DD."
+            )
     else:
         target = _today()
 
@@ -103,7 +106,11 @@ def get_cinema_screenings(cinema_name: str) -> dict[str, Any]:
     if snapshot is None:
         raise HTTPException(404, "Nessun dato disponibile")
 
-    films = [_screening_dict(s) for s in snapshot.screenings if cinema_name.lower() in s.cinema.lower()]
+    films = [
+        _screening_dict(s)
+        for s in snapshot.screenings
+        if cinema_name.lower() in s.cinema.lower()
+    ]
     if not films:
         raise HTTPException(404, f"Nessun film trovato per '{cinema_name}'")
 

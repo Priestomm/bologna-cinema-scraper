@@ -1,4 +1,5 @@
 """Formattazione messaggi Telegram in HTML."""
+
 from __future__ import annotations
 
 import html
@@ -8,12 +9,27 @@ from database import CacheSnapshot
 from scrapers import Screening
 
 _GIORNI = (
-    "Lunedi", "Martedi", "Mercoledi", "Giovedi",
-    "Venerdi", "Sabato", "Domenica",
+    "Lunedi",
+    "Martedi",
+    "Mercoledi",
+    "Giovedi",
+    "Venerdi",
+    "Sabato",
+    "Domenica",
 )
 _MESI = (
-    "gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
-    "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre",
+    "gennaio",
+    "febbraio",
+    "marzo",
+    "aprile",
+    "maggio",
+    "giugno",
+    "luglio",
+    "agosto",
+    "settembre",
+    "ottobre",
+    "novembre",
+    "dicembre",
 )
 
 # Limite messaggio Telegram = 4096 caratteri. Tagliamo a 3900 per sicurezza
@@ -38,9 +54,7 @@ def _format_film(s: Screening) -> str:
     titolo = f"<b>{html.escape(s.titolo)}</b>"
     orari = ""
     if s.orari:
-        orari = " " + " ".join(
-            f"<code>{html.escape(o)}</code>" for o in s.orari
-        )
+        orari = " " + " ".join(f"<code>{html.escape(o)}</code>" for o in s.orari)
     note = ""
     if s.note:
         note = f"\n   <i>{html.escape(s.note)}</i>"
@@ -69,9 +83,7 @@ def render_snapshot(snapshot: CacheSnapshot) -> list[str]:
 
     warnings_block = ""
     if snapshot.warnings:
-        warning_lines = "\n".join(
-            f"!!! {html.escape(w)}" for w in snapshot.warnings
-        )
+        warning_lines = "\n".join(f"!!! {html.escape(w)}" for w in snapshot.warnings)
         warnings_block = f"\n\n<b>Avvisi</b>\n{warning_lines}"
 
     messages: list[str] = []

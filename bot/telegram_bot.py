@@ -3,6 +3,7 @@
 Il bot non scrape mai inline: legge sempre dalla cache. Se la cache del
 giorno non esiste (raro, es. primo avvio), forza una pipeline al volo.
 """
+
 from __future__ import annotations
 
 import asyncio

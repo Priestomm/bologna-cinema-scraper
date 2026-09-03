@@ -10,6 +10,7 @@ pagina, senza sottodomini. Il parser estrae il nome sala nel campo note;
 qui lo promuoviamo a `cinema` cosi' il formatter raggruppa per sala come
 fa per gli altri circuiti.
 """
+
 from __future__ import annotations
 
 import re
@@ -37,6 +38,6 @@ class PopUpCinemaScraper(BaseScraper):
                 sala = match.group(1).strip()
                 # Promuovi la sala a cinema; rimuovi il duplicato dalla nota.
                 s.cinema = f"Pop Up - {sala}"
-                s.note = s.note[match.end():].strip()
+                s.note = s.note[match.end() :].strip()
             s.note = (s.note + " - " if s.note else "") + "Pop Up"
         return day

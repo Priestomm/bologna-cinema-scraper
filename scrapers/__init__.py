@@ -1,4 +1,5 @@
 """Layer scrapers: ognuno restituisce list[Screening] per la giornata richiesta."""
+
 from .base import BaseScraper, ScraperResult, Screening
 from .cineteca import CinetecaScraper
 from .circuito import CircuitoCinemaScraper

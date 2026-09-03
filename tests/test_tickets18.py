@@ -70,4 +70,7 @@ class TestParseDay:
         assert parse_day("", "Test", target_date) == []
 
     def test_invalid_html(self, target_date: date) -> None:
-        assert parse_day("<html><body>nothing here</body></html>", "Test", target_date) == []
+        assert (
+            parse_day("<html><body>nothing here</body></html>", "Test", target_date)
+            == []
+        )

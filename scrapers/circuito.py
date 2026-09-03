@@ -4,6 +4,7 @@ Backend: ccb.18tickets.it con sottodomini per ogni sala
 (rialto, odeon, europa, roma). Si recuperano i 4 in parallelo
 e si fondono i risultati nel modello standard.
 """
+
 from __future__ import annotations
 
 import time
@@ -64,8 +65,6 @@ class CircuitoCinemaScraper(BaseScraper):
                 try:
                     results.extend(fut.result())
                 except Exception as exc:  # noqa: BLE001
-                    self.logger.warning(
-                        "Sala %s non disponibile: %s", theater, exc
-                    )
+                    self.logger.warning("Sala %s non disponibile: %s", theater, exc)
 
         return results

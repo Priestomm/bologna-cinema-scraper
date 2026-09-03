@@ -9,6 +9,7 @@ Include:
 - GET /api/history        storico ultimi N giorni
 - GET /api/stats          statistiche generali
 """
+
 from __future__ import annotations
 
 import threading
@@ -37,6 +38,7 @@ def _get_cache() -> Cache:
     if _cache is None:
         _cache = Cache()
     return _cache
+
 
 app = FastAPI(
     title="Cinema Bologna Bot",

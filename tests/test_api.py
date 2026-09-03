@@ -37,11 +37,17 @@ def seed_cache() -> None:
     cache = _get_cache()
     d = datetime.now(pytz.timezone(settings.timezone)).date()
     screenings = [
-        Screening(cinema="Rialto", titolo="Parasite", orari=["18:00", "21:00"], note="VO"),
+        Screening(
+            cinema="Rialto", titolo="Parasite", orari=["18:00", "21:00"], note="VO"
+        ),
         Screening(cinema="Rialto", titolo="Oppenheimer", orari=["19:30"], note=""),
-        Screening(cinema="Lumiere", titolo="La grande bellezza", orari=["15:00"], note="VO"),
+        Screening(
+            cinema="Lumiere", titolo="La grande bellezza", orari=["15:00"], note="VO"
+        ),
     ]
-    result = ScraperResult(name="Test", slug="test", screenings=screenings, success=True)
+    result = ScraperResult(
+        name="Test", slug="test", screenings=screenings, success=True
+    )
     cache.store(d, [result])
 
 

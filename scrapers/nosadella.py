@@ -5,6 +5,7 @@ Il cinema ha due sale interne (Sala Berti, Sala Scalo); per ora le
 manteniamo aggregate sotto il singolo cinema, il nome sala finisce
 nelle note (estratto dal parser comune via _SALA_RE).
 """
+
 from __future__ import annotations
 
 from datetime import date

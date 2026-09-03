@@ -1,6 +1,7 @@
 """Orchestratore del ciclo di scraping: esegue tutti gli scraper in parallelo
 e salva l'esito (compresi gli avvisi) nella cache.
 """
+
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed

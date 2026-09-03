@@ -72,7 +72,9 @@ class TestRenderSnapshot:
     def test_single_message_within_limit(self) -> None:
         snap = self._snapshot(
             screenings=[
-                Screening(cinema="Rialto", titolo="Parasite", orari=["18:00"], note="VO")
+                Screening(
+                    cinema="Rialto", titolo="Parasite", orari=["18:00"], note="VO"
+                )
             ]
         )
         msgs = render_snapshot(snap)

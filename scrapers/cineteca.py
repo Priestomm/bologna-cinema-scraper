@@ -5,6 +5,7 @@ distribuita sui sottodomini delle due sale (Lumiere e Modernissimo);
 il root mostra solo "in arrivo" e link generici, quindi scrapiamo i
 sottodomini in parallelo.
 """
+
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed

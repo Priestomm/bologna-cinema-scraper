@@ -7,6 +7,7 @@ Schema:
 
 Il bot legge sempre da qui; mai dalle fonti remote.
 """
+
 from __future__ import annotations
 
 import json
@@ -88,9 +89,7 @@ class Cache:
                         f"Nessuna proiezione trovata per {r.name} (controlla i selettori)."
                     )
             else:
-                warnings.append(
-                    f"Circuito non disponibile: {r.name} ({r.error})."
-                )
+                warnings.append(f"Circuito non disponibile: {r.name} ({r.error}).")
 
         payload = {
             "screenings": [s.to_dict() for s in screenings],

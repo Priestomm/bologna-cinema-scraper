@@ -12,6 +12,7 @@ Filtriamo per giorno usando `data-time` (timestamp ms in UTC dal portale,
 ma in locale Europe/Rome il bot lavora con la stessa data; usiamo
 l'aritmetica ms->date in fuso locale).
 """
+
 from __future__ import annotations
 
 import re
@@ -34,9 +35,15 @@ def _ms_to_local_date(ms: int) -> date:
 def _extract_lang_note(text: str) -> str:
     lower = text.lower()
     parts: list[str] = []
-    if any(h in lower for h in ("v.o.", " vo ", "versione originale", "lingua originale")):
+    if any(
+        h in lower for h in ("v.o.", " vo ", "versione originale", "lingua originale")
+    ):
         parts.append("VO")
-    if "sub ita" in lower or "sottotitoli in italiano" in lower or "sottotitoli italiano" in lower:
+    if (
+        "sub ita" in lower
+        or "sottotitoli in italiano" in lower
+        or "sottotitoli italiano" in lower
+    ):
         parts.append("Sub ITA")
     elif "sub eng" in lower or "sottotitoli in inglese" in lower:
         parts.append("Sub ENG")

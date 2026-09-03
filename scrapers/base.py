@@ -9,6 +9,7 @@ Ogni scraper concreto deve:
 e cattura qualunque eccezione. Il chiamante riceve sempre uno ScraperResult,
 non solleva mai. Cosi un cinema rotto non puo far cadere la pipeline.
 """
+
 from __future__ import annotations
 
 import abc

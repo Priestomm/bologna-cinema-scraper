@@ -3,6 +3,7 @@
 Tutto orario locale Europe/Rome. Gli scheduler non si sovrappongono:
 il broadcast legge dalla cache popolata dal job di scraping.
 """
+
 from __future__ import annotations
 
 from typing import Awaitable, Callable

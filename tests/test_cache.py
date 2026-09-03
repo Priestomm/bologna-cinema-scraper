@@ -33,9 +33,7 @@ class TestCache:
     def test_store_and_load(self) -> None:
         cache = self._make_cache()
         d = date(2026, 6, 8)
-        screenings = [
-            Screening(cinema="Rialto", titolo="Parasite", orari=["18:00"])
-        ]
+        screenings = [Screening(cinema="Rialto", titolo="Parasite", orari=["18:00"])]
         result = self._ok_result(screenings)
 
         snap = cache.store(d, [result])
