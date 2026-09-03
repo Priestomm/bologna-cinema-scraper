@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 from database.cache import CacheSnapshot
 from scrapers.base import Screening
@@ -58,7 +58,7 @@ class TestRenderSnapshot:
     ) -> CacheSnapshot:
         return CacheSnapshot(
             target_date=date(2026, 6, 8),
-            updated_at=datetime(2026, 6, 8, 8, 0),
+            updated_at=datetime(2026, 6, 8, 8, 0, tzinfo=timezone.utc),
             screenings=screenings or [],
             warnings=warnings or [],
         )
