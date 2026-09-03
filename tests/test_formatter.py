@@ -11,7 +11,7 @@ class TestFormatDate:
     def test_weekday(self) -> None:
         d = date(2026, 6, 8)
         result = _format_date(d)
-        assert "Lunedi" in result
+        assert "Lunedì" in result
         assert "8" in result
         assert "giugno" in result
         assert "2026" in result

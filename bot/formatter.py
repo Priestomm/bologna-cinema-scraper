@@ -9,11 +9,11 @@ from database import CacheSnapshot
 from scrapers import Screening
 
 _GIORNI = (
-    "Lunedi",
-    "Martedi",
-    "Mercoledi",
-    "Giovedi",
-    "Venerdi",
+    "Lunedì",
+    "Martedì",
+    "Mercoledì",
+    "Giovedì",
+    "Venerdì",
     "Sabato",
     "Domenica",
 )
@@ -50,41 +50,80 @@ def _group_by_cinema(screenings: list[Screening]) -> dict[str, list[Screening]]:
     return dict(sorted(grouped.items(), key=lambda kv: kv[0].lower()))
 
 
+def _format_orari(orari: list[str]) -> str:
+    if not orari:
+        return ""
+    return "  ".join(f"<code>{html.escape(o)}</code>" for o in orari)
+
+
+def _format_note(note: str) -> str:
+    if not note:
+        return ""
+    tags: list[str] = []
+    lower = note.lower()
+    if "vo" in lower:
+        tags.append("🔤 VO")
+    if "sub ita" in lower:
+        tags.append("🇮🇹 Sub")
+    elif "sub eng" in lower:
+        tags.append("🇬🇧 Sub")
+    # Sala / cinema info (ultima parte della nota)
+    parts = [p.strip() for p in note.split(" - ") if p.strip()]
+    sala = (
+        parts[-1]
+        if parts and not any(kw in parts[-1].lower() for kw in ("vo", "sub"))
+        else ""
+    )
+    if tags:
+        return " · ".join(tags) + (f"  •  <i>{html.escape(sala)}</i>" if sala else "")
+    return f"<i>{html.escape(note)}</i>" if note else ""
+
+
 def _format_film(s: Screening) -> str:
     titolo = f"<b>{html.escape(s.titolo)}</b>"
-    orari = ""
-    if s.orari:
-        orari = " " + " ".join(f"<code>{html.escape(o)}</code>" for o in s.orari)
-    note = ""
-    if s.note:
-        note = f"\n   <i>{html.escape(s.note)}</i>"
-    return f"- {titolo}{orari}{note}"
+    orari = _format_orari(s.orari)
+    note = _format_note(s.note)
+
+    line1 = f"  ▸ {titolo}"
+    if orari:
+        line1 += f"  {orari}"
+    if note:
+        line1 += f"\n     {note}"
+    return line1
 
 
 def render_snapshot(snapshot: CacheSnapshot) -> list[str]:
     """Restituisce uno o piu' messaggi (split se troppo lunghi)."""
     header = (
-        f"<b>Programmazione cinema Bologna</b>\n"
-        f"<i>{html.escape(_format_date(snapshot.target_date))}</i>\n"
-        f"<i>Aggiornato: {snapshot.updated_at.strftime('%H:%M')}</i>\n"
+        f"🎬 <b>Programmazione Cinema Bologna</b>\n"
+        f"📅 {_format_date(snapshot.target_date)}\n"
+        f"🔄 Aggiornato alle {snapshot.updated_at.strftime('%H:%M')}"
     )
 
     if snapshot.is_empty and not snapshot.warnings:
-        return [header + "\nNessuna proiezione disponibile per oggi."]
+        return [header + "\n\n_Nessuna proiezione disponibile per oggi._"]
 
-    grouped = _group_by_cinema(snapshot.screenings)
+    grouped = _group_by_cinema(screenings=snapshot.screenings)
+    cinema_count = len(grouped)
+    film_count = len(snapshot.screenings)
+
+    header += f"\n📊 {film_count} film  •  {cinema_count} sale"
 
     sections: list[str] = []
     for cinema, films in grouped.items():
-        lines = [f"\n*** {html.escape(cinema)} ***"]
+        film_count_cinema = len(films)
+        lines = [
+            f"\n<b>📍 {html.escape(cinema)}</b>  <i>({film_count_cinema})</i>",
+            "",
+        ]
         for f in films:
             lines.append(_format_film(f))
         sections.append("\n".join(lines))
 
     warnings_block = ""
     if snapshot.warnings:
-        warning_lines = "\n".join(f"!!! {html.escape(w)}" for w in snapshot.warnings)
-        warnings_block = f"\n\n<b>Avvisi</b>\n{warning_lines}"
+        warning_lines = "\n".join(f"  ⚠️ {html.escape(w)}" for w in snapshot.warnings)
+        warnings_block = f"\n\n<b>⚠️ Avvisi</b>\n{warning_lines}"
 
     messages: list[str] = []
     current = header
