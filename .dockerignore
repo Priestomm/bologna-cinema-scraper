@@ -1,0 +1,18 @@
+.venv/
+.venv 2/
+__pycache__/
+*.pyc
+.git/
+.github/
+.env
+.env.example
+data/
+logs/
+tests/
+*.md
+.gitignore
+.DS_Store
+.vscode/
+.idea/
+deploy/
+ecosystem.config.js

@@ -1,0 +1,20 @@
+[Unit]
+Description=Bot Telegram programmazione cinema Bologna
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Adatta User, Group e WorkingDirectory al tuo ambiente.
+User=youruser
+Group=youruser
+WorkingDirectory=/opt/scraper-cinema-bologna
+EnvironmentFile=/opt/scraper-cinema-bologna/.env
+ExecStart=/opt/scraper-cinema-bologna/.venv/bin/python /opt/scraper-cinema-bologna/main.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/opt/scraper-cinema-bologna/logs/systemd.log
+StandardError=append:/opt/scraper-cinema-bologna/logs/systemd.err
+
+[Install]
+WantedBy=multi-user.target
