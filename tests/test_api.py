@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 from unittest.mock import patch
 
@@ -11,7 +12,7 @@ from scrapers.base import ScraperResult, Screening
 
 
 @pytest.fixture(autouse=True)
-def _patch_cache(tmp_path: Path) -> None:
+def _patch_cache(tmp_path: Path) -> Iterator[None]:
     db = tmp_path / "test.sqlite3"
     cache = Cache(db)
     with patch("bot.health._get_cache", return_value=cache):

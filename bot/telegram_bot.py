@@ -6,6 +6,7 @@ giorno non esiste (raro, es. primo avvio), forza una pipeline al volo.
 from __future__ import annotations
 
 import asyncio
+import threading
 
 from telegram import Update
 from telegram.constants import ParseMode
@@ -38,7 +39,7 @@ class CinemaBot:
             on_scrape=self._job_scrape,
             on_broadcast=self._job_broadcast,
         )
-        self._health_server = None
+        self._health_server: threading.Thread | None = None
         self._register_handlers()
 
     # ---- handlers -----------------------------------------------------
@@ -51,6 +52,8 @@ class CinemaBot:
     async def _cmd_start(
         self, update: Update, _context: ContextTypes.DEFAULT_TYPE
     ) -> None:
+        if not update.message:
+            return
         await update.message.reply_text(
             "Ciao! Comandi disponibili:\n"
             "/cinema - programmazione di oggi (Cineteca, Pop Up, Circuito Cinema, Nosadella)\n"
@@ -61,10 +64,11 @@ class CinemaBot:
     async def _cmd_cinema(
         self, update: Update, _context: ContextTypes.DEFAULT_TYPE
     ) -> None:
+        if not update.message:
+            return
         target = today()
         snapshot = self._cache.load(target)
         if snapshot is None:
-            # Primo avvio: niente in cache. Eseguiamo la pipeline al volo.
             await update.message.reply_text(
                 "Cache vuota, recupero ora la programmazione (puo' richiedere fino a "
                 f"{settings.scraper_timeout * 2}s)..."
