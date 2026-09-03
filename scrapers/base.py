@@ -13,7 +13,8 @@ non solleva mai. Cosi un cinema rotto non puo far cadere la pipeline.
 from __future__ import annotations
 
 import abc
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeout
 from dataclasses import asdict, dataclass, field
 from datetime import date
 from typing import Any
@@ -73,7 +74,7 @@ class BaseScraper(abc.ABC):
             msg = f"timeout dopo {settings.scraper_timeout}s"
             self.logger.warning("Scraper %s fallito: %s", self.slug, msg)
             return ScraperResult(self.name, self.slug, [], success=False, error=msg)
-        except Exception as exc:  # noqa: BLE001  isolamento esplicito
+        except Exception as exc:
             self.logger.exception("Scraper %s fallito", self.slug)
             return ScraperResult(
                 self.name, self.slug, [], success=False, error=str(exc)

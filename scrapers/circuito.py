@@ -13,8 +13,8 @@ from datetime import date
 
 import requests
 
-from .base import BaseScraper, Screening
 from ._tickets18 import parse_day
+from .base import BaseScraper, Screening
 
 _THEATERS = {
     "Rialto": "https://rialto.ccb.18tickets.it/",

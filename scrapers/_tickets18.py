@@ -22,6 +22,7 @@ import pytz
 from bs4 import BeautifulSoup, Tag
 
 from config import settings
+
 from .base import Screening
 
 _TZ = pytz.timezone(settings.timezone)

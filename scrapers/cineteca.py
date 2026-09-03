@@ -11,8 +11,8 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 
-from .base import BaseScraper, Screening
 from ._tickets18 import parse_day
+from .base import BaseScraper, Screening
 
 _THEATERS = {
     "Cineteca - Lumiere": "https://lumiere.cinetecabologna.18tickets.it/",

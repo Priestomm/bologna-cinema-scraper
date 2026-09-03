@@ -16,8 +16,8 @@ from __future__ import annotations
 import re
 from datetime import date
 
-from .base import BaseScraper, Screening
 from ._tickets18 import parse_day
+from .base import BaseScraper, Screening
 
 # "Cinema XXX" o "Arena XXX" all'inizio del campo note (eventualmente
 # seguito da " - ..." con annotazioni linguistiche).

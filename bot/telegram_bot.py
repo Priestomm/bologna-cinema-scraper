@@ -87,7 +87,7 @@ class CinemaBot:
         logger.info("Job scrape avviato")
         try:
             await asyncio.to_thread(run_scrape_pipeline)
-        except Exception:  # noqa: BLE001
+        except Exception:
             logger.exception("Job scrape fallito (l'errore e' isolato dal bot)")
 
     async def _job_broadcast(self) -> None:
@@ -105,7 +105,7 @@ class CinemaBot:
                     parse_mode=ParseMode.HTML,
                     disable_web_page_preview=True,
                 )
-            except Exception:  # noqa: BLE001
+            except Exception:
                 logger.exception("Invio broadcast fallito")
 
     # ---- ciclo di vita -----------------------------------------------

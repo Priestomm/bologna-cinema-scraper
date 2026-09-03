@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from datetime import date
 
-from .base import BaseScraper, Screening
 from ._tickets18 import parse_day
+from .base import BaseScraper, Screening
 
 
 class NosadellaScraper(BaseScraper):

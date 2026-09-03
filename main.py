@@ -34,9 +34,10 @@ def _run_scrape_only() -> int:
 
 def _run_broadcast_test() -> int:
     """Esegue uno scrape e invia in chat (utile per testare la formattazione)."""
-    from config import settings
     from telegram import Bot
     from telegram.constants import ParseMode
+
+    from config import settings
 
     snapshot = run_scrape_pipeline()
 

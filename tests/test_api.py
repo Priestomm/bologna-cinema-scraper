@@ -29,6 +29,7 @@ def client() -> TestClient:
 @pytest.fixture
 def seed_cache() -> None:
     from datetime import datetime
+
     import pytz
 
     from bot.health import _get_cache
@@ -83,7 +84,9 @@ class TestScreenings:
 
     def test_specific_date(self, client: TestClient, seed_cache: None) -> None:
         from datetime import datetime
+
         import pytz
+
         from config import settings
 
         d = datetime.now(pytz.timezone(settings.timezone)).date().isoformat()

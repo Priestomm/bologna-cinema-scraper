@@ -14,12 +14,12 @@ ALL_SCRAPERS: list[type[BaseScraper]] = [
 ]
 
 __all__ = [
+    "ALL_SCRAPERS",
     "BaseScraper",
-    "ScraperResult",
-    "Screening",
     "CinetecaScraper",
     "CircuitoCinemaScraper",
     "NosadellaScraper",
     "PopUpCinemaScraper",
-    "ALL_SCRAPERS",
+    "ScraperResult",
+    "Screening",
 ]

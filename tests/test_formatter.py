@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 
+from bot.formatter import _format_date, _group_by_cinema, render_snapshot
 from database.cache import CacheSnapshot
 from scrapers.base import Screening
-from bot.formatter import render_snapshot, _format_date, _group_by_cinema
 
 
 class TestFormatDate:

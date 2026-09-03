@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from datetime import date
 
-from scrapers._tickets18 import parse_day, _extract_lang_note
+from scrapers._tickets18 import _extract_lang_note, parse_day
 from tests.conftest import (
-    MOCK_HTML_ONE_MOVIE,
+    MOCK_HTML_FALLBACK_DATE,
     MOCK_HTML_MULTI_MOVIE,
     MOCK_HTML_NO_SHOWTIMES,
-    MOCK_HTML_FALLBACK_DATE,
+    MOCK_HTML_ONE_MOVIE,
 )
 
 
