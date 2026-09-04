@@ -7,6 +7,7 @@ from bot.formatter import (
     _format_date,
     _format_note,
     _group_by_cinema,
+    _group_by_timeslot,
     render_snapshot,
 )
 from database.cache import CacheSnapshot
@@ -163,6 +164,116 @@ class TestRenderSnapshot:
         ]
         snap = self._snapshot(screenings=screenings)
         msgs = render_snapshot(snap)
+        assert len(msgs) > 1
+        for m in msgs:
+            assert len(m) <= 3900
+
+
+class TestGroupByTimeslot:
+    def test_film_appears_in_correct_slot(self) -> None:
+        screenings = [
+            Screening(cinema="Rialto", titolo="Film Mattina", orari=["10:00"], note=""),
+            Screening(cinema="Rialto", titolo="Film Sera", orari=["19:30"], note=""),
+        ]
+        grouped = _group_by_timeslot(screenings)
+        assert "🌅 Mattina" in grouped
+        assert "🌆 Sera" in grouped
+        assert "Film Mattina" in [s.titolo for s in grouped["🌅 Mattina"]["Rialto"]]
+        assert "Film Sera" in [s.titolo for s in grouped["🌆 Sera"]["Rialto"]]
+
+    def test_film_with_multiple_times_in_multiple_slots(self) -> None:
+        screenings = [
+            Screening(
+                cinema="Rialto",
+                titolo="Film Completo",
+                orari=["10:00", "15:00", "19:00", "22:00"],
+                note="",
+            ),
+        ]
+        grouped = _group_by_timeslot(screenings)
+        slots_with_film = [
+            slot
+            for slot, cinemas in grouped.items()
+            if any(
+                s.titolo == "Film Completo" for films in cinemas.values() for s in films
+            )
+        ]
+        assert len(slots_with_film) == 4
+
+    def test_empty_slots_excluded(self) -> None:
+        screenings = [
+            Screening(cinema="Rialto", titolo="Film Sera", orari=["19:00"], note=""),
+        ]
+        grouped = _group_by_timeslot(screenings)
+        assert "🌅 Mattina" not in grouped
+        assert "☀️ Pomeriggio" not in grouped
+        assert "🌙 Notte" not in grouped
+
+    def test_sorts_by_cinema_then_title(self) -> None:
+        screenings = [
+            Screening(cinema="B", titolo="Z Film", orari=["10:00"]),
+            Screening(cinema="A", titolo="A Film", orari=["10:00"]),
+            Screening(cinema="A", titolo="M Film", orari=["10:00"]),
+        ]
+        grouped = _group_by_timeslot(screenings)
+        assert list(grouped["🌅 Mattina"].keys()) == ["A", "B"]
+        titles = [s.titolo for s in grouped["🌅 Mattina"]["A"]]
+        assert titles == ["A Film", "M Film"]
+
+
+class TestRenderTimeslot:
+    def _snapshot(
+        self,
+        screenings: list[Screening] | None = None,
+        warnings: list[str] | None = None,
+    ) -> CacheSnapshot:
+        return CacheSnapshot(
+            target_date=date(2026, 6, 8),
+            updated_at=datetime(2026, 6, 8, 8, 0, tzinfo=timezone.utc),
+            screenings=screenings or [],
+            warnings=warnings or [],
+        )
+
+    def test_timeslot_mode_header(self) -> None:
+        snap = self._snapshot(
+            screenings=[
+                Screening(cinema="Rialto", titolo="Film", orari=["19:00"], note="")
+            ]
+        )
+        msgs = render_snapshot(snap, mode="timeslot")
+        assert len(msgs) == 1
+        assert "🌆 Sera" in msgs[0]
+
+    def test_timeslot_empty_snapshot(self) -> None:
+        snap = self._snapshot()
+        msgs = render_snapshot(snap, mode="timeslot")
+        assert len(msgs) == 1
+        assert "Nessuna proiezione" in msgs[0]
+
+    def test_timeslot_cinema_label_inline(self) -> None:
+        snap = self._snapshot(
+            screenings=[
+                Screening(
+                    cinema="Rialto", titolo="Parasite", orari=["18:00"], note="VO"
+                )
+            ]
+        )
+        msgs = render_snapshot(snap, mode="timeslot")
+        full = msgs[0]
+        assert "Rialto" in full
+        assert "Parasite" in full
+
+    def test_timeslot_long_list_splits(self) -> None:
+        screenings = [
+            Screening(
+                cinema=f"Cinema {i:03d}",
+                titolo=f"Film {i:03d}",
+                orari=["19:00"],
+            )
+            for i in range(100)
+        ]
+        snap = self._snapshot(screenings=screenings)
+        msgs = render_snapshot(snap, mode="timeslot")
         assert len(msgs) > 1
         for m in msgs:
             assert len(m) <= 3900

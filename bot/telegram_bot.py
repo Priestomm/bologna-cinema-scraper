@@ -9,17 +9,19 @@ from __future__ import annotations
 import asyncio
 import threading
 
-from telegram import Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
     ApplicationBuilder,
+    CallbackQueryHandler,
     CommandHandler,
     ContextTypes,
 )
 
 from config import settings
 from database import Cache
+from database.cache import CacheSnapshot
 from utils import get_logger
 
 from .formatter import render_snapshot
@@ -28,6 +30,25 @@ from .pipeline import run_scrape_pipeline, today
 from .scheduler import CinemaScheduler
 
 logger = get_logger("bot.telegram")
+
+_MODE_KEYBOARDS: dict[str, InlineKeyboardMarkup] = {
+    "cinema": InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("📍 Per Cinema", callback_data="mode:cinema"),
+                InlineKeyboardButton("⏰ Per Orari", callback_data="mode:timeslot"),
+            ]
+        ]
+    ),
+    "timeslot": InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("📍 Per Cinema", callback_data="mode:cinema"),
+                InlineKeyboardButton("⏰ Per Orari", callback_data="mode:timeslot"),
+            ]
+        ]
+    ),
+}
 
 
 class CinemaBot:
@@ -49,6 +70,7 @@ class CinemaBot:
         self._app.add_handler(CommandHandler("start", self._cmd_start))
         self._app.add_handler(CommandHandler("help", self._cmd_start))
         self._app.add_handler(CommandHandler("cinema", self._cmd_cinema))
+        self._app.add_handler(CallbackQueryHandler(self._cb_mode, pattern=r"^mode:"))
 
     async def _cmd_start(
         self, update: Update, _context: ContextTypes.DEFAULT_TYPE
@@ -63,7 +85,7 @@ class CinemaBot:
         )
 
     async def _cmd_cinema(
-        self, update: Update, _context: ContextTypes.DEFAULT_TYPE
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         if not update.message:
             return
@@ -76,9 +98,47 @@ class CinemaBot:
             )
             snapshot = await asyncio.to_thread(run_scrape_pipeline, target)
 
-        for chunk in render_snapshot(snapshot):
+        if context.user_data is not None:
+            context.user_data["snapshot"] = snapshot
+        for chunk in render_snapshot(snapshot, mode="cinema"):
             await update.message.reply_text(
-                chunk, parse_mode=ParseMode.HTML, disable_web_page_preview=True
+                chunk,
+                parse_mode=ParseMode.HTML,
+                disable_web_page_preview=True,
+                reply_markup=_MODE_KEYBOARDS["cinema"],
+            )
+
+    async def _cb_mode(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        query = update.callback_query
+        if not query or not query.data:
+            return
+        await query.answer()
+
+        mode = query.data.removeprefix("mode:")
+        if mode not in ("cinema", "timeslot"):
+            return
+
+        snapshot: CacheSnapshot | None = None
+        if context.user_data is not None:
+            snapshot = context.user_data.get("snapshot")
+        if snapshot is None:
+            target = today()
+            snapshot = self._cache.load(target)
+            if snapshot is None:
+                snapshot = await asyncio.to_thread(run_scrape_pipeline, target)
+            if context.user_data is not None:
+                context.user_data["snapshot"] = snapshot
+
+        if not query.message or not hasattr(query.message, "reply_text"):
+            return
+        for chunk in render_snapshot(snapshot, mode=mode):
+            await query.message.reply_text(
+                chunk,
+                parse_mode=ParseMode.HTML,
+                disable_web_page_preview=True,
+                reply_markup=_MODE_KEYBOARDS[mode],
             )
 
     # ---- jobs schedulati ---------------------------------------------
