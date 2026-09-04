@@ -1,136 +1,226 @@
-"""Formattazione messaggi Telegram in HTML per Fascia Oraria."""
+"""Formattazione messaggi Telegram in HTML."""
 
 from __future__ import annotations
 
 import html
+import re
 from datetime import date
-from typing import NamedTuple
 
 from database import CacheSnapshot
 from scrapers import Screening
 
-_GIORNI = ("Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica")
-_MESI = ("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
+_GIORNI = (
+    "Lunedì",
+    "Martedì",
+    "Mercoledì",
+    "Giovedì",
+    "Venerdì",
+    "Sabato",
+    "Domenica",
+)
+_MESI = (
+    "gennaio",
+    "febbraio",
+    "marzo",
+    "aprile",
+    "maggio",
+    "giugno",
+    "luglio",
+    "agosto",
+    "settembre",
+    "ottobre",
+    "novembre",
+    "dicembre",
+)
 
+# Limite messaggio Telegram = 4096 caratteri. Tagliamo a 3900 per sicurezza
+# e splittiamo su confine di cinema.
 _MAX_LEN = 3900
 
-class TimeSlotItem(NamedTuple):
-    orario: str
-    titolo: str
-    cinema: str
-    note: str
 
 def _format_date(d: date) -> str:
     return f"{_GIORNI[d.weekday()]} {d.day} {_MESI[d.month - 1]} {d.year}"
 
-def _get_slot_name(orario_str: str) -> str:
-    """Assegna la fascia oraria corretta in base all'orario dello screening."""
-    try:
-        # Prende solo le ore (es. "18:30" -> 18)
-        ora = int(orario_str.split(":")[0])
-    except (ValueError, IndexError):
-        return "🌙 SECONDA SERATA (dalle 21:30)"  # Fallback di sicurezza
-        
-    if ora < 18:
-        return "🌅 POMERIGGIO (fino alle 18:00)"
-    if 18 <= ora < 21:
-        return "🍹 APERITIVO & PRIMA SERATA (18:00 - 21:30)"
-    return "🌙 SECONDA SERATA (dalle 21:30)"
 
-def _group_by_timeslot(screenings: list[Screening]) -> dict[str, list[TimeSlotItem]]:
-    """Esplode le proiezioni per singolo orario e le raggruppa per fascia oraria cronologica."""
-    # Definiamo l'ordine fisso delle fasce orarie
-    slots = {
-        "🌅 POMERIGGIO (fino alle 18:00)": [],
-        "🍹 APERITIVO & PRIMA SERATA (18:00 - 21:30)": [],
-        "🌙 SECONDA SERATA (dalle 21:30)": []
-    }
-    
+def _title_case_word(match: re.Match[str]) -> str:
+    word = match.group(0)
+    # Numeri romani o risoluzioni come 4K, 3D
+    if re.match(r"^(?:I{2,3}|IV|VI{0,3}|IX|X{1,3}|\d+[a-zA-Z]*)$", word):
+        return word.upper()
+    return word.capitalize()
+
+
+def _clean_title(titolo: str) -> str:
+    """Pulisce il titolo rimuovendo suffissi/prefissi ridondanti e normalizza il casing."""
+    cleaned = titolo.strip()
+
+    # Rimuove prefissi e suffissi tipici della versione originale / lingua
+    cleaned = re.sub(
+        r"^(?:original version|versione originale)\s*:\s*",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        r"\s*-\s*(?:v\.?\s*o\.?|original version|versione originale|sub\s*ita|sub\s*eng)$",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = cleaned.strip(" -:")
+
+    # Se tutto maiuscolo, applica Title Case intelligente preservando apostrofi e simboli
+    if cleaned.isupper():
+        cleaned = re.sub(r"[a-zA-ZÀ-ÖØ-öø-ÿ]+", _title_case_word, cleaned)
+
+    return cleaned
+
+
+def _group_by_cinema(screenings: list[Screening]) -> dict[str, list[Screening]]:
+    grouped: dict[str, list[Screening]] = {}
     for s in screenings:
-        for orario in s.orari:
-            slot_name = _get_slot_name(orario)
-            slots[slot_name].append(
-                TimeSlotItem(orario=orario, titolo=s.titolo, cinema=s.cinema, note=s.note)
-            )
-            
-    # Ordina i film all'interno di ogni fascia per orario e poi per titolo
-    for slot_name in slots:
-        slots[slot_name].sort(key=lambda x: (x.orario, x.titolo.lower()))
-        
-    # Ritorna solo le fasce che hanno effettivamente dei film dentro
-    return {name: items for name, items in slots.items() if items}
+        grouped.setdefault(s.cinema, []).append(s)
+    for items in grouped.values():
+        items.sort(key=lambda s: _clean_title(s.titolo).lower())
+    return dict(sorted(grouped.items(), key=lambda kv: kv[0].lower()))
 
-def _format_note_compatta(note: str) -> str:
+
+def _format_orari(orari: list[str]) -> str:
+    if not orari:
+        return ""
+    return " · ".join(f"<code>{html.escape(o)}</code>" for o in orari)
+
+
+def _format_note(note: str, cinema_name: str = "") -> str:
     if not note:
         return ""
-    tags: list[str] = []
+
     lower = note.lower()
-    
-    if "vo" in lower:
-        tags.append("🗣️ VO")
-    if "sub ita" in lower:
-        tags.append("🇬🇧 sott. 🇮🇹")
-    elif "sub eng" in lower:
-        tags.append("🇮🇹 sott. 🇬🇧")
-        
-    parts = [p.strip() for p in note.split(" - ") if p.strip()]
-    sala = parts[-1] if parts and not any(kw in parts[-1].lower() for kw in ("vo", "sub")) else ""
-    
-    result = " · ".join(tags)
-    if sala:
-        result += f" ({html.escape(sala)})" if result else html.escape(sala)
-    return f" <i>[{result}]</i>" if result else ""
+    tags: list[str] = []
+
+    if any(
+        k in lower for k in ("vo", "v.o.", "versione originale", "original version")
+    ):
+        tags.append("🔤 VO")
+    if "sub ita" in lower or "sottotitoli in italiano" in lower:
+        tags.append("🇮🇹 Sub")
+    elif "sub eng" in lower or "sottotitoli in inglese" in lower:
+        tags.append("🇬🇧 Sub")
+
+    # Filtra nomi generici e ridondanti del circuito/cinema
+    ignore_tokens = {
+        "cineteca",
+        "circuito cinema",
+        "circuito",
+        "pop up",
+        "nosadella",
+        "cinema lumiere",
+        "cinema modernissimo",
+        "modernissimo",
+        "lumiere",
+        "rialto",
+        "odeon",
+        "europa",
+        "roma",
+        "roma d'azeglio",
+        "cinema jolly",
+        "cinema medica",
+        "cinema arlecchino",
+        "cinema nosadella",
+    }
+    if cinema_name:
+        ignore_tokens.add(cinema_name.lower())
+        for part in re.split(r"[\s\-]+", cinema_name.lower()):
+            if len(part) > 2:
+                ignore_tokens.add(part)
+
+    parts = [p.strip() for p in re.split(r"\s*[-/]\s*", note) if p.strip()]
+    specific_room = ""
+    for p in parts:
+        p_lower = p.lower()
+        if any(kw in p_lower for kw in ("vo", "sub", "versione", "lingua", "original")):
+            continue
+        if p_lower in ignore_tokens:
+            continue
+        if re.search(r"\b(sala|arena)\b", p_lower):
+            specific_room = p
+            break
+
+    elements: list[str] = []
+    if tags:
+        elements.append(" · ".join(tags))
+    if specific_room:
+        elements.append(f"🏛️ {specific_room}")
+
+    return "  •  ".join(elements)
+
+
+def _format_film(s: Screening) -> str:
+    titolo_clean = _clean_title(s.titolo)
+    titolo_html = f"<b>{html.escape(titolo_clean)}</b>"
+    orari_html = _format_orari(s.orari)
+    note_txt = _format_note(s.note, cinema_name=s.cinema)
+    note_html = html.escape(note_txt) if note_txt else ""
+
+    lines = [f"• {titolo_html}"]
+    if orari_html and note_html:
+        lines.append(f"  {orari_html}  —  {note_html}")
+    elif orari_html:
+        lines.append(f"  {orari_html}")
+    elif note_html:
+        lines.append(f"  {note_html}")
+
+    return "\n".join(lines)
+
 
 def render_snapshot(snapshot: CacheSnapshot) -> list[str]:
-    """Restituisce messaggi strutturati in modo intelligente per orario d'inizio."""
+    """Restituisce uno o piu' messaggi Telegram formattati in HTML."""
     header = (
-        f"🎬 <b>OGGI AL CINEMA A BOLOGNA</b>\n"
+        f"🎬 <b>Programmazione Cinema Bologna</b>\n"
         f"📅 <i>{_format_date(snapshot.target_date)}</i>\n"
-        f"🕒 <code>Aggiornato alle {snapshot.updated_at.strftime('%H:%M')}</code>"
+        f"🔄 <i>Aggiornato alle {snapshot.updated_at.strftime('%H:%M')}</i>"
     )
 
     if snapshot.is_empty and not snapshot.warnings:
-        return [header + "\n\n✨ <i>Nessuna proiezione disponibile per oggi.</i>"]
+        return [header + "\n\n<i>Nessuna proiezione disponibile per oggi.</i>"]
 
-    grouped_slots = _group_by_timeslot(snapshot.screenings)
-    
-    # Calcolo statistiche veloci
-    cinema_count = len({s.cinema for s in snapshot.screenings})
+    grouped = _group_by_cinema(snapshot.screenings)
+    cinema_count = len(grouped)
     film_count = len(snapshot.screenings)
-    header += f"\n📊 <b>{film_count}</b> film in programmazione  •  <b>{cinema_count}</b> sale"
+
+    header += f"\n📊 <b>{film_count}</b> film  •  <b>{cinema_count}</b> cinema\n"
 
     sections: list[str] = []
-    for slot_name, items in grouped_slots.items():
-        lines = [f"\n<b>{slot_name}</b>", "───────────────────"]
-        for item in items:
-            note = _format_note_compatta(item.note)
-            # Layout super denso: Orario | Titolo | Cinema e Note alla fine
-            lines.append(
-                f"⏱️ <code>{item.orario}</code> 🔹 <b>{html.escape(item.titolo).upper()}</b>\n"
-                f"      📍 <i>{html.escape(item.cinema)}</i>{note}"
-            )
-        sections.append("\n".join(lines))
+    for cinema, films in grouped.items():
+        film_count_cinema = len(films)
+        cinema_header = f"📍 <b>{html.escape(cinema)}</b> <i>({film_count_cinema})</i>"
+        film_lines = [_format_film(f) for f in films]
+        blockquote_body = "\n\n".join(film_lines)
+        section = f"{cinema_header}\n<blockquote>{blockquote_body}</blockquote>"
+        sections.append(section)
 
     warnings_block = ""
     if snapshot.warnings:
         warning_lines = "\n".join(f"⚠️ {html.escape(w)}" for w in snapshot.warnings)
-        warnings_block = f"\n\n⚠️ <b>AVVISI</b>\n{warning_lines}"
+        warnings_block = f"\n\n<b>⚠️ Avvisi</b>\n{warning_lines}"
 
     messages: list[str] = []
     current = header
     for section in sections:
         if len(current) + len(section) + 2 > _MAX_LEN:
-            messages.append(current)
-            current = section.lstrip("\n")
+            messages.append(current.strip())
+            current = section
         else:
             current += "\n" + section
-            
+
     if warnings_block:
         if len(current) + len(warnings_block) > _MAX_LEN:
-            messages.append(current)
+            messages.append(current.strip())
             current = warnings_block.lstrip("\n")
         else:
             current += warnings_block
-            
-    messages.append(current)
+
+    if current.strip():
+        messages.append(current.strip())
+
     return messages

@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 
-from bot.formatter import _format_date, _group_by_cinema, render_snapshot
+from bot.formatter import (
+    _clean_title,
+    _format_date,
+    _format_note,
+    _group_by_cinema,
+    render_snapshot,
+)
 from database.cache import CacheSnapshot
 from scrapers.base import Screening
 
@@ -21,6 +27,49 @@ class TestFormatDate:
         result = _format_date(d)
         assert "Domenica" in result
         assert "14" in result
+
+
+class TestCleanTitle:
+    def test_all_caps_converted_to_title_case(self) -> None:
+        assert _clean_title("SILENT FRIEND") == "Silent Friend"
+
+    def test_strip_original_version_suffixes(self) -> None:
+        assert _clean_title("ODISSEA - V. O.") == "Odissea"
+        assert _clean_title("L'HANGAR ROSSO - ORIGINAL VERSION") == "L'Hangar Rosso"
+        assert _clean_title("CAMP MIASMA - VERSIONE ORIGINALE") == "Camp Miasma"
+
+    def test_strip_original_version_prefix(self) -> None:
+        assert (
+            _clean_title("ORIGINAL VERSION: TONY - DIARIO DI UN GIOVANE CUOCO")
+            == "Tony - Diario Di Un Giovane Cuoco"
+        )
+
+    def test_preserves_roman_numerals(self) -> None:
+        assert (
+            _clean_title("IL SIGNORE DEGLI ANELLI - PARTE II")
+            == "Il Signore Degli Anelli - Parte II"
+        )
+
+
+class TestFormatNote:
+    def test_removes_redundant_cinema_names(self) -> None:
+        assert _format_note("Cinema Lumiere - Cineteca", "Cineteca - Lumiere") == ""
+        assert _format_note("Pop Up", "Pop Up - Cinema Medica") == ""
+
+    def test_extracts_vo_and_sub(self) -> None:
+        assert (
+            _format_note(
+                "Cinema Modernissimo - VO / Sub ITA - Cineteca",
+                "Cineteca - Modernissimo",
+            )
+            == "🔤 VO · 🇮🇹 Sub"
+        )
+
+    def test_extracts_specific_room(self) -> None:
+        assert (
+            _format_note("Sala Mastroianni - VO - Cineteca", "Cineteca - Lumiere")
+            == "🔤 VO  •  🏛️ Sala Mastroianni"
+        )
 
 
 class TestGroupByCinema:
