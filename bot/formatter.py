@@ -272,7 +272,9 @@ def _render_cinema(snapshot: CacheSnapshot, header: str) -> list[str]:
     for cinema, films in grouped.items():
         film_count_cinema = len(films)
         cinema_display = _display_cinema(cinema)
-        cinema_header = f"📍 <b>{html.escape(cinema_display)}</b> <i>({film_count_cinema})</i>"
+        cinema_header = (
+            f"📍 <b>{html.escape(cinema_display)}</b> <i>({film_count_cinema})</i>"
+        )
         film_lines = [_format_film(f) for f in films]
         blockquote_body = "\n\n".join(film_lines)
         section = f"{cinema_header}\n<blockquote>{blockquote_body}</blockquote>"
