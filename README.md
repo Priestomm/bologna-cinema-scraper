@@ -1,8 +1,9 @@
 # Cinema Bologna Bot
 
 ![CI](https://github.com/Priestomm/bologna-cinema-scraper/actions/workflows/ci.yml/badge.svg)
+![Status](https://img.shields.io/badge/status-sempre%20attivo-success?logo=oracle)
 
-Bot Telegram che ogni mattina pubblica la programmazione cinematografica giornaliera di Bologna per quattro circuiti:
+Bot Telegram che ogni mattina pubblica la programmazione cinematografica giornaliera di Bologna per quattro circuiti, attivo 24/7 su Oracle Cloud:
 
 - **Cineteca di Bologna** (Lumiere, Modernissimo)
 - **Pop Up Cinema**
@@ -191,6 +192,26 @@ journalctl -u cinema-bot -f
 ### Opzione C - macOS launchd
 
 Crea `~/Library/LaunchAgents/com.cinema.bot.plist` con il comando `python main.py` come `ProgramArguments`. `launchctl load -w ...`.
+
+### Opzione D - Oracle Cloud (VM sempre attiva)
+
+Il bot è attualmente ospitato su una VM Oracle Cloud (always-free tier) con PM2.
+
+```bash
+# clona il repo sulla VM
+git clone https://github.com/Priestomm/bologna-cinema-scraper.git
+cd bologna-cinema-scraper
+
+# setup
+make install
+cp .env.example .env
+# configura TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID
+
+# avvia con PM2
+pm2 start ecosystem.config.js
+pm2 save
+pm2 startup   # auto-start ai reboot della VM
+```
 
 ## Personalizzazione
 
