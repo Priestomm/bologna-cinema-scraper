@@ -37,6 +37,17 @@ _MESI = (
 # e splittiamo su confine di cinema.
 _MAX_LEN = 3900
 
+_CINEMA_DISPLAY_NAMES: dict[str, str] = {
+    "Rialto": "CCB - Rialto",
+    "Odeon": "CCB - Odeon",
+    "Europa": "CCB - Europa",
+    "Roma D'Azeglio": "CCB - Roma D'Azeglio",
+}
+
+
+def _display_cinema(name: str) -> str:
+    return _CINEMA_DISPLAY_NAMES.get(name, name)
+
 
 def _format_date(d: date) -> str:
     return f"{_GIORNI[d.weekday()]} {d.day} {_MESI[d.month - 1]} {d.year}"
@@ -260,7 +271,8 @@ def _render_cinema(snapshot: CacheSnapshot, header: str) -> list[str]:
     sections: list[str] = []
     for cinema, films in grouped.items():
         film_count_cinema = len(films)
-        cinema_header = f"📍 <b>{html.escape(cinema)}</b> <i>({film_count_cinema})</i>"
+        cinema_display = _display_cinema(cinema)
+        cinema_header = f"📍 <b>{html.escape(cinema_display)}</b> <i>({film_count_cinema})</i>"
         film_lines = [_format_film(f) for f in films]
         blockquote_body = "\n\n".join(film_lines)
         section = f"{cinema_header}\n<blockquote>{blockquote_body}</blockquote>"
