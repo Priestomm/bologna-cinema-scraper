@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cinema Bologna - {{ date }}</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f4f4f6; color: #1c1c1e; line-height: 1.5;
+    padding: 16px; max-width: 720px; margin: 0 auto;
+  }
+  h1 {
+    font-size: 1.5rem; font-weight: 700; text-align: center;
+    margin-bottom: 4px;
+  }
+  .subtitle { text-align: center; color: #6b7280; font-size: 0.875rem; margin-bottom: 16px; }
+  .nav {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+  }
+  .nav a {
+    text-decoration: none; font-size: 0.875rem; font-weight: 600;
+    padding: 6px 14px; border-radius: 8px; background: #e5e7eb; color: #374151;
+  }
+  .nav a:hover { background: #d1d5db; }
+  .nav .today { font-weight: 600; font-size: 0.875rem; color: #6b7280; }
+  .cinema-card {
+    background: #fff; border-radius: 12px; padding: 16px;
+    margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .cinema-name {
+    font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;
+  }
+  .cinema-name .count {
+    font-weight: 400; color: #6b7280; font-size: 0.875rem;
+  }
+  .film { margin-bottom: 10px; }
+  .film:last-child { margin-bottom: 0; }
+  .film-title { font-weight: 600; font-size: 0.95rem; color: #1c1c1e; }
+  .film-meta { font-size: 0.8rem; color: #6b7280; margin-top: 1px; }
+  .film-times {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;
+  }
+  .time-chip {
+    background: #eef2ff; color: #4338ca; font-size: 0.8rem; font-weight: 600;
+    padding: 2px 10px; border-radius: 6px; font-variant-numeric: tabular-nums;
+  }
+  .warning-card {
+    background: #fef2f2; border-radius: 12px; padding: 12px 16px;
+    margin-bottom: 12px; border: 1px solid #fecaca;
+  }
+  .warning-title { font-weight: 600; font-size: 0.9rem; color: #991b1b; margin-bottom: 4px; }
+  .warning-item { font-size: 0.85rem; color: #991b1b; }
+  .footer {
+    text-align: center; font-size: 0.75rem; color: #9ca3af;
+    margin-top: 24px; padding-bottom: 32px;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #1c1c1e; color: #f4f4f6; }
+    .cinema-card { background: #2c2c2e; }
+    .nav a { background: #3a3a3c; color: #e5e7eb; }
+    .nav .today { color: #9ca3af; }
+    .time-chip { background: #312e81; color: #e0e7ff; }
+    .warning-card { background: #3a1a1a; border-color: #7f1d1d; }
+    .warning-title, .warning-item { color: #fca5a5; }
+  }
+</style>
+</head>
+<body>
+  <h1>🎬 Cinema Bologna</h1>
+  <p class="subtitle">Programmazione del {{ date }}</p>
+
+  <div class="nav">
+    <a href="/{{ prev }}">&larr; {{ prev }}</a>
+    <span class="today">{{ label }}</span>
+    <a href="/{{ next }}">{{ next }} &rarr;</a>
+  </div>
+
+  {% if warnings %}
+  <div class="warning-card">
+    <div class="warning-title">⚠️ Avvisi</div>
+    {% for w in warnings %}
+    <div class="warning-item">{{ w }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% for cinema in cinemas %}
+  <div class="cinema-card">
+    <div class="cinema-name">{{ cinema.name }} <span class="count">({{ cinema.count }})</span></div>
+    {% for film in cinema.films %}
+    <div class="film">
+      <div class="film-title">{{ film.titolo }}</div>
+      <div class="film-meta">{{ film.note }}</div>
+      <div class="film-times">
+        {% for ora in film.orari %}
+        <span class="time-chip">{{ ora }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+
+  <div class="footer">
+    Aggiornato: {{ updated_at }} &middot; Dati forniti dai circuiti cinematografici di Bologna
+  </div>
+</body>
+</html>

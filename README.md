@@ -118,11 +118,21 @@ make scrape
 make broadcast
 ```
 
-### Health Check & API REST
+### Health Check, Mini-sito & API REST
 
-Il bot espone un server HTTP FastAPI sulla porta 8080 (configurabile via `HEALTH_PORT` in `.env`).
+Il bot espone un server HTTP FastAPI sulla porta 8080 (configurabile via `HEALTH_PORT` in `.env`) con tre funzioni:
+
+1. **Mini-sito** — pagina web navigabile con la programmazione del giorno
+2. **Health check** — stato del bot
+3. **API REST** — dati in formato JSON
 
 ```bash
+# Mini-sito (pagina HTML navigabile)
+open http://localhost:8080/
+
+# Data specifica
+open http://localhost:8080/2026-06-08
+
 # Health check
 curl http://localhost:8080/health
 
@@ -152,6 +162,8 @@ open http://localhost:8080/docs
 
 | Endpoint | Descrizione |
 |---|---|
+| `GET /` | Mini-sito HTML — programmazione di oggi |
+| `GET /{YYYY-MM-DD}` | Mini-sito HTML — programmazione di una data |
 | `GET /health` | Stato del bot (uptime, conteggio film, avvisi) |
 | `GET /api/screenings?date=YYYY-MM-DD` | Programmazione per data |
 | `GET /api/cinemas` | Elenco cinema con conteggio film |

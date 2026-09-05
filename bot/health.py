@@ -1,7 +1,9 @@
-"""Server HTTP combinato: health check + REST API.
+"""Server HTTP combinato: mini-sito, health check + REST API.
 
 Avvia un server FastAPI su una porta dedicata (default 8080).
 Include:
+- GET /                   mini-sito HTML (programmazione oggi)
+- GET /{YYYY-MM-DD}       mini-sito HTML (programmazione per data)
 - GET /health             stato del bot
 - GET /api/screenings     programmazione
 - GET /api/cinemas        elenco cinema
@@ -20,6 +22,9 @@ from typing import Any
 import pytz
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from starlette.requests import Request
 
 from config import settings
 from database import Cache
@@ -40,9 +45,12 @@ def _get_cache() -> Cache:
     return _cache
 
 
+templates = Jinja2Templates(directory="bot/templates")
+
+
 app = FastAPI(
     title="Cinema Bologna Bot",
-    description="Health check + API REST per la programmazione cinematografica di Bologna",
+    description="Health check + API REST + mini-sito per la programmazione cinematografica di Bologna",
     version="1.0.0",
 )
 
@@ -204,6 +212,69 @@ def get_stats() -> dict[str, Any]:
         "cinemas": sorted(total_cinemas),
         "last_updated": last_updated,
     }
+
+
+# ---- mini-sito --------------------------------------------------------
+
+
+def _date_params(target: date) -> dict[str, str]:
+    prev = (target - timedelta(days=1)).isoformat()
+    nxt = (target + timedelta(days=1)).isoformat()
+    label = "Oggi" if target == _today() else target.isoformat()
+    return {"prev": prev, "next": nxt, "label": label}
+
+
+@app.get("/", response_class=HTMLResponse)
+def schedule_today(request: Request) -> HTMLResponse:
+    return _schedule_page(request, _today())
+
+
+@app.get("/{date_param}", response_class=HTMLResponse)
+def schedule_date(request: Request, date_param: str) -> HTMLResponse:
+    try:
+        target = _parse_date(date_param)
+    except ValueError:
+        return HTMLResponse("Data non valida", status_code=400)
+    return _schedule_page(request, target)
+
+
+def _schedule_page(request: Request, target: date) -> HTMLResponse:
+    snapshot = _get_cache().load(target)
+    if snapshot is None:
+        return templates.TemplateResponse(
+            request=request,
+            name="schedule.html",
+            context={
+                "date": target.isoformat(),
+                "label": "Oggi" if target == _today() else target.isoformat(),
+                "next": (target + timedelta(days=1)).isoformat(),
+                "prev": (target - timedelta(days=1)).isoformat(),
+                "updated_at": "",
+                "cinemas": [],
+                "warnings": ["Nessun dato disponibile per questa data."],
+            },
+        )
+
+    cinemas: dict[str, list[dict]] = {}
+    for s in snapshot.screenings:
+        cinemas.setdefault(s.cinema, []).append(_screening_dict(s))
+
+    cinema_list = [
+        {"name": name, "count": len(films), "films": films}
+        for name, films in sorted(cinemas.items())
+    ]
+
+    return templates.TemplateResponse(
+        request=request,
+        name="schedule.html",
+        context={
+            "date": target.isoformat(),
+            **_date_params(target),
+            "updated_at": snapshot.updated_at.strftime("%H:%M"),
+            "cinemas": cinema_list,
+            "warnings": snapshot.warnings,
+        },
+    )
 
 
 # ---- helpers ----------------------------------------------------------
