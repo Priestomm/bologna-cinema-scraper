@@ -201,6 +201,14 @@ body{
   background:rgba(255,159,28,0.9);color:#000;
   backdrop-filter:blur(4px);display:flex;align-items:center;gap:3px
 }
+.film-lang{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:3px 8px;text-align:center;
+  font-size:0.6rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:0.06em;color:#fff;
+  background:linear-gradient(transparent,rgba(0,0,0,0.85));
+  border-radius:0 0 12px 12px
+}
 .film-title-overlay{
   width:100%;position:relative;z-index:1
 }
@@ -394,7 +402,11 @@ body{
             <div class="film-poster"{% if film.poster_url %} style="background: url('{{ film.poster_url }}') center/cover no-repeat"{% endif %}>
               {% if film.rating and film.rating != "0.0" %}<span class="film-rating">&#9733; {{ film.rating }}</span>{% else %}<span class="film-rating" style="background:rgba(100,100,100,0.7);color:#aaa">&#9733; N/D</span>{% endif %}
               {% set badge_name = cinema.name|replace("Cineteca - ", "")|replace("Pop Up - ", "") %}
+              {% if "cinema" not in badge_name|lower and "arena" not in badge_name|lower %}{% set badge_name = "Cinema " ~ badge_name %}{% endif %}
               <span class="film-badge" style="background: {{ matched.badge_bg }}">{{ badge_name|upper }}</span>
+              {% if "vo" in film.note|lower or "sub ita" in film.note|lower or "sub eng" in film.note|lower %}
+              <span class="film-lang">{{ film.note|replace(" / ", " ")|replace(" - ", " ") }}</span>
+              {% endif %}
               <div class="film-title-overlay">
                 <h3>{{ film.titolo }}</h3>
               </div>
