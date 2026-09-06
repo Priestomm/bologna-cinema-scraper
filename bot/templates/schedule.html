@@ -324,6 +324,9 @@ body{
     <button class="refresh-btn" id="refreshBtn" onclick="doRefresh()">
       <span id="refreshIcon">&#8635;</span> Aggiorna
     </button>
+    <button class="filter-btn" id="futureToggle" onclick="toggleFuture()">
+      <span id="futureIcon">&#9200;</span> In programmazione dopo le {{ now_hour }}
+    </button>
 
     <div class="filter-wrapper" id="filterWrapper">
       <button class="filter-btn active" id="filterToggle">
@@ -466,6 +469,23 @@ body{
     icon.textContent = '\u21BB';
   }
 
+  // future filter
+  var futureActive = false;
+  var nowHour = '{{ now_hour }}';
+
+  window.toggleFuture = function() {
+    futureActive = !futureActive;
+    var btn = document.getElementById('futureToggle');
+    btn.classList.toggle('active', futureActive);
+    applyFiltersAndSort();
+  };
+
+  function isFilmFuture(card) {
+    if (!futureActive) return true;
+    var firstTime = card.getAttribute('data-times') || '99:99';
+    return firstTime >= nowHour;
+  }
+
   // filter
   const filterItems = document.querySelectorAll('#filterMenu .dropdown-item');
   const filterLabel = document.getElementById('filterLabel');
@@ -510,7 +530,7 @@ body{
     const visibleCards = [];
     cards.forEach(function(card) {
       const cinema = card.dataset.cinema;
-      const match = (filter === 'all' || cinema.includes(filter));
+      const match = (filter === 'all' || cinema.includes(filter)) && isFilmFuture(card);
       if (match) {
         visibleCards.push(card);
         visible++;
