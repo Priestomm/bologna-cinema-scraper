@@ -110,14 +110,15 @@ body{
 /* date bar */
 .date-bar{
   display:flex;gap:8px;overflow-x:auto;padding:0 0 16px;
-  scrollbar-width:none;-ms-overflow-style:none
+  scrollbar-width:none;-ms-overflow-style:none;
+  -webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory
 }
 .date-bar::-webkit-scrollbar{display:none}
 .date-card{
   flex-shrink:0;width:90px;padding:10px 6px;
   border-radius:10px;cursor:pointer;text-align:center;
   border:1.5px solid #333;background:#1a1a1a;transition:all .2s;
-  text-decoration:none;display:block
+  text-decoration:none;display:block;scroll-snap-align:start
 }
 .date-card:hover{border-color:#555;background:#222}
 .date-card.active{
@@ -257,18 +258,36 @@ body{
 
 /* responsive */
 @media(max-width:600px){
-  .film-grid{grid-template-columns:repeat(2,1fr);gap:12px}
-  .header{padding:14px 0}
-  .logo{font-size:1.4rem}
-  .nav{gap:12px}
-  .nav a{font-size:0.75rem}
-  .date-card{width:72px;padding:8px 4px}
-  .date-num{font-size:1.1rem}
-  .date-card{width:68px}
-  .film-poster{padding:8px}
-  .film-title-overlay h3{font-size:0.85rem}
-  .film-times{padding:4px 8px 8px}
-  .film-time{font-size:0.7rem}
+  .film-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .header{padding:12px 0}
+  .logo{font-size:1.2rem}
+  .nav{gap:10px}
+  .nav a{font-size:0.7rem}
+  .hero{padding:30px 20px 25px;margin:12px -20px 0}
+  .hero h2{font-size:1.8rem;letter-spacing:0.04em}
+  .hero h2 span{font-size:0.7rem;letter-spacing:0.2em}
+  .date-bar{gap:6px;padding:0 0 12px}
+  .date-card{width:64px;padding:8px 4px;border-radius:8px}
+  .date-num{font-size:1rem}
+  .date-day{font-size:0.6rem}
+  .date-month{font-size:0.55rem}
+  .film-poster{padding:6px;aspect-ratio:3/4}
+  .film-badge{font-size:0.55rem;padding:2px 6px;top:6px;right:6px}
+  .film-rating{font-size:0.6rem;padding:2px 6px;top:6px;left:6px}
+  .film-title-overlay h3{font-size:0.78rem;line-height:1.2}
+  .film-times{padding:2px 6px 8px;gap:3px}
+  .film-time{font-size:0.68rem;padding:2px 7px}
+  .film-note{font-size:0.65rem;padding:0 6px 8px}
+  .filter-bar{padding:0 0 14px}
+  .refresh-btn{padding:6px 10px;font-size:0.7rem}
+  .filter-btn{padding:6px 10px;font-size:0.7rem}
+  .day-header{font-size:0.75rem;padding:5px 14px;margin-bottom:14px}
+  .footer{padding:20px 0}
+}
+@media(max-width:380px){
+  .film-grid{grid-template-columns:1fr}
+  .date-card{width:56px;padding:6px 2px}
+  .nav{gap:8px}
 }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
