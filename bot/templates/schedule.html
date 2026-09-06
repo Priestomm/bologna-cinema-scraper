@@ -404,12 +404,8 @@ body{
               {% set badge_name = cinema.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
               <span class="film-badge" style="background: {{ matched.badge_bg }}">{{ badge_name|upper }}</span>
               {% set note_lower = film.note|lower %}
-              {% if "vo" in note_lower and "sub ita" in note_lower %}
-              <span class="film-lang">VO / SUB</span>
-              {% elif "vo" in note_lower %}
+              {% if "vo" in note_lower or "sub ita" in note_lower or "sub eng" in note_lower %}
               <span class="film-lang">VO</span>
-              {% elif "sub ita" in note_lower %}
-              <span class="film-lang">SUB</span>
               {% endif %}
               <div class="film-title-overlay">
                 <h3>{{ film.titolo }}</h3>
