@@ -57,7 +57,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -212,6 +212,47 @@ def get_stats() -> dict[str, Any]:
         "cinemas": sorted(total_cinemas),
         "last_updated": last_updated,
     }
+
+
+# ---- refresh -----------------------------------------------------------
+
+
+_refresh_lock = threading.Lock()
+_refresh_in_progress = False
+
+
+@app.post("/api/refresh")
+def trigger_refresh() -> dict[str, Any]:
+    """Trigger uno scraping multi-giorno in background e restituisce il risultato."""
+    global _refresh_in_progress
+
+    if _refresh_in_progress:
+        return {"status": "already_running", "message": "Scraping già in corso"}
+
+    def _run() -> None:
+        global _refresh_in_progress
+        _refresh_in_progress = True
+        try:
+            from bot.pipeline import run_multi_day_pipeline
+
+            run_multi_day_pipeline(days=7)
+            logger.info("Refresh completato")
+        except Exception:
+            logger.exception("Refresh fallito")
+        finally:
+            _refresh_in_progress = False
+
+    if _refresh_lock.locked():
+        return {"status": "already_running", "message": "Scraping già in corso"}
+
+    threading.Thread(target=_run, daemon=True).start()
+    return {"status": "started", "message": "Scraping avviato"}
+
+
+@app.get("/api/refresh/status")
+def refresh_status() -> dict[str, Any]:
+    """Stato del refresh in corso."""
+    return {"in_progress": _refresh_in_progress}
 
 
 # ---- mini-sito --------------------------------------------------------

@@ -132,8 +132,19 @@ body{
 
 /* filter bar */
 .filter-bar{
-  display:flex;gap:10px;padding:0 0 20px;flex-wrap:wrap
+  display:flex;gap:10px;padding:0 0 20px;flex-wrap:wrap;align-items:center
 }
+.refresh-btn{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:8px;font-size:0.78rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:0.04em;
+  background:#1a1a1a;border:1px solid #333;color:#ccc;cursor:pointer;
+  transition:all .2s
+}
+.refresh-btn:hover{border-color:#FF9F1C;color:#FF9F1C}
+.refresh-btn.loading{opacity:0.5;pointer-events:none}
+.refresh-btn .spin{animation:spin 1s linear infinite;display:inline-block}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .filter-btn{
   display:flex;align-items:center;gap:6px;
   padding:7px 14px;border-radius:8px;font-size:0.78rem;font-weight:600;
@@ -310,6 +321,10 @@ body{
 
   <!-- filter bar -->
   <div class="filter-bar">
+    <button class="refresh-btn" id="refreshBtn" onclick="doRefresh()">
+      <span id="refreshIcon">&#8635;</span> Aggiorna
+    </button>
+
     <div class="filter-wrapper" id="filterWrapper">
       <button class="filter-btn active" id="filterToggle">
         <span id="filterLabel">Tutti i cinema</span>
@@ -407,6 +422,49 @@ body{
   }
   setupDropdown('filterToggle', 'filterMenu');
   setupDropdown('sortToggle', 'sortMenu');
+
+  // refresh
+  window.doRefresh = function() {
+    var btn = document.getElementById('refreshBtn');
+    var icon = document.getElementById('refreshIcon');
+    btn.classList.add('loading');
+    icon.classList.add('spin');
+    icon.textContent = '⟳';
+
+    fetch('/api/refresh', {method: 'POST'})
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.status === 'started' || d.status === 'already_running') {
+          pollRefresh();
+        } else {
+          resetBtn();
+        }
+      })
+      .catch(function() { resetBtn(); });
+  };
+
+  function pollRefresh() {
+    setTimeout(function() {
+      fetch('/api/refresh/status')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.in_progress) {
+            pollRefresh();
+          } else {
+            window.location.reload();
+          }
+        })
+        .catch(function() { window.location.reload(); });
+    }, 2000);
+  }
+
+  function resetBtn() {
+    var btn = document.getElementById('refreshBtn');
+    var icon = document.getElementById('refreshIcon');
+    btn.classList.remove('loading');
+    icon.classList.remove('spin');
+    icon.textContent = '\u21BB';
+  }
 
   // filter
   const filterItems = document.querySelectorAll('#filterMenu .dropdown-item');
