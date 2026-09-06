@@ -12,7 +12,7 @@ import argparse
 import asyncio
 import sys
 
-from bot import CinemaBot, run_scrape_pipeline
+from bot import CinemaBot, run_multi_day_pipeline, run_scrape_pipeline
 from bot.formatter import render_snapshot
 from utils import get_logger
 
@@ -20,16 +20,17 @@ logger = get_logger("main")
 
 
 def _run_scrape_only(days: int = 1) -> int:
-    result = run_scrape_pipeline(days=days)
-    if isinstance(result, list):
-        total = sum(len(s.screenings) for s in result)
-        logger.info("Risultato: %d giorni, %d film totali", days, total)
-    else:
+    if days <= 1:
+        result = run_scrape_pipeline()
         logger.info(
             "Risultato: %d film, %d avvisi",
             len(result.screenings),
             len(result.warnings),
         )
+    else:
+        snapshots = run_multi_day_pipeline(days=days)
+        total = sum(len(s.screenings) for s in snapshots)
+        logger.info("Risultato: %d giorni, %d film totali", days, total)
     return 0
 
 

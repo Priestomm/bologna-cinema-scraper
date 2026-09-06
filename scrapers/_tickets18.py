@@ -16,7 +16,8 @@ l'aritmetica ms->date in fuso locale).
 from __future__ import annotations
 
 import re
-from datetime import date, datetime, timezone
+from collections import defaultdict
+from datetime import date, datetime, timedelta, timezone
 
 import pytz
 from bs4 import BeautifulSoup, Tag
@@ -151,3 +152,107 @@ def parse_day(html: str, cinema_name: str, target: date) -> list[Screening]:
         if screening:
             out.append(screening)
     return out
+
+
+def _extract_movie_all_dates(
+    movie_div: Tag,
+    cinema_name: str,
+    after_date: date,
+    max_days: int,
+) -> dict[date, Screening]:
+    """Estrae un film e raggruppa gli orari per data (invece di filtrarne una)."""
+    title_tag = movie_div.find("a", class_="movie__title")
+    if not title_tag:
+        return {}
+    titolo = title_tag.get_text(" ", strip=True)
+    if not titolo:
+        return {}
+
+    poster_url = ""
+    poster_img = movie_div.find("img", class_="img-fluid")
+    if poster_img and poster_img.get("src"):
+        poster_url = poster_img["src"].strip()
+
+    lingua_text = ""
+    for opt in movie_div.find_all("p", class_="movie__option"):
+        strong = opt.find("strong")
+        if strong and "lingua" in strong.get_text(strip=True).lower():
+            lingua_text = opt.get_text(" ", strip=True)
+            break
+    lang_note = _extract_lang_note(lingua_text)
+
+    # Raggruppa orari e sale per data
+    orari_by_date: dict[date, list[str]] = defaultdict(list)
+    sale_by_date: dict[date, list[str]] = defaultdict(list)
+
+    cutoff = after_date + timedelta(days=max_days)
+
+    for show in movie_div.find_all("div", class_="schedule-section-show"):
+        show_text = show.get_text(" ", strip=True)
+        sala_match = re.search(
+            r"(Cinema\s+[A-Z][A-Za-z' ]+|Arena\s+[A-Z][A-Za-z' ]+|"
+            r"Sala\s+[A-Za-z0-9]+|"
+            r"Modernissimo|Lumi[eè]re|Mastroianni|Officinema|Scorsese|Cervi|"
+            r"Rialto|Odeon|Europa|Roma|"
+            r"Arlecchino|Bristol|Berti|Scalo|"
+            r"Puccini|Sotto le Stelle)",
+            show_text,
+        )
+        sala = sala_match.group(1).strip() if sala_match else ""
+
+        for link in show.find_all("a", attrs={"data-time": True}):
+            try:
+                ms = int(link["data-time"])
+            except (TypeError, ValueError):
+                continue
+            d = _ms_to_local_date(ms)
+            if d < after_date or d >= cutoff:
+                continue
+            ts = datetime.fromtimestamp(ms / 1000, tz=timezone.utc).astimezone(_TZ)
+            formatted = ts.strftime("%H:%M")
+            if formatted not in orari_by_date[d]:
+                orari_by_date[d].append(formatted)
+            if sala and sala not in sale_by_date[d]:
+                sale_by_date[d].append(sala)
+
+    if not orari_by_date:
+        return {}
+
+    result: dict[date, Screening] = {}
+    for d, orari in orari_by_date.items():
+        note_bits: list[str] = []
+        if sale_by_date[d]:
+            note_bits.append(" / ".join(sale_by_date[d]))
+        if lang_note:
+            note_bits.append(lang_note)
+        note = " - ".join(note_bits)
+        result[d] = Screening(
+            cinema=cinema_name,
+            titolo=titolo,
+            orari=sorted(orari),
+            note=note,
+            poster_url=poster_url,
+        )
+    return result
+
+
+def parse_all_dates(
+    html: str,
+    cinema_name: str,
+    after_date: date,
+    max_days: int = 7,
+) -> dict[date, list[Screening]]:
+    """Analizza la pagina e raggruppa i film per data.
+
+    Restituisce solo le date in [after_date, after_date + max_days).
+    """
+    soup = BeautifulSoup(html, "lxml")
+    by_date: dict[date, list[Screening]] = defaultdict(list)
+
+    for movie in soup.find_all("div", class_="movie--preview"):
+        for d, screening in _extract_movie_all_dates(
+            movie, cinema_name, after_date, max_days
+        ).items():
+            by_date[d].append(screening)
+
+    return dict(by_date)

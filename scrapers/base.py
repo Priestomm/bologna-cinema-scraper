@@ -16,7 +16,7 @@ import abc
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FuturesTimeout
 from dataclasses import asdict, dataclass, field
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 import requests
@@ -91,6 +91,20 @@ class BaseScraper(abc.ABC):
     @abc.abstractmethod
     def _fetch(self, target_date: date) -> list[Screening]:
         """Logica concreta di estrazione dati per il giorno richiesto."""
+
+    def fetch_all_dates(
+        self, after_date: date, max_days: int = 7
+    ) -> dict[date, list[Screening]]:
+        """Versione multi-giorno: chiama _fetch per ogni data.
+
+        Override nelle sottoclassi per fare un'unica richiesta HTML
+        ed estrarre tutte le date (evita 429).
+        """
+        result: dict[date, list[Screening]] = {}
+        for i in range(max_days):
+            d = after_date + timedelta(days=i)
+            result[d] = self._fetch(d)
+        return result
 
     # ---- helper condivisi --------------------------------------------
 

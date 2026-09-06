@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from ._tickets18 import parse_day
+from ._tickets18 import parse_all_dates, parse_day
 from .base import BaseScraper, Screening
 
 
@@ -25,3 +25,13 @@ class NosadellaScraper(BaseScraper):
         for s in day:
             s.note = (s.note + " - " if s.note else "") + "Nosadella"
         return day
+
+    def fetch_all_dates(
+        self, after_date: date, max_days: int = 7
+    ) -> dict[date, list[Screening]]:
+        html = self._get(self.base_url).text
+        by_date = parse_all_dates(html, self.name, after_date, max_days)
+        for screenings in by_date.values():
+            for s in screenings:
+                s.note = (s.note + " - " if s.note else "") + "Nosadella"
+        return by_date

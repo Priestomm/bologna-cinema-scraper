@@ -26,7 +26,7 @@ from utils import get_logger
 
 from .formatter import render_snapshot
 from .health import start_api_server
-from .pipeline import run_scrape_pipeline, today
+from .pipeline import run_multi_day_pipeline, run_scrape_pipeline, today
 from .scheduler import CinemaScheduler
 
 logger = get_logger("bot.telegram")
@@ -144,9 +144,9 @@ class CinemaBot:
     # ---- jobs schedulati ---------------------------------------------
 
     async def _job_scrape(self) -> None:
-        logger.info("Job scrape avviato (7 giorni)")
+        logger.info("Job scrape avviato (7 giorni, singola chiamata per circuito)")
         try:
-            await asyncio.to_thread(run_scrape_pipeline, days=7)
+            await asyncio.to_thread(run_multi_day_pipeline, days=7)
         except Exception:
             logger.exception("Job scrape fallito (l'errore e' isolato dal bot)")
 
