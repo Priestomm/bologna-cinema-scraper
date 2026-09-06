@@ -1,111 +1,494 @@
 <!DOCTYPE html>
+{% set day_map = {"Monday": "Lunedì", "Tuesday": "Martedì", "Wednesday": "Mercoledì", "Thursday": "Giovedì", "Friday": "Venerdì", "Saturday": "Sabato", "Sunday": "Domenica"} %}
+{% set month_map = {"January": "GENNAIO", "February": "FEBBRAIO", "March": "MARZO", "April": "APRILE", "May": "MAGGIO", "June": "GIUGNO", "July": "LUGLIO", "August": "AGOSTO", "September": "SETTEMBRE", "October": "OTTOBRE", "November": "NOVEMBRE", "December": "DICEMBRE"} %}
+{% set cinema_colors = {
+  "Lumiere": {"grad": "linear-gradient(135deg, #0d1b2a, #1b3a5c)", "badge": "#1b3a5c"},
+  "Modernissimo": {"grad": "linear-gradient(135deg, #0d1b2a, #1b3a5c)", "badge": "#1b3a5c"},
+  "Cineteca": {"grad": "linear-gradient(135deg, #0d1b2a, #1b3a5c)", "badge": "#1b3a5c"},
+  "Rialto": {"grad": "linear-gradient(135deg, #3d0000, #8a1a1a)", "badge": "#8a1a1a"},
+  "Odeon": {"grad": "linear-gradient(135deg, #3d0000, #8a1a1a)", "badge": "#8a1a1a"},
+  "Europa": {"grad": "linear-gradient(135deg, #3d0000, #8a1a1a)", "badge": "#8a1a1a"},
+  "Roma": {"grad": "linear-gradient(135deg, #3d0000, #8a1a1a)", "badge": "#8a1a1a"},
+  "Pop Up": {"grad": "linear-gradient(135deg, #0d2d1a, #1a5c3a)", "badge": "#1a5c3a"},
+  "Medica": {"grad": "linear-gradient(135deg, #0d2d1a, #1a5c3a)", "badge": "#1a5c3a"},
+  "Jolly": {"grad": "linear-gradient(135deg, #0d2d1a, #1a5c3a)", "badge": "#1a5c3a"},
+  "Nosadella": {"grad": "linear-gradient(135deg, #2a0d2d, #5a1a5c)", "badge": "#5a1a5c"},
+  "Berti": {"grad": "linear-gradient(135deg, #2a0d2d, #5a1a5c)", "badge": "#5a1a5c"},
+  "Scalo": {"grad": "linear-gradient(135deg, #2a0d2d, #5a1a5c)", "badge": "#5a1a5c"},
+} %}
+{% set default_grad = "linear-gradient(135deg, #1a1a2e, #2d2d44)" %}
+{% set default_badge = "#2d2d44" %}
+
+{% macro cinema_style(name) %}
+{% set key = namespace(found="") %}
+{% for k, v in cinema_colors.items() %}
+{% if k.lower() in name.lower() %}{% set found = k %}{% endif %}
+{% endfor %}
+{% if found %}
+gradient: {{ cinema_colors[found].grad }}; badge: {{ cinema_colors[found].badge }}
+{% else %}
+gradient: {{ default_grad }}; badge: {{ default_badge }}
+{% endif %}
+{% endmacro %}
+
 <html lang="it">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cinema Bologna - {{ date }}</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #f4f4f6; color: #1c1c1e; line-height: 1.5;
-    padding: 16px; max-width: 720px; margin: 0 auto;
-  }
-  h1 {
-    font-size: 1.5rem; font-weight: 700; text-align: center;
-    margin-bottom: 4px;
-  }
-  .subtitle { text-align: center; color: #6b7280; font-size: 0.875rem; margin-bottom: 16px; }
-  .nav {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 16px;
-  }
-  .nav a {
-    text-decoration: none; font-size: 0.875rem; font-weight: 600;
-    padding: 6px 14px; border-radius: 8px; background: #e5e7eb; color: #374151;
-  }
-  .nav a:hover { background: #d1d5db; }
-  .nav .today { font-weight: 600; font-size: 0.875rem; color: #6b7280; }
-  .cinema-card {
-    background: #fff; border-radius: 12px; padding: 16px;
-    margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  }
-  .cinema-name {
-    font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;
-  }
-  .cinema-name .count {
-    font-weight: 400; color: #6b7280; font-size: 0.875rem;
-  }
-  .film { margin-bottom: 10px; }
-  .film:last-child { margin-bottom: 0; }
-  .film-title { font-weight: 600; font-size: 0.95rem; color: #1c1c1e; }
-  .film-meta { font-size: 0.8rem; color: #6b7280; margin-top: 1px; }
-  .film-times {
-    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;
-  }
-  .time-chip {
-    background: #eef2ff; color: #4338ca; font-size: 0.8rem; font-weight: 600;
-    padding: 2px 10px; border-radius: 6px; font-variant-numeric: tabular-nums;
-  }
-  .warning-card {
-    background: #fef2f2; border-radius: 12px; padding: 12px 16px;
-    margin-bottom: 12px; border: 1px solid #fecaca;
-  }
-  .warning-title { font-weight: 600; font-size: 0.9rem; color: #991b1b; margin-bottom: 4px; }
-  .warning-item { font-size: 0.85rem; color: #991b1b; }
-  .footer {
-    text-align: center; font-size: 0.75rem; color: #9ca3af;
-    margin-top: 24px; padding-bottom: 32px;
-  }
-  @media (prefers-color-scheme: dark) {
-    body { background: #1c1c1e; color: #f4f4f6; }
-    .cinema-card { background: #2c2c2e; }
-    .nav a { background: #3a3a3c; color: #e5e7eb; }
-    .nav .today { color: #9ca3af; }
-    .time-chip { background: #312e81; color: #e0e7ff; }
-    .warning-card { background: #3a1a1a; border-color: #7f1d1d; }
-    .warning-title, .warning-item { color: #fca5a5; }
-  }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:#121212;color:#fff;line-height:1.5;min-height:100vh;
+  -webkit-font-smoothing:antialiased
+}
+.container{max-width:1200px;margin:0 auto;padding:0 20px}
+
+/* header */
+.header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:20px 0;border-bottom:1px solid #222
+}
+.logo{
+  font-family:'Abril Fatface',Georgia,serif;
+  font-size:1.8rem;color:#FF9F1C;text-transform:uppercase;
+  letter-spacing:0.05em;text-decoration:none;font-weight:400
+}
+.logo span{color:#FFD166}
+.nav{display:flex;gap:24px}
+.nav a{
+  color:#999;text-decoration:none;font-size:0.85rem;
+  text-transform:uppercase;letter-spacing:0.08em;transition:color .2s
+}
+.nav a:hover{color:#FF9F1C}
+
+/* hero */
+.hero{
+  background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);
+  margin:20px -20px 0;padding:60px 20px 50px;
+  position:relative;overflow:hidden;
+  border-bottom:3px solid #FF9F1C
+}
+.hero::after{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(
+    0deg,transparent,transparent 40px,rgba(255,159,28,0.03) 40px,rgba(255,159,28,0.03) 41px
+  );
+  pointer-events:none
+}
+.hero h2{
+  font-family:'Abril Fatface',Georgia,serif;
+  font-size:3.5rem;text-transform:uppercase;
+  letter-spacing:0.08em;color:#fff;position:relative;z-index:1;
+  text-align:center;line-height:1.1
+}
+.hero h2 span{
+  display:block;font-size:1rem;
+  font-family:'Inter',sans-serif;font-weight:400;color:#FFD166;
+  letter-spacing:0.3em;margin-top:8px;text-transform:uppercase
+}
+@media(max-width:600px){
+  .hero h2{font-size:2.2rem}
+  .hero{padding:40px 20px 35px}
+}
+
+/* control bar */
+.control-bar{
+  display:flex;align-items:center;gap:12px;
+  padding:20px 0 16px
+}
+.tabs{display:flex;gap:0;border:1px solid #333;border-radius:8px;overflow:hidden}
+.tab{
+  padding:8px 20px;font-size:0.8rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;
+  transition:all .2s;border:none;background:transparent;color:#666
+}
+.tab.active{background:#FF9F1C;color:#000}
+.tab:not(.active):hover{color:#fff}
+
+/* date bar */
+.date-bar{
+  display:flex;gap:8px;overflow-x:auto;padding:0 0 16px;
+  scrollbar-width:none;-ms-overflow-style:none
+}
+.date-bar::-webkit-scrollbar{display:none}
+.date-card{
+  flex-shrink:0;width:90px;padding:10px 6px;
+  border-radius:10px;cursor:pointer;text-align:center;
+  border:1.5px solid #333;background:#1a1a1a;transition:all .2s;
+  text-decoration:none;display:block
+}
+.date-card:hover{border-color:#555;background:#222}
+.date-card.active{
+  background:#FF9F1C;border-color:#FF9F1C
+}
+.date-card.active .date-day,
+.date-card.active .date-num,
+.date-card.active .date-month{color:#000}
+.date-day{font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:#888}
+.date-num{font-size:1.3rem;font-weight:800;color:#fff;line-height:1.2;margin-top:2px}
+.date-month{font-size:0.65rem;text-transform:uppercase;color:#888;letter-spacing:0.06em}
+
+/* filter bar */
+.filter-bar{
+  display:flex;gap:10px;padding:0 0 20px;flex-wrap:wrap
+}
+.filter-btn{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:8px;font-size:0.78rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:0.04em;
+  background:#1a1a1a;border:1px solid #333;color:#ccc;cursor:pointer;
+  transition:all .2s
+}
+.filter-btn:hover{border-color:#FF9F1C;color:#FF9F1C}
+.filter-btn.active{background:#FF9F1C;border-color:#FF9F1C;color:#000}
+.filter-btn .arrow{font-size:0.6rem;margin-left:4px}
+
+/* day header */
+.day-header{
+  display:inline-block;
+  background:#FF9F1C;color:#000;padding:6px 20px;
+  font-weight:800;font-size:0.85rem;text-transform:uppercase;
+  letter-spacing:0.08em;margin-bottom:20px;border-radius:6px
+}
+
+/* film grid */
+.film-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:20px;padding-bottom:60px
+}
+.film-card{
+  border-radius:12px;overflow:hidden;background:#1a1a1a;
+  transition:transform .2s,box-shadow .2s;cursor:pointer;
+  position:relative;border:1px solid #2a2a2a
+}
+.film-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 12px 30px rgba(0,0,0,0.5)
+}
+.film-poster{
+  aspect-ratio:2/3;width:100%;position:relative;
+  display:flex;align-items:flex-end;
+  padding:12px;
+  background:linear-gradient(135deg, #1a1a2e, #2d2d44)
+}
+.film-badge{
+  position:absolute;top:10px;right:10px;
+  padding:3px 10px;border-radius:4px;
+  font-size:0.65rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:0.05em;color:#fff;background:rgba(0,0,0,0.7);
+  backdrop-filter:blur(4px)
+}
+.film-title-overlay{
+  width:100%;position:relative;z-index:1
+}
+.film-title-overlay h3{
+  font-size:1rem;font-weight:700;color:#fff;line-height:1.3;
+  text-shadow:0 2px 8px rgba(0,0,0,0.7);
+  background:linear-gradient(transparent,rgba(0,0,0,0.8) 40%);
+  padding:20px 0 4px;margin:0 -12px;padding-left:12px;padding-right:12px
+}
+.film-times{
+  display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;
+  padding:4px 12px 12px
+}
+.film-time{
+  background:rgba(255,255,255,0.08);
+  color:#ccc;font-size:0.78rem;font-weight:600;
+  padding:3px 10px;border-radius:5px;
+  font-variant-numeric:tabular-nums
+}
+.film-card:hover .film-time{background:rgba(255,159,28,0.15);color:#FF9F1C}
+.film-note{
+  font-size:0.72rem;color:#777;padding:0 12px 12px;
+  margin-top:-4px
+}
+
+/* empty */
+.empty-state{
+  text-align:center;padding:80px 20px;color:#555
+}
+.empty-state h3{font-size:1.5rem;margin-bottom:8px;color:#888}
+.empty-state p{font-size:0.9rem}
+
+/* footer */
+.footer{
+  text-align:center;padding:30px 0;
+  border-top:1px solid #222;margin-top:20px
+}
+.footer p{font-size:0.75rem;color:#555}
+
+/* dropdown menu */
+.dropdown-menu{
+  position:absolute;top:100%;left:0;margin-top:4px;
+  background:#1a1a1a;border:1px solid #333;border-radius:8px;
+  padding:6px;min-width:180px;z-index:50;display:none
+}
+.dropdown-menu.open{display:block}
+.dropdown-item{
+  display:block;width:100%;padding:8px 12px;
+  font-size:0.8rem;color:#ccc;background:none;border:none;
+  text-align:left;cursor:pointer;border-radius:6px;transition:all .15s
+}
+.dropdown-item:hover{background:#FF9F1C;color:#000}
+.dropdown-item.active{background:#FF9F1C;color:#000;font-weight:700}
+.filter-wrapper{position:relative}
+
+/* responsive */
+@media(max-width:600px){
+  .film-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .header{padding:14px 0}
+  .logo{font-size:1.4rem}
+  .nav{gap:12px}
+  .nav a{font-size:0.75rem}
+  .date-card{width:72px;padding:8px 4px}
+  .date-num{font-size:1.1rem}
+  .date-card{width:68px}
+  .film-poster{padding:8px}
+  .film-title-overlay h3{font-size:0.85rem}
+  .film-times{padding:4px 8px 8px}
+  .film-time{font-size:0.7rem}
+}
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h1>🎬 Cinema Bologna</h1>
-  <p class="subtitle">Programmazione del {{ date }}</p>
 
-  <div class="nav">
-    <a href="/{{ prev }}">&larr; {{ prev }}</a>
-    <span class="today">{{ label }}</span>
-    <a href="/{{ next }}">{{ next }} &rarr;</a>
+<div class="container">
+
+  <!-- header -->
+  <header class="header">
+    <a href="/" class="logo">CINEMA<span>BOLOGNA</span></a>
+    <nav class="nav">
+      <a href="/">Oggi</a>
+      <a href="https://t.me/..." target="_blank">Telegram</a>
+      <a href="/docs">API</a>
+    </nav>
+  </header>
+
+  <!-- hero -->
+  <section class="hero">
+    <h2>
+      PROGRAMMAZIONE
+      <span>CINEMA A BOLOGNA</span>
+    </h2>
+  </section>
+
+  <!-- tabs -->
+  <div class="control-bar">
+    <div class="tabs">
+      <button class="tab active" data-tab="now">In programmazione</button>
+    </div>
   </div>
 
-  {% if warnings %}
-  <div class="warning-card">
-    <div class="warning-title">⚠️ Avvisi</div>
-    {% for w in warnings %}
-    <div class="warning-item">{{ w }}</div>
+  <!-- date bar -->
+  <div class="date-bar" id="dateBar">
+    {% set today_obj = today if today is defined else date_obj %}
+    {% for i in range(7) %}
+      {% set d = today_obj.__class__(today_obj.year, today_obj.month, today_obj.day) %}
+      {% set d = d.__class__.fromordinal(d.toordinal() + i) %}
+      {% set day_label = "OGGI" if i == 0 else (day_map[d.strftime("%A")][:3].upper() if i > 0 else "OGGI") %}
+      {% set active_class = "active" if d.isoformat() == date else "" %}
+      {% set is_today = (i == 0) %}
+      <a href="/{{ d.isoformat() }}"
+         class="date-card {{ active_class }}"
+         data-date="{{ d.isoformat() }}">
+        <div class="date-day">{{ "OGGI" if is_today else day_map[d.strftime("%A")][:3].upper() }}</div>
+        <div class="date-num">{{ d.day }}</div>
+        <div class="date-month">{{ month_map[d.strftime("%B")][:3] }}</div>
+      </a>
     {% endfor %}
   </div>
-  {% endif %}
 
-  {% for cinema in cinemas %}
-  <div class="cinema-card">
-    <div class="cinema-name">{{ cinema.name }} <span class="count">({{ cinema.count }})</span></div>
-    {% for film in cinema.films %}
-    <div class="film">
-      <div class="film-title">{{ film.titolo }}</div>
-      <div class="film-meta">{{ film.note }}</div>
-      <div class="film-times">
-        {% for ora in film.orari %}
-        <span class="time-chip">{{ ora }}</span>
+  <!-- filter bar -->
+  <div class="filter-bar">
+    <div class="filter-wrapper" id="filterWrapper">
+      <button class="filter-btn active" id="filterToggle">
+        <span id="filterLabel">Tutti i cinema</span>
+        <span class="arrow">▾</span>
+      </button>
+      <div class="dropdown-menu" id="filterMenu">
+        <button class="dropdown-item active" data-filter="all">Tutti i cinema</button>
+        {% set all_cinemas = cinemas|map(attribute='name')|list %}
+        {% for cinema_name in all_cinemas %}
+        <button class="dropdown-item" data-filter="{{ cinema_name|lower }}">{{ cinema_name }}</button>
         {% endfor %}
       </div>
     </div>
-    {% endfor %}
-  </div>
-  {% endfor %}
 
-  <div class="footer">
-    Aggiornato: {{ updated_at }} &middot; Dati forniti dai circuiti cinematografici di Bologna
+    <div class="filter-wrapper" id="sortWrapper">
+      <button class="filter-btn" id="sortToggle">
+        <span id="sortLabel">Ordine</span>
+        <span class="arrow">▾</span>
+      </button>
+      <div class="dropdown-menu" id="sortMenu">
+        <button class="dropdown-item active" data-sort="default">Predefinito</button>
+        <button class="dropdown-item" data-sort="title">Titolo A-Z</button>
+        <button class="dropdown-item" data-sort="time">Orario</button>
+        <button class="dropdown-item" data-sort="cinema">Cinema</button>
+      </div>
+    </div>
   </div>
+
+  <!-- day header -->
+  {% set dt_parts = date.split('-') %}
+  {% set d_obj = date_obj if date_obj is defined else today_obj %}
+  <div class="day-header">{{ day_map[d_obj.strftime("%A")]|upper }} / {{ d_obj.day }} {{ month_map[d_obj.strftime("%B")] }}</div>
+
+  <!-- film grid -->
+  <div class="film-grid" id="filmGrid">
+    {% if cinemas %}
+      {% for cinema in cinemas %}
+        {% for film in cinema.films %}
+          {% set cinema_lower = cinema.name|lower %}
+          {% set matched = namespace(color=default_grad, badge_bg=default_badge) %}
+          {% for k, v in cinema_colors.items() %}
+            {% if k.lower() in cinema_lower %}
+              {% set matched.color = v.grad %}
+              {% set matched.badge_bg = v.badge %}
+            {% endif %}
+          {% endfor %}
+          <div class="film-card" data-cinema="{{ cinema.name|lower }}" data-title="{{ film.titolo|lower }}" data-times="{{ film.orari|first|default('99:99') }}">
+            <div class="film-poster" style="background: {{ matched.color }}">
+              <span class="film-badge" style="background: {{ matched.badge_bg }}">{{ cinema.name|upper }}</span>
+              <div class="film-title-overlay">
+                <h3>{{ film.titolo }}</h3>
+              </div>
+            </div>
+            <div class="film-times">
+              {% for ora in film.orari %}
+              <span class="film-time">{{ ora }}</span>
+              {% endfor %}
+            </div>
+            {% if film.note %}
+            <div class="film-note">{{ film.note }}</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% endfor %}
+    {% else %}
+      <div class="empty-state" style="grid-column:1/-1">
+        <h3>Nessuna programmazione</h3>
+        <p>Non ci sono film disponibili per questa data.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- footer -->
+  <footer class="footer">
+    <p>Dati forniti dai circuiti cinematografici di Bologna &middot; Aggiornato: {{ updated_at if updated_at else "—" }}</p>
+  </footer>
+
+</div>
+
+<script>
+(function() {
+  // dropdown toggle
+  function setupDropdown(btnId, menuId) {
+    const btn = document.getElementById(btnId);
+    const menu = document.getElementById(menuId);
+    if (!btn || !menu) return;
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.querySelectorAll('.dropdown-menu.open').forEach(m => { if(m !== menu) m.classList.remove('open'); });
+      menu.classList.toggle('open');
+    });
+    document.addEventListener('click', function() { menu.classList.remove('open'); });
+    menu.addEventListener('click', function(e) { e.stopPropagation(); });
+  }
+  setupDropdown('filterToggle', 'filterMenu');
+  setupDropdown('sortToggle', 'sortMenu');
+
+  // filter
+  const filterItems = document.querySelectorAll('#filterMenu .dropdown-item');
+  const filterLabel = document.getElementById('filterLabel');
+  const cards = document.querySelectorAll('.film-card');
+  const emptyState = document.querySelector('.empty-state');
+
+  filterItems.forEach(function(item) {
+    item.addEventListener('click', function() {
+      filterItems.forEach(i => i.classList.remove('active'));
+      this.classList.add('active');
+      const filter = this.dataset.filter;
+      filterLabel.textContent = this.textContent.trim();
+
+      applyFiltersAndSort();
+    });
+  });
+
+  // sort
+  const sortItems = document.querySelectorAll('#sortMenu .dropdown-item');
+  const sortLabel = document.getElementById('sortLabel');
+
+  sortItems.forEach(function(item) {
+    item.addEventListener('click', function() {
+      sortItems.forEach(i => i.classList.remove('active'));
+      this.classList.add('active');
+      sortLabel.textContent = this.textContent.trim();
+
+      applyFiltersAndSort();
+    });
+  });
+
+  function applyFiltersAndSort() {
+    const activeFilter = document.querySelector('#filterMenu .dropdown-item.active');
+    const filter = activeFilter ? activeFilter.dataset.filter : 'all';
+    const activeSort = document.querySelector('#sortMenu .dropdown-item.active');
+    const sort = activeSort ? activeSort.dataset.sort : 'default';
+
+    let visible = 0;
+    const parent = document.getElementById('filmGrid');
+
+    // collect visible cards
+    const visibleCards = [];
+    cards.forEach(function(card) {
+      const cinema = card.dataset.cinema;
+      const match = (filter === 'all' || cinema.includes(filter));
+      if (match) {
+        visibleCards.push(card);
+        visible++;
+      }
+    });
+
+    // sort
+    if (sort === 'title') {
+      visibleCards.sort((a, b) => (a.dataset.title || '').localeCompare(b.dataset.title || ''));
+    } else if (sort === 'time') {
+      visibleCards.sort((a, b) => (a.dataset.times || '99:99').localeCompare(b.dataset.times || '99:99'));
+    } else if (sort === 'cinema') {
+      visibleCards.sort((a, b) => (a.dataset.cinema || '').localeCompare(b.dataset.cinema || ''));
+    }
+
+    // reorder: hide all, then append visible in order
+    cards.forEach(function(c) { c.style.display = 'none'; });
+    visibleCards.forEach(function(c) { parent.appendChild(c); c.style.display = ''; });
+
+    // empty state
+    if (emptyState) {
+      emptyState.style.display = (visible === 0 && cards.length > 0) ? '' : 'none';
+    }
+  }
+
+  // film card hover: gradient shift effect
+  cards.forEach(function(card) {
+    const poster = card.querySelector('.film-poster');
+    if (!poster) return;
+    card.addEventListener('mousemove', function(e) {
+      const rect = card.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      poster.style.backgroundPosition = x + '% ' + y + '%';
+    });
+    card.addEventListener('mouseleave', function() {
+      poster.style.backgroundPosition = '';
+    });
+  });
+
+})();
+</script>
+
 </body>
 </html>

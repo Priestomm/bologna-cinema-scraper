@@ -246,6 +246,7 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
             name="schedule.html",
             context={
                 "date": target.isoformat(),
+                "date_obj": target,
                 "label": "Oggi" if target == _today() else target.isoformat(),
                 "next": (target + timedelta(days=1)).isoformat(),
                 "prev": (target - timedelta(days=1)).isoformat(),
@@ -269,6 +270,7 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
         name="schedule.html",
         context={
             "date": target.isoformat(),
+            "date_obj": target,
             **_date_params(target),
             "updated_at": snapshot.updated_at.strftime("%H:%M"),
             "cinemas": cinema_list,
