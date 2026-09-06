@@ -292,6 +292,8 @@ def _screening_dict(s: Screening) -> dict[str, Any]:
         "orari": s.orari,
         "note": s.note,
         "poster_url": s.poster_url,
+        "rating": s.rating,
+        "regista": s.regista,
     }
 
 

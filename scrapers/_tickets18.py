@@ -52,6 +52,19 @@ def _extract_lang_note(text: str) -> str:
     return " / ".join(parts)
 
 
+def _extract_director(movie_div: Tag) -> str:
+    """Estrae il nome del regista da <p class='movie__option'>Regia: ...</p>"""
+    for opt in movie_div.find_all("p", class_="movie__option"):
+        strong = opt.find("strong")
+        if strong and "regia" in strong.get_text(strip=True).lower():
+            # Rimuovi il prefisso "Regia:" e pulisci
+            full = opt.get_text(" ", strip=True)
+            regista = re.sub(r"^Regia\s*:?\s*", "", full, flags=re.I).strip()
+            if regista:
+                return regista
+    return ""
+
+
 def _extract_movie(
     movie_div: Tag,
     cinema_name: str,
@@ -78,6 +91,9 @@ def _extract_movie(
             lingua_text = opt.get_text(" ", strip=True)
             break
     lang_note = _extract_lang_note(lingua_text)
+
+    # Regista
+    regista = _extract_director(movie_div)
 
     # Raccoglie tutti i blocchi orario filtrati per data target via data-time
     orari: list[str] = []
@@ -141,6 +157,7 @@ def _extract_movie(
         orari=sorted(orari),
         note=note,
         poster_url=poster_url,
+        regista=regista,
     )
 
 
@@ -180,6 +197,8 @@ def _extract_movie_all_dates(
             lingua_text = opt.get_text(" ", strip=True)
             break
     lang_note = _extract_lang_note(lingua_text)
+
+    regista = _extract_director(movie_div)
 
     # Raggruppa orari e sale per data
     orari_by_date: dict[date, list[str]] = defaultdict(list)
@@ -232,6 +251,7 @@ def _extract_movie_all_dates(
             orari=sorted(orari),
             note=note,
             poster_url=poster_url,
+            regista=regista,
         )
     return result
 

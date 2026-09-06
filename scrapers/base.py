@@ -37,6 +37,8 @@ class Screening:
     orari: list[str] = field(default_factory=list)
     note: str = ""
     poster_url: str = ""
+    rating: str = ""
+    regista: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

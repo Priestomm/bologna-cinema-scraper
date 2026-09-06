@@ -38,6 +38,7 @@ class Settings:
     log_level: str
     health_port: int = 8080
     timezone: str = "Europe/Rome"
+    tmdb_api_key: str = ""
 
 
 def _load() -> Settings:
@@ -57,6 +58,7 @@ def _load() -> Settings:
         cache_db_path=PROJECT_ROOT / _env("CACHE_DB_PATH", "data/cache.sqlite3"),
         log_level=_env("LOG_LEVEL", "INFO"),
         health_port=_int("HEALTH_PORT", 8080),
+        tmdb_api_key=_env("TMDB_API_KEY"),
     )
 
 

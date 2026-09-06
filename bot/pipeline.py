@@ -14,6 +14,7 @@ from config import settings
 from database import Cache, CacheSnapshot
 from scrapers import ALL_SCRAPERS, ScraperResult
 from scrapers.base import Screening
+from scrapers.tmdb import TmdbClient
 from utils import get_logger
 
 logger = get_logger("bot.pipeline")
@@ -102,7 +103,22 @@ def run_multi_day_pipeline(
     with ThreadPoolExecutor(max_workers=len(scrapers)) as pool:
         pool.map(_run_scraper, [cls for cls in ALL_SCRAPERS])
 
-    # 2) Salva ogni giorno in cache con il formato atteso
+    # 2) Enrichment TMDb: rating per tutti i film unici
+    all_screenings = []
+    for screenings in all_by_date.values():
+        all_screenings.extend(screenings)
+
+    if all_screenings:
+        tmdb = TmdbClient()
+        if tmdb.enabled:
+            logger.info(
+                "Enrichment TMDb: cerco rating per %d film", len(all_screenings)
+            )
+            tmdb.enrich_screenings(all_screenings)
+        else:
+            logger.info("TMDb disabilitato (nessuna TMDB_API_KEY)")
+
+    # 3) Salva ogni giorno in cache con il formato atteso
     snapshots: list[CacheSnapshot] = []
     for i in range(days):
         d = start + timedelta(days=i)
