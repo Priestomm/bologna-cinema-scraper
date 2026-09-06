@@ -1,7 +1,7 @@
 # Cinema Bologna Bot
 
 ![CI](https://github.com/Priestomm/bologna-cinema-scraper/actions/workflows/ci.yml/badge.svg)
-![Status](https://img.shields.io/badge/status-sempre%20attivo-success?logo=oracle)
+![Status](https://img.shields.io/badge/status-%20active-success?logo=oracle)
 
 Bot Telegram che ogni mattina pubblica la programmazione cinematografica giornaliera di Bologna per quattro circuiti, attivo 24/7 su Oracle Cloud:
 
