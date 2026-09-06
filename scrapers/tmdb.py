@@ -13,7 +13,7 @@ import re
 import sqlite3
 import time
 from contextlib import contextmanager
-from typing import Iterator
+from collections.abc import Iterator
 
 import requests
 
@@ -33,8 +33,7 @@ def _normalize(text: str) -> str:
     t = re.sub(r"\s*\(.*?\)\s*", " ", t)
     # Rimuovi prefissi comuni 18tickets
     for prefix in ("original version - ", "original version: ", "original: ", "v.o.: "):
-        if t.startswith(prefix):
-            t = t[len(prefix) :]
+        t = t.removeprefix(prefix)
     t = re.sub(r"\s*-\s*v\.?\s*o\.?\s*$", "", t)
     t = re.sub(r"\s*-\s*versione originale\s*$", "", t)
     t = re.sub(r"[^a-z0-9\s]", " ", t)
@@ -45,8 +44,7 @@ def _clean_title_for_search(title: str) -> str:
     """Pulisce il titolo per la ricerca TMDb: rimuove prefissi/suffissi 18tickets."""
     t = title.lower()
     for prefix in ("original version - ", "original version: ", "original: ", "v.o.: "):
-        if t.startswith(prefix):
-            t = t[len(prefix) :]
+        t = t.removeprefix(prefix)
     t = re.sub(r"\s*-\s*v\.?\s*o\.?\s*$", "", t)
     t = re.sub(r"\s*-\s*versione originale\s*$", "", t)
     t = re.sub(r"\s*\(.*?\)\s*", " ", t)

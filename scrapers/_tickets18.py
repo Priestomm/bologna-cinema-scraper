@@ -59,7 +59,7 @@ def _extract_director(movie_div: Tag) -> str:
         if strong and "regia" in strong.get_text(strip=True).lower():
             # Rimuovi il prefisso "Regia:" e pulisci
             full = opt.get_text(" ", strip=True)
-            regista = re.sub(r"^Regia\s*:?\s*", "", full, flags=re.I).strip()
+            regista = re.sub(r"^Regia\s*:?\s*", "", full, flags=re.IGNORECASE).strip()
             if regista:
                 return regista
     return ""
