@@ -352,7 +352,7 @@ body{
             {% endif %}
           {% endfor %}
           <div class="film-card" data-cinema="{{ cinema.name|lower }}" data-title="{{ film.titolo|lower }}" data-times="{{ film.orari|first|default('99:99') }}">
-            <div class="film-poster" style="background: {{ matched.color }}">
+            <div class="film-poster"{% if film.poster_url %} style="background: url('{{ film.poster_url }}') center/cover no-repeat"{% endif %}>
               <span class="film-badge" style="background: {{ matched.badge_bg }}">{{ cinema.name|upper }}</span>
               <div class="film-title-overlay">
                 <h3>{{ film.titolo }}</h3>

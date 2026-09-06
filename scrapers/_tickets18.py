@@ -63,6 +63,12 @@ def _extract_movie(
     if not titolo:
         return None
 
+    # Poster
+    poster_url = ""
+    poster_img = movie_div.find("img", class_="img-fluid")
+    if poster_img and poster_img.get("src"):
+        poster_url = poster_img["src"].strip()
+
     # Lingua: parsing dei paragrafi movie__option
     lingua_text = ""
     for opt in movie_div.find_all("p", class_="movie__option"):
@@ -133,6 +139,7 @@ def _extract_movie(
         titolo=titolo,
         orari=sorted(orari),
         note=note,
+        poster_url=poster_url,
     )
 
 
