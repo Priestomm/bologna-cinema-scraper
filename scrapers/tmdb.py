@@ -31,6 +31,12 @@ def _normalize(text: str) -> str:
     """Lowercase, senza punteggiatura, trim."""
     t = text.lower()
     t = re.sub(r"\s*\(.*?\)\s*", " ", t)
+    # Rimuovi prefissi comuni 18tickets
+    for prefix in ("original version - ", "original version: ", "original: ", "v.o.: "):
+        if t.startswith(prefix):
+            t = t[len(prefix) :]
+    t = re.sub(r"\s*-\s*v\.?\s*o\.?\s*$", "", t)
+    t = re.sub(r"\s*-\s*versione originale\s*$", "", t)
     t = re.sub(r"[^a-z0-9\s]", " ", t)
     return " ".join(t.split())
 
@@ -38,7 +44,7 @@ def _normalize(text: str) -> str:
 def _clean_title_for_search(title: str) -> str:
     """Pulisce il titolo per la ricerca TMDb: rimuove prefissi/suffissi 18tickets."""
     t = title.lower()
-    for prefix in ("original version: ", "original: ", "v.o.: "):
+    for prefix in ("original version - ", "original version: ", "original: ", "v.o.: "):
         if t.startswith(prefix):
             t = t[len(prefix) :]
     t = re.sub(r"\s*-\s*v\.?\s*o\.?\s*$", "", t)
