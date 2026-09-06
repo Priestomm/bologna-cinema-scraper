@@ -39,6 +39,7 @@ class Screening:
     poster_url: str = ""
     rating: str = ""
     regista: str = ""
+    url: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

@@ -77,6 +77,12 @@ def _extract_movie(
     if not titolo:
         return None
 
+    # URL pagina film
+    film_url = ""
+    href = title_tag.get("href", "")
+    if href:
+        film_url = href.strip()
+
     # Poster
     poster_url = ""
     poster_img = movie_div.find("img", class_="img-fluid")
@@ -158,6 +164,7 @@ def _extract_movie(
         note=note,
         poster_url=poster_url,
         regista=regista,
+        url=film_url,
     )
 
 
@@ -184,6 +191,11 @@ def _extract_movie_all_dates(
     titolo = title_tag.get_text(" ", strip=True)
     if not titolo:
         return {}
+
+    film_url = ""
+    href = title_tag.get("href", "")
+    if href:
+        film_url = href.strip()
 
     poster_url = ""
     poster_img = movie_div.find("img", class_="img-fluid")
@@ -252,6 +264,7 @@ def _extract_movie_all_dates(
             note=note,
             poster_url=poster_url,
             regista=regista,
+            url=film_url,
         )
     return result
 

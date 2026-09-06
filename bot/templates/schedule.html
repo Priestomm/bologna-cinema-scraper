@@ -161,8 +161,9 @@ body{
 }
 .film-card{
   border-radius:12px;overflow:hidden;background:#1a1a1a;
-  transition:transform .2s,box-shadow .2s;cursor:pointer;
-  position:relative;border:1px solid #2a2a2a
+  transition:transform .2s,box-shadow .2s;
+  position:relative;border:1px solid #2a2a2a;
+  text-decoration:none;color:inherit;display:block
 }
 .film-card:hover{
   transform:translateY(-4px);
@@ -355,7 +356,7 @@ body{
               {% set matched.badge_bg = v.badge %}
             {% endif %}
           {% endfor %}
-          <div class="film-card" data-cinema="{{ cinema.name|lower }}" data-title="{{ film.titolo|lower }}" data-times="{{ film.orari|first|default('99:99') }}">
+          <a href="{{ film.url }}" target="_blank" rel="noopener" class="film-card" data-cinema="{{ cinema.name|lower }}" data-title="{{ film.titolo|lower }}" data-times="{{ film.orari|first|default('99:99') }}">
             <div class="film-poster"{% if film.poster_url %} style="background: url('{{ film.poster_url }}') center/cover no-repeat"{% endif %}>
               {% if film.rating %}<span class="film-rating">&#9733; {{ film.rating }}</span>{% endif %}
               <span class="film-badge" style="background: {{ matched.badge_bg }}">{{ cinema.name|upper }}</span>
@@ -371,7 +372,7 @@ body{
             {% if film.note %}
             <div class="film-note">{{ film.note }}</div>
             {% endif %}
-          </div>
+          </a>
         {% endfor %}
       {% endfor %}
     {% else %}
