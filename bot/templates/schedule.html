@@ -393,7 +393,8 @@ body{
           <a href="{{ film.url }}" target="_blank" rel="noopener" class="film-card" data-cinema="{{ cinema.name|lower }}" data-title="{{ film.titolo|lower }}" data-times="{{ film.orari|first|default('99:99') }}">
             <div class="film-poster"{% if film.poster_url %} style="background: url('{{ film.poster_url }}') center/cover no-repeat"{% endif %}>
               {% if film.rating and film.rating != "0.0" %}<span class="film-rating">&#9733; {{ film.rating }}</span>{% else %}<span class="film-rating" style="background:rgba(100,100,100,0.7);color:#aaa">&#9733; N/D</span>{% endif %}
-              <span class="film-badge" style="background: {{ matched.badge_bg }}">{{ cinema.name|upper }}</span>
+              {% set badge_name = cinema.name|replace("Cineteca - ", "")|replace("Pop Up - ", "") %}
+              <span class="film-badge" style="background: {{ matched.badge_bg }}">{{ badge_name|upper }}</span>
               <div class="film-title-overlay">
                 <h3>{{ film.titolo }}</h3>
               </div>
