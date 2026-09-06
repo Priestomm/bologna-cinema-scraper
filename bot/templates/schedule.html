@@ -403,8 +403,13 @@ body{
               {% if film.rating and film.rating != "0.0" %}<span class="film-rating">&#9733; {{ film.rating }}</span>{% else %}<span class="film-rating" style="background:rgba(100,100,100,0.7);color:#aaa">&#9733; N/D</span>{% endif %}
               {% set badge_name = cinema.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
               <span class="film-badge" style="background: {{ matched.badge_bg }}">{{ badge_name|upper }}</span>
-              {% if "vo" in film.note|lower %}
+              {% set note_lower = film.note|lower %}
+              {% if "vo" in note_lower and "sub ita" in note_lower %}
+              <span class="film-lang">VO / SUB</span>
+              {% elif "vo" in note_lower %}
               <span class="film-lang">VO</span>
+              {% elif "sub ita" in note_lower %}
+              <span class="film-lang">SUB</span>
               {% endif %}
               <div class="film-title-overlay">
                 <h3>{{ film.titolo }}</h3>
