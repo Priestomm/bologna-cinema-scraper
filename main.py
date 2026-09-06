@@ -19,16 +19,17 @@ from utils import get_logger
 logger = get_logger("main")
 
 
-def _run_scrape_only() -> int:
-    snapshot = run_scrape_pipeline()
-    logger.info(
-        "Risultato: %d film, %d avvisi",
-        len(snapshot.screenings),
-        len(snapshot.warnings),
-    )
-    for chunk in render_snapshot(snapshot):
-        print(chunk)
-        print("-" * 60)
+def _run_scrape_only(days: int = 1) -> int:
+    result = run_scrape_pipeline(days=days)
+    if isinstance(result, list):
+        total = sum(len(s.screenings) for s in result)
+        logger.info("Risultato: %d giorni, %d film totali", days, total)
+    else:
+        logger.info(
+            "Risultato: %d film, %d avvisi",
+            len(result.screenings),
+            len(result.warnings),
+        )
     return 0
 
 
@@ -63,6 +64,12 @@ def main() -> int:
         help="Esegue solo uno scraping e stampa il risultato",
     )
     parser.add_argument(
+        "--days",
+        type=int,
+        default=1,
+        help="Numero di giorni da scrapare (default: 1, usa 7 per la settimana)",
+    )
+    parser.add_argument(
         "--broadcast",
         action="store_true",
         help="Scrape + invio messaggio nella chat configurata (test)",
@@ -70,7 +77,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.scrape:
-        return _run_scrape_only()
+        return _run_scrape_only(days=args.days)
     if args.broadcast:
         return _run_broadcast_test()
 

@@ -144,9 +144,9 @@ class CinemaBot:
     # ---- jobs schedulati ---------------------------------------------
 
     async def _job_scrape(self) -> None:
-        logger.info("Job scrape avviato")
+        logger.info("Job scrape avviato (7 giorni)")
         try:
-            await asyncio.to_thread(run_scrape_pipeline)
+            await asyncio.to_thread(run_scrape_pipeline, days=7)
         except Exception:
             logger.exception("Job scrape fallito (l'errore e' isolato dal bot)")
 
