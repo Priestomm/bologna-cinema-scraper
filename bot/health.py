@@ -240,6 +240,7 @@ def schedule_date(request: Request, date_param: str) -> HTMLResponse:
 
 def _schedule_page(request: Request, target: date) -> HTMLResponse:
     snapshot = _get_cache().load(target)
+    today = _today()
     if snapshot is None:
         return templates.TemplateResponse(
             request=request,
@@ -247,7 +248,8 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
             context={
                 "date": target.isoformat(),
                 "date_obj": target,
-                "label": "Oggi" if target == _today() else target.isoformat(),
+                "today": today,
+                "label": "Oggi" if target == today else target.isoformat(),
                 "next": (target + timedelta(days=1)).isoformat(),
                 "prev": (target - timedelta(days=1)).isoformat(),
                 "updated_at": "",
@@ -271,6 +273,7 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
         context={
             "date": target.isoformat(),
             "date_obj": target,
+            "today": today,
             **_date_params(target),
             "updated_at": snapshot.updated_at.strftime("%H:%M"),
             "cinemas": cinema_list,

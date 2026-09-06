@@ -286,13 +286,10 @@ body{
 
   <!-- date bar -->
   <div class="date-bar" id="dateBar">
-    {% set today_obj = today if today is defined else date_obj %}
     {% for i in range(7) %}
-      {% set d = today_obj.__class__(today_obj.year, today_obj.month, today_obj.day) %}
-      {% set d = d.__class__.fromordinal(d.toordinal() + i) %}
-      {% set day_label = "OGGI" if i == 0 else (day_map[d.strftime("%A")][:3].upper() if i > 0 else "OGGI") %}
+      {% set d = today.fromordinal(today.toordinal() + i) %}
+      {% set is_today = (d == today) %}
       {% set active_class = "active" if d.isoformat() == date else "" %}
-      {% set is_today = (i == 0) %}
       <a href="/{{ d.isoformat() }}"
          class="date-card {{ active_class }}"
          data-date="{{ d.isoformat() }}">
