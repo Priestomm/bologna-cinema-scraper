@@ -12,8 +12,8 @@ import difflib
 import re
 import sqlite3
 import time
-from contextlib import contextmanager
 from collections.abc import Iterator
+from contextlib import contextmanager
 
 import requests
 
