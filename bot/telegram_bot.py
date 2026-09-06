@@ -96,7 +96,9 @@ class CinemaBot:
                 "Cache vuota, recupero ora la programmazione (puo' richiedere fino a "
                 f"{settings.scraper_timeout * 2}s)..."
             )
-            snapshot = await asyncio.to_thread(run_scrape_pipeline, target)
+            result = await asyncio.to_thread(run_scrape_pipeline, target)
+            assert isinstance(result, CacheSnapshot)
+            snapshot = result
 
         if context.user_data is not None:
             context.user_data["snapshot"] = snapshot
@@ -127,7 +129,9 @@ class CinemaBot:
             target = today()
             snapshot = self._cache.load(target)
             if snapshot is None:
-                snapshot = await asyncio.to_thread(run_scrape_pipeline, target)
+                result = await asyncio.to_thread(run_scrape_pipeline, target)
+                assert isinstance(result, CacheSnapshot)
+                snapshot = result
             if context.user_data is not None:
                 context.user_data["snapshot"] = snapshot
 
@@ -156,7 +160,9 @@ class CinemaBot:
         snapshot = self._cache.load(target)
         if snapshot is None:
             logger.warning("Cache vuota al broadcast: eseguo scraping di emergenza")
-            snapshot = await asyncio.to_thread(run_scrape_pipeline, target)
+            result = await asyncio.to_thread(run_scrape_pipeline, target)
+            assert isinstance(result, CacheSnapshot)
+            snapshot = result
         for chunk in render_snapshot(snapshot):
             try:
                 await self._app.bot.send_message(

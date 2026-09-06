@@ -224,8 +224,6 @@ _refresh_in_progress = False
 @app.post("/api/refresh")
 def trigger_refresh() -> dict[str, Any]:
     """Trigger uno scraping multi-giorno in background e restituisce il risultato."""
-    global _refresh_in_progress
-
     if _refresh_in_progress:
         return {"status": "already_running", "message": "Scraping già in corso"}
 

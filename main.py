@@ -14,6 +14,7 @@ import sys
 
 from bot import CinemaBot, run_multi_day_pipeline, run_scrape_pipeline
 from bot.formatter import render_snapshot
+from database import CacheSnapshot
 from utils import get_logger
 
 logger = get_logger("main")
@@ -22,6 +23,7 @@ logger = get_logger("main")
 def _run_scrape_only(days: int = 1) -> int:
     if days <= 1:
         result = run_scrape_pipeline()
+        assert isinstance(result, CacheSnapshot)
         logger.info(
             "Risultato: %d film, %d avvisi",
             len(result.screenings),
@@ -42,6 +44,7 @@ def _run_broadcast_test() -> int:
     from config import settings
 
     snapshot = run_scrape_pipeline()
+    assert isinstance(snapshot, CacheSnapshot)
 
     async def _send() -> None:
         bot = Bot(token=settings.telegram_token)
