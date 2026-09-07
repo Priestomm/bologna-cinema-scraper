@@ -41,13 +41,16 @@ _cache: Cache | None = None
 
 def _normalize_title(title: str) -> str:
     """Normalizza il titolo per il raggruppamento film duplicati.
-    Rimuove prefissi/suffissi OV per unificare versioni diverse."""
+    Rimuove prefissi/suffissi OV, sottotitoli e varianti per unificare."""
     t = title.lower()
     t = re.sub(r"\s*\(.*?\)\s*", " ", t)
     for prefix in ("original version - ", "original version: ", "original: ", "v.o.: "):
         t = t.removeprefix(prefix)
     t = re.sub(r"\s*-\s*v\.?\s*o\.?\s*$", "", t)
     t = re.sub(r"\s*-\s*versione originale\s*$", "", t)
+    # Rimuovi sottotitolo dopo " - " (es. "ONE NIGHT ONLY - QUANDO TUTTO È POSSIBILE")
+    if " - " in t:
+        t = t.rsplit(" - ", 1)[0]
     t = re.sub(r"[^a-z0-9\s]", " ", t)
     return " ".join(t.split())
 
