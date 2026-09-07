@@ -44,17 +44,24 @@ def _normalize_title(title: str) -> str:
     Rimuove prefissi/suffissi OV, sottotitoli e varianti per unificare."""
     t = title.lower()
     t = re.sub(r"\s*\(.*?\)\s*", " ", t)
+
+    # Detect VO markers on original title (before stripping)
+    has_vo = bool(
+        re.search(r"original version|versione originale|v\.?\s*o\.?|sub\s+(ita|eng)", t)
+    )
+
+    # Strip subtitles after " - " only if original had VO markers
+    if has_vo and " - " in t:
+        t = t.rsplit(" - ", 1)[0]
+
     for prefix in ("original version - ", "original version: ", "original: ", "v.o.: "):
         t = t.removeprefix(prefix)
-    t = re.sub(r"\s*-\s*versione originale\s*$", "", t)
-    t = re.sub(r"\s*-\s*original version\s*$", "", t)
-    t = re.sub(r"\s*-\s*v\.?\s*o\.?\s*$", "", t)
-    t = re.sub(r"\s*-\s*sub\s+(ita|eng)\s*$", "", t)
-    # Rimuovi sottotitolo dopo " - " solo se il risultato contiene marker VO
-    if " - " in t:
-        candidate = t.rsplit(" - ", 1)[0]
-        if any(m in candidate for m in ("original version", "original", "v.o.", "v o")):
-            t = candidate
+    t = re.sub(r"\s*[-–]\s*versione originale\s*$", "", t)
+    t = re.sub(r"\s*[-–]\s*original version\s*$", "", t)
+    t = re.sub(r"\s*[-–]\s*v\.?\s*o\.?\s*$", "", t)
+    t = re.sub(r"\s*[-–]\s*sub\s+(ita|eng)\s*$", "", t)
+    # Strip common abbreviations (C.A., S.A., etc.)
+    t = re.sub(r"\s+(?:c\.?a\.?|s\.?a\.?|s\.?p\.?a\.?)\s*$", "", t)
     t = re.sub(r"[^a-z0-9\s]", " ", t)
     return " ".join(t.split())
 
@@ -326,12 +333,33 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
 
     # Raggruppa per film normalizzato, poi per cinema
     film_groups: dict[str, dict] = {}
+    # Keep track of original titles per group for prefix matching
+    group_originals: dict[str, list[str]] = {}
     for s in snapshot.screenings:
         norm = _normalize_title(s.titolo)
         if not norm:
             continue
 
-        if norm not in film_groups:
+        # Find existing group: exact match first, then prefix/substring match
+        matched_key = None
+        if norm in film_groups:
+            matched_key = norm
+        else:
+            for existing_key in group_originals:
+                short, long = (
+                    (norm, existing_key)
+                    if len(norm) <= len(existing_key)
+                    else (existing_key, norm)
+                )
+                if long.startswith(short + " "):
+                    matched_key = existing_key
+                    break
+                # Substring match (min 15 chars to avoid false positives)
+                if len(short) >= 15 and short in long:
+                    matched_key = existing_key
+                    break
+
+        if matched_key is None:
             film_groups[norm] = {
                 "titolo": s.titolo,
                 "normalized": norm,
@@ -340,11 +368,18 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
                 "genre": s.genre,
                 "cinemas": {},
             }
+            group_originals[norm] = [s.titolo]
+            matched_key = norm
 
-        fg = film_groups[norm]
+        fg = film_groups[matched_key]
+        group_originals[matched_key].append(s.titolo)
 
         # Preferisci titolo senza suffisso V.O. come titolo display
-        if not _is_vo(s.note) and _is_vo(fg["titolo"]):
+        stored_vo = _is_vo(fg["titolo"]) or any(
+            m in fg["titolo"].lower()
+            for m in ("original version", "v.o.", "v. o.", "versione originale")
+        )
+        if not _is_vo(s.note) and stored_vo:
             fg["titolo"] = s.titolo
 
         # Aggiorna dati film con quelli del cinema che ha piu' info
