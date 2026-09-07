@@ -363,8 +363,10 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
                 "url": s.url,
             })
 
-    # Converti a lista e ordina per numero di orari
+    # Converti a lista, ordina orari per ora e cinema per numero di orari
     for fg in film_groups.values():
+        for cinema in fg["cinemas"].values():
+            cinema["times"].sort(key=lambda t: t["ora"])
         cinema_list = list(fg["cinemas"].values())
         cinema_list.sort(key=lambda c: len(c["times"]), reverse=True)
         fg["cinemas"] = cinema_list
