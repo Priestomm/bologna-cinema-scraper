@@ -334,27 +334,75 @@ body{
 .filter-wrapper{position:relative}
 
 /* responsive */
-@media(max-width:600px){
-  .film-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+@media(max-width:768px){
+  .film-grid{
+    display:flex;flex-direction:column;gap:14px;
+    grid-template-columns:none
+  }
+  .film-card{
+    flex-direction:row;padding:12px;gap:12px
+  }
+  .film-poster{
+    width:95px;flex-shrink:0;aspect-ratio:2/3;
+    border-radius:8px;overflow:hidden;
+    padding:0;position:relative
+  }
+  .film-poster::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg,rgba(26,26,46,0.3),rgba(45,45,68,0.3));
+    border-radius:8px;pointer-events:none
+  }
+  .film-rating{
+    font-size:0.55rem;padding:2px 5px;top:4px;left:4px;
+    border-radius:10px;z-index:2
+  }
+  .film-title-overlay{
+    position:absolute;bottom:0;left:0;right:0;z-index:2;
+    opacity:1
+  }
+  .film-title-overlay h3{
+    font-size:0.8rem;line-height:1.2;
+    padding:16px 6px 4px;margin:0;
+    background:linear-gradient(to top,rgba(0,0,0,0.9) 0%,transparent 100%)
+  }
+  .film-genres-overlay{
+    position:absolute;top:4px;right:4px;z-index:2;
+    opacity:1;flex-direction:row;gap:2px
+  }
+  .film-genres-overlay .genre-chip{
+    font-size:0.45rem;padding:1px 5px
+  }
+  .film-card > .film-cinemas{
+    flex:1;display:flex;flex-direction:column;gap:8px;
+    padding:0;min-width:0
+  }
+  .film-cinema-row{
+    display:flex;flex-direction:column;gap:3px;
+    padding:4px 0;border-top:1px solid rgba(255,255,255,0.04)
+  }
+  .cinema-name{font-size:0.65rem}
+  .cinema-times{
+    display:flex;flex-wrap:wrap;gap:8px;margin-top:2px
+  }
+  .film-time{
+    padding:6px 12px;min-height:36px;font-size:0.8rem;
+    border-radius:6px;display:inline-flex;align-items:center;
+    white-space:nowrap
+  }
+  .pill-vo{font-size:0.45rem}
+  .expand-times{font-size:0.55rem;padding:4px 8px}
+  .expand-cinemas{font-size:0.55rem;padding:4px 8px}
   .header{padding:12px 0}
   .logo{font-size:1.2rem}
   .nav{gap:10px}
   .nav a{font-size:0.7rem}
-  .hero{padding:24px 0 20px}
-  .hero h2{font-size:1.8rem;letter-spacing:0.04em}
+  .hero{padding:20px 0 16px}
+  .hero h2{font-size:1.6rem;letter-spacing:0.04em}
   .date-bar{gap:6px;padding:0 0 12px}
   .date-card{width:64px;padding:8px 4px;border-radius:8px}
   .date-num{font-size:1rem}
   .date-day{font-size:0.6rem}
   .date-month{font-size:0.55rem}
-  .film-poster{padding:6px 6px 0;aspect-ratio:2/3}
-  .film-rating{font-size:0.55rem;padding:2px 5px;top:4px;left:4px}
-  .film-title-overlay h3{font-size:0.75rem;line-height:1.15}
-  .film-cinemas{padding:0 6px 6px;gap:4px}
-  .cinema-name{font-size:0.55rem}
-  .film-time{font-size:0.6rem;padding:2px 5px;white-space:nowrap}
-  .expand-times{font-size:0.5rem;padding:2px 6px}
-  .pill-vo{font-size:0.35rem}
   .filter-bar{padding:0 0 14px}
   .refresh-btn{padding:6px 10px;font-size:0.7rem}
   .filter-btn{padding:6px 10px;font-size:0.7rem}
@@ -362,7 +410,7 @@ body{
   .footer{padding:20px 0}
 }
 @media(max-width:380px){
-  .film-grid{grid-template-columns:1fr}
+  .film-poster{width:80px}
   .date-card{width:56px;padding:6px 2px}
   .nav{gap:8px}
 }
