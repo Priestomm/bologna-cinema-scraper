@@ -456,7 +456,7 @@ body{
       {% for film in films %}
         <div class="film-card"
              data-title="{{ film.titolo|lower }}"
-             data-times="{{ film.cinemas[0].orari[0] if film.cinemas and film.cinemas[0].orari else '99:99' }}"
+             data-times="{{ film.cinemas[0].times[0].ora if film.cinemas and film.cinemas[0].times else '99:99' }}"
              data-cinemas="{{ film.cinemas|map(attribute='name')|join(',')|lower }}">
           <div class="film-poster"{% if film.poster_url %} style="background: url('{{ film.poster_url }}') center/cover no-repeat"{% endif %}>
             {% if film.rating and film.rating != "0.0" %}<span class="film-rating">&#9733; {{ film.rating }}</span>{% else %}<span class="film-rating" style="background:rgba(100,100,100,0.7);color:#aaa">&#9733; N/D</span>{% endif %}
@@ -477,14 +477,14 @@ body{
               <div class="film-cinema-row{% if total_cinemas > 3 and loop.index > 3 %} overflow-row{% endif %}" data-cinema="{{ c.name|lower }}">
                 {% set short_name = c.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
                 <span class="cinema-badge" style="border-left-color: {{ matched.border }}">{{ short_name|upper }}</span>
-                <div class="cinema-times{% if c.orari|length > 2 %} times-collapsed{% endif %}">
-                  {% for ora in c.orari %}
-                  <a href="{{ c.url }}" target="_blank" rel="noopener" class="film-time{% if c.vo %} film-time-vo{% endif %}{% if c.orari|length > 2 and loop.index > 2 %} overflow-time{% endif %}">
-                    {% if c.vo %}<span class="pill-vo">VO</span>{% endif %}{{ ora }}
+                <div class="cinema-times{% if c.times|length > 2 %} times-collapsed{% endif %}">
+                  {% for t in c.times %}
+                  <a href="{{ c.url }}" target="_blank" rel="noopener" class="film-time{% if t.vo %} film-time-vo{% endif %}{% if c.times|length > 2 and loop.index > 2 %} overflow-time{% endif %}">
+                    {% if t.vo %}<span class="pill-vo">VO</span>{% endif %}{{ t.ora }}
                   </a>
                   {% endfor %}
-                  {% if c.orari|length > 2 %}
-                  <button class="expand-times" onclick="this.parentElement.classList.toggle('times-collapsed');this.textContent=this.parentElement.classList.contains('times-collapsed') ? '+{{ c.orari|length - 2 }} altri' : 'Mostra meno'">+{{ c.orari|length - 2 }} altri</button>
+                  {% if c.times|length > 2 %}
+                  <button class="expand-times" onclick="this.parentElement.classList.toggle('times-collapsed');this.textContent=this.parentElement.classList.contains('times-collapsed') ? '+{{ c.times|length - 2 }} altri' : 'Mostra meno'">+{{ c.times|length - 2 }} altri</button>
                   {% endif %}
                 </div>
               </div>

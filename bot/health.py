@@ -317,7 +317,7 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
             },
         )
 
-    # Raggruppa per film normalizzato
+    # Raggruppa per film normalizzato, poi per cinema
     film_groups: dict[str, dict] = {}
     for s in snapshot.screenings:
         norm = _normalize_title(s.titolo)
@@ -331,7 +331,7 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
                 "poster_url": s.poster_url,
                 "rating": s.rating,
                 "genre": s.genre,
-                "cinemas": [],
+                "cinemas": {},
             }
 
         fg = film_groups[norm]
@@ -339,16 +339,6 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
         # Preferisci titolo senza suffisso V.O. come titolo display
         if not _is_vo(s.note) and _is_vo(fg["titolo"]):
             fg["titolo"] = s.titolo
-
-        # Aggiungi cinema con i suoi orari, URL e flag VO
-        cinema_entry = {
-            "name": s.cinema,
-            "orari": s.orari,
-            "note": s.note,
-            "url": s.url,
-            "vo": _is_vo(s.note),
-        }
-        fg["cinemas"].append(cinema_entry)
 
         # Aggiorna dati film con quelli del cinema che ha piu' info
         if s.poster_url and not fg["poster_url"]:
@@ -358,9 +348,27 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
         if s.genre and not fg["genre"]:
             fg["genre"] = s.genre
 
-    # Ordina cinema per numero di orari (decrescente) e film per titolo
+        # Merge per cinema: ogni orario porta il suo flag vo
+        cinema_key = s.cinema
+        vo_flag = _is_vo(s.note)
+        if cinema_key not in fg["cinemas"]:
+            fg["cinemas"][cinema_key] = {
+                "name": s.cinema,
+                "times": [],
+                "url": s.url,
+            }
+        for ora in s.orari:
+            fg["cinemas"][cinema_key]["times"].append({"ora": ora, "vo": vo_flag})
+        # Aggiorna URL se quello nuovo e' piu' specifico
+        if s.url and not fg["cinemas"][cinema_key]["url"]:
+            fg["cinemas"][cinema_key]["url"] = s.url
+
+    # Converti a lista e ordina per numero di orari
     for fg in film_groups.values():
-        fg["cinemas"].sort(key=lambda c: len(c["orari"]), reverse=True)
+        cinema_list = list(fg["cinemas"].values())
+        cinema_list.sort(key=lambda c: len(c["times"]), reverse=True)
+        fg["cinemas"] = cinema_list
+
     film_list = sorted(film_groups.values(), key=lambda f: f["titolo"].lower())
 
     return templates.TemplateResponse(
