@@ -6,7 +6,7 @@
 Bot Telegram che ogni mattina pubblica la programmazione cinematografica giornaliera di Bologna per quattro circuiti, attivo 24/7 su Oracle Cloud:
 
 - **Cineteca di Bologna** (Lumiere, Modernissimo)
-- **Pop Up Cinema**
+- **Pop Up Cinema** (Jolly, Arlecchino, Medica)
 - **Circuito Cinema Bologna** (Rialto, Odeon, Europa, Roma D'Azeglio)
 - **Nuovo Cinema Nosadella** (Sala Berti, Sala Scalo)
 
