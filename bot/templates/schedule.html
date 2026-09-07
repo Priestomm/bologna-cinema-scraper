@@ -205,10 +205,32 @@ body{
   background:linear-gradient(transparent,rgba(0,0,0,0.8) 40%);
   padding:20px 0 4px;margin:0 -12px;padding-left:12px;padding-right:12px
 }
-.film-genre{
-  font-size:0.65rem;color:#a78bfa;padding:0 12px 2px;
-  font-weight:600;letter-spacing:0.03em
+.film-genres{
+  display:flex;flex-wrap:wrap;gap:4px;padding:6px 12px 8px
 }
+.genre-chip{
+  font-size:0.55rem;font-weight:600;letter-spacing:0.02em;
+  padding:2px 8px;border-radius:10px;
+  cursor:default;transition:opacity .15s
+}
+.genre-chip:hover{opacity:0.8}
+/* palette generi */
+.genre-commedia{color:#fbbf24;background:rgba(251,191,36,0.12)}
+.genre-horror,..genre-terror{color:#ef4444;background:rgba(239,68,68,0.12)}
+.genre-dramma,.genre-drama{color:#60a5fa;background:rgba(96,165,250,0.12)}
+.genre-avventura,.genre-adventure{color:#34d399;background:rgba(52,211,153,0.12)}
+.genre-famiglia,.genre-family{color:#fb923c;background:rgba(251,146,60,0.12)}
+.genre-romance,.genre-romantico{color:#f472b6;background:rgba(244,114,182,0.12)}
+.genre-animazione,.genre-animation{color:#a78bfa;background:rgba(167,139,250,0.12)}
+.genre-azione,.genre-action{color:#f87171;background:rgba(248,113,113,0.12)}
+.genre-thriller{color:#fbbf24;background:rgba(251,191,36,0.12)}
+.genre-giallo,.genre-mystery{color:#94a3b8;background:rgba(148,163,184,0.12)}
+.genre-documentario,.genre-documentary{color:#2dd4bf;background:rgba(45,212,191,0.12)}
+.genre-musical,.genre-musicale{color:#e879f9;background:rgba(232,121,249,0.12)}
+.genre-guerra,.genre-war{color:#a8a29e;background:rgba(168,162,158,0.12)}
+.genre-western{color:#d97706;background:rgba(217,119,6,0.12)}
+.genre-sportivo,.genre-sport{color:#4ade80;background:rgba(74,222,128,0.12)}
+.genre-default{color:#9ca3af;background:rgba(156,163,175,0.12)}
 .film-cinemas{
   padding:0 12px 8px;display:flex;flex-direction:column;gap:6px
 }
@@ -305,7 +327,8 @@ body{
   .film-poster{padding:6px;aspect-ratio:2/3}
   .film-rating{font-size:0.55rem;padding:2px 5px;top:4px;left:4px}
   .film-title-overlay h3{font-size:0.75rem;line-height:1.15}
-  .film-genre{font-size:0.55rem;padding:0 6px 2px}
+  .film-genres{padding:4px 6px 6px;gap:3px}
+  .genre-chip{font-size:0.45rem;padding:1px 6px}
   .film-cinemas{padding:0 6px 6px;gap:4px}
   .cinema-badge{font-size:0.5rem;padding:1px 5px;max-width:80px}
   .film-time{font-size:0.6rem;padding:2px 5px}
@@ -439,15 +462,13 @@ body{
                   {% set matched.border = v.badge %}
                 {% endif %}
               {% endfor %}
-              {% set note_lower = c.note|lower %}
-              {% set is_vo = "vo" in note_lower or "sub ita" in note_lower or "sub eng" in note_lower %}
               <div class="film-cinema-row{% if total_cinemas > 3 and loop.index > 3 %} overflow-row{% endif %}" data-cinema="{{ c.name|lower }}">
                 {% set short_name = c.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
                 <span class="cinema-badge" style="border-left-color: {{ matched.border }}">{{ short_name|upper }}</span>
                 <div class="cinema-times">
                   {% for ora in c.orari %}
-                  <a href="{{ c.url }}" target="_blank" rel="noopener" class="film-time{% if is_vo %} film-time-vo{% endif %}">
-                    {% if is_vo %}<span class="pill-vo">VO</span>{% endif %}{{ ora }}
+                  <a href="{{ c.url }}" target="_blank" rel="noopener" class="film-time{% if c.vo %} film-time-vo{% endif %}">
+                    {% if c.vo %}<span class="pill-vo">VO</span>{% endif %}{{ ora }}
                   </a>
                   {% endfor %}
                 </div>
@@ -460,7 +481,12 @@ body{
             {% endif %}
           </div>
           {% if film.genre %}
-          <div class="film-genre">{{ film.genre }}</div>
+          <div class="film-genres">
+            {% for g in film.genre.split("/") %}
+              {% set g = g.strip() %}
+              <span class="genre-chip genre-{{ g|lower|replace(' ', '-') }}">{{ g }}</span>
+            {% endfor %}
+          </div>
           {% endif %}
         </div>
       {% endfor %}

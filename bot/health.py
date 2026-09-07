@@ -39,9 +39,9 @@ _start_time = time.time()
 _cache: Cache | None = None
 
 
-def _normalize_title(title: str, note: str = "") -> str:
+def _normalize_title(title: str) -> str:
     """Normalizza il titolo per il raggruppamento film duplicati.
-    Titoli OV e non-OV restano separati."""
+    Rimuove prefissi/suffissi OV per unificare versioni diverse."""
     t = title.lower()
     t = re.sub(r"\s*\(.*?\)\s*", " ", t)
     for prefix in ("original version - ", "original version: ", "original: ", "v.o.: "):
@@ -49,13 +49,13 @@ def _normalize_title(title: str, note: str = "") -> str:
     t = re.sub(r"\s*-\s*v\.?\s*o\.?\s*$", "", t)
     t = re.sub(r"\s*-\s*versione originale\s*$", "", t)
     t = re.sub(r"[^a-z0-9\s]", " ", t)
-    t = " ".join(t.split())
+    return " ".join(t.split())
 
-    # Separa OV da versione italiana
-    note_lower = note.lower()
-    is_ov = "vo" in note_lower or "sub ita" in note_lower or "sub eng" in note_lower
-    suffix = "-ov" if is_ov else "-it"
-    return t + suffix
+
+def _is_vo(note: str) -> bool:
+    """True se la proiezione e' in versione originale."""
+    n = note.lower()
+    return "vo" in n or "sub ita" in n or "sub eng" in n
 
 
 def _get_cache() -> Cache:
@@ -320,7 +320,7 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
     # Raggruppa per film normalizzato
     film_groups: dict[str, dict] = {}
     for s in snapshot.screenings:
-        norm = _normalize_title(s.titolo, s.note)
+        norm = _normalize_title(s.titolo)
         if not norm:
             continue
 
@@ -334,17 +334,23 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
                 "cinemas": [],
             }
 
-        # Aggiungi cinema con i suoi orari e URL per biglietteria
+        fg = film_groups[norm]
+
+        # Preferisci titolo senza suffisso V.O. come titolo display
+        if not _is_vo(s.note) and _is_vo(fg["titolo"]):
+            fg["titolo"] = s.titolo
+
+        # Aggiungi cinema con i suoi orari, URL e flag VO
         cinema_entry = {
             "name": s.cinema,
             "orari": s.orari,
             "note": s.note,
             "url": s.url,
+            "vo": _is_vo(s.note),
         }
-        film_groups[norm]["cinemas"].append(cinema_entry)
+        fg["cinemas"].append(cinema_entry)
 
         # Aggiorna dati film con quelli del cinema che ha piu' info
-        fg = film_groups[norm]
         if s.poster_url and not fg["poster_url"]:
             fg["poster_url"] = s.poster_url
         if s.rating and not fg["rating"]:
