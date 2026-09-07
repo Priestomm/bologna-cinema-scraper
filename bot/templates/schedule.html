@@ -171,7 +171,7 @@ body{
 .film-grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-  gap:20px;padding-bottom:60px
+  gap:20px;padding-bottom:60px;align-items:start
 }
 .film-card{
   border-radius:12px;overflow:hidden;background:#1a1a1a;
@@ -211,12 +211,13 @@ body{
 .genre-chip{
   font-size:0.55rem;font-weight:600;letter-spacing:0.02em;
   padding:2px 8px;border-radius:10px;
-  cursor:default;transition:opacity .15s
+  cursor:default;transition:opacity .15s;
+  color:#9ca3af;background:rgba(156,163,175,0.12)
 }
 .genre-chip:hover{opacity:0.8}
 /* palette generi */
 .genre-commedia{color:#fbbf24;background:rgba(251,191,36,0.12)}
-.genre-horror,..genre-terror{color:#ef4444;background:rgba(239,68,68,0.12)}
+.genre-horror,.genre-terror{color:#ef4444;background:rgba(239,68,68,0.12)}
 .genre-dramma,.genre-drama{color:#60a5fa;background:rgba(96,165,250,0.12)}
 .genre-avventura,.genre-adventure{color:#34d399;background:rgba(52,211,153,0.12)}
 .genre-famiglia,.genre-family{color:#fb923c;background:rgba(251,146,60,0.12)}
@@ -230,7 +231,11 @@ body{
 .genre-guerra,.genre-war{color:#a8a29e;background:rgba(168,162,158,0.12)}
 .genre-western{color:#d97706;background:rgba(217,119,6,0.12)}
 .genre-sportivo,.genre-sport{color:#4ade80;background:rgba(74,222,128,0.12)}
-.genre-default{color:#9ca3af;background:rgba(156,163,175,0.12)}
+.genre-fantascienza,.genre-science-fiction,.genre-sci-fi{color:#38bdf8;background:rgba(56,189,248,0.12)}
+.genre-fantasy{color:#c084fc;background:rgba(192,132,252,0.12)}
+.genre-storia,.genre-history{color:#a8a29e;background:rgba(168,162,158,0.12)}
+.genre-biografico,.genre-biography{color:#d4a574;background:rgba(212,165,116,0.12)}
+.genre-guerra,.genre-war{color:#a8a29e;background:rgba(168,162,158,0.12)}
 .film-cinemas{
   padding:0 12px 8px;display:flex;flex-direction:column;gap:6px
 }
@@ -241,13 +246,19 @@ body{
 .cinema-badge{
   padding:2px 8px;border-radius:0 4px 4px 0;flex-shrink:0;
   font-size:0.6rem;font-weight:700;text-transform:uppercase;
-  letter-spacing:0.04em;color:#eee;min-width:0;
-  max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  border-left:3px solid #FF9F1C;background:rgba(255,255,255,0.05)
+  letter-spacing:0.04em;color:#eee;
+  border-left:3px solid #FF9F1C;background:rgba(255,255,255,0.05);
+  max-width:140px;word-wrap:break-word;line-height:1.3
 }
 .cinema-times{
-  display:flex;flex-wrap:wrap;gap:4px
+  display:flex;flex-wrap:wrap;gap:4px;align-items:center
 }
+.cinema-times.times-collapsed .overflow-time{display:none}
+.expand-times{
+  font-size:0.55rem;color:#888;background:none;border:none;
+  cursor:pointer;padding:2px 0;font-weight:600;white-space:nowrap
+}
+.expand-times:hover{color:#FF9F1C}
 .film-time{
   display:inline-flex;align-items:center;gap:4px;
   background:rgba(255,255,255,0.08);
@@ -330,8 +341,9 @@ body{
   .film-genres{padding:4px 6px 6px;gap:3px}
   .genre-chip{font-size:0.45rem;padding:1px 6px}
   .film-cinemas{padding:0 6px 6px;gap:4px}
-  .cinema-badge{font-size:0.5rem;padding:1px 5px;max-width:80px}
+  .cinema-badge{font-size:0.5rem;padding:1px 5px;max-width:120px}
   .film-time{font-size:0.6rem;padding:2px 5px}
+  .expand-times{font-size:0.5rem}
   .pill-vo{font-size:0.4rem}
   .filter-bar{padding:0 0 14px}
   .refresh-btn{padding:6px 10px;font-size:0.7rem}
@@ -465,12 +477,15 @@ body{
               <div class="film-cinema-row{% if total_cinemas > 3 and loop.index > 3 %} overflow-row{% endif %}" data-cinema="{{ c.name|lower }}">
                 {% set short_name = c.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
                 <span class="cinema-badge" style="border-left-color: {{ matched.border }}">{{ short_name|upper }}</span>
-                <div class="cinema-times">
+                <div class="cinema-times{% if c.orari|length > 2 %} times-collapsed{% endif %}">
                   {% for ora in c.orari %}
-                  <a href="{{ c.url }}" target="_blank" rel="noopener" class="film-time{% if c.vo %} film-time-vo{% endif %}">
+                  <a href="{{ c.url }}" target="_blank" rel="noopener" class="film-time{% if c.vo %} film-time-vo{% endif %}{% if c.orari|length > 2 and loop.index > 2 %} overflow-time{% endif %}">
                     {% if c.vo %}<span class="pill-vo">VO</span>{% endif %}{{ ora }}
                   </a>
                   {% endfor %}
+                  {% if c.orari|length > 2 %}
+                  <button class="expand-times" onclick="this.parentElement.classList.toggle('times-collapsed');this.textContent=this.parentElement.classList.contains('times-collapsed') ? '+{{ c.orari|length - 2 }} altri' : 'Mostra meno'">+{{ c.orari|length - 2 }} altri</button>
+                  {% endif %}
                 </div>
               </div>
             {% endfor %}
