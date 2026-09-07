@@ -135,18 +135,6 @@ body{
 .filter-bar{
   display:flex;gap:10px;padding:0 0 20px;flex-wrap:wrap;align-items:center
 }
-.refresh-btn{
-  display:flex;align-items:center;gap:6px;
-  padding:7px 14px;border-radius:8px;font-size:0.78rem;font-weight:600;
-  text-transform:uppercase;letter-spacing:0.04em;
-  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
-  color:#a1a1aa;cursor:pointer;backdrop-filter:blur(10px);
-  transition:all .2s ease
-}
-.refresh-btn:hover{border-color:rgba(226,178,80,0.4);color:#e2b250}
-.refresh-btn.loading{opacity:0.5;pointer-events:none}
-.refresh-btn .spin{animation:spin 1s linear infinite;display:inline-block}
-@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .filter-btn{
   display:flex;align-items:center;gap:6px;
   padding:7px 14px;border-radius:8px;font-size:0.78rem;font-weight:600;
@@ -416,7 +404,6 @@ body{
   .date-day{font-size:0.6rem}
   .date-month{font-size:0.55rem}
   .filter-bar{padding:0 0 14px}
-  .refresh-btn{padding:6px 10px;font-size:0.7rem}
   .filter-btn{padding:6px 10px;font-size:0.7rem}
   .day-header{font-size:0.75rem;padding:5px 14px;margin-bottom:14px}
   .footer{padding:20px 0}
@@ -470,10 +457,6 @@ body{
 
   <!-- filter bar -->
   <div class="filter-bar">
-    <button class="refresh-btn" id="refreshBtn" onclick="doRefresh()">
-      <span id="refreshIcon">&#8635;</span> Aggiorna
-    </button>
-
     <div class="filter-wrapper" id="filterWrapper">
       <button class="filter-btn active" id="filterToggle">
         <span id="filterLabel">Tutti i cinema</span>
@@ -618,48 +601,10 @@ body{
   setupDropdown('sortToggle', 'sortMenu');
   setupDropdown('genreToggle', 'genreMenu');
 
-  // refresh
-  window.doRefresh = function() {
-    var btn = document.getElementById('refreshBtn');
-    var icon = document.getElementById('refreshIcon');
-    btn.classList.add('loading');
-    icon.classList.add('spin');
-    icon.textContent = '⟳';
-
-    fetch('/api/refresh', {method: 'POST'})
-      .then(function(r) { return r.json(); })
-      .then(function(d) {
-        if (d.status === 'started' || d.status === 'already_running') {
-          pollRefresh();
-        } else {
-          resetBtn();
-        }
-      })
-      .catch(function() { resetBtn(); });
-  };
-
-  function pollRefresh() {
-    setTimeout(function() {
-      fetch('/api/refresh/status')
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          if (d.in_progress) {
-            pollRefresh();
-          } else {
-            window.location.reload();
-          }
-        })
-        .catch(function() { window.location.reload(); });
-    }, 2000);
-  }
-
-  function resetBtn() {
-    var btn = document.getElementById('refreshBtn');
-    var icon = document.getElementById('refreshIcon');
-    btn.classList.remove('loading');
-    icon.classList.remove('spin');
-    icon.textContent = '\u21BB';
-  }
+  // auto-refresh ogni 15 minuti
+  setInterval(function() {
+    window.location.reload();
+  }, 15 * 60 * 1000);
 
   // filter
   const filterItems = document.querySelectorAll('#filterMenu .dropdown-item');
