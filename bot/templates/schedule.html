@@ -734,21 +734,6 @@ body{
     }
   }
 
-  // film card hover: gradient shift effect
-  cards.forEach(function(card) {
-    const poster = card.querySelector('.film-poster');
-    if (!poster) return;
-    card.addEventListener('mousemove', function(e) {
-      const rect = card.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
-      poster.style.backgroundPosition = x + '% ' + y + '%';
-    });
-    card.addEventListener('mouseleave', function() {
-      poster.style.backgroundPosition = '';
-    });
-  });
-
 })();
 </script>
 
