@@ -447,7 +447,8 @@ body{
                 {% endif %}
               {% endfor %}
               <div class="film-cinema-row" data-cinema="{{ c.name|lower }}">
-                <span class="cinema-badge" style="background: {{ matched.badge_bg }}">{{ c.name|upper }}</span>
+                {% set short_name = c.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
+                <span class="cinema-badge" style="background: {{ matched.badge_bg }}">{{ short_name|upper }}</span>
                 <div class="cinema-times">
                   {% for ora in c.orari %}
                   <span class="film-time">{{ ora }}</span>
