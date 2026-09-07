@@ -1,445 +1,473 @@
 <!DOCTYPE html>
 {% set day_map = {"Monday": "Lunedì", "Tuesday": "Martedì", "Wednesday": "Mercoledì", "Thursday": "Giovedì", "Friday": "Venerdì", "Saturday": "Sabato", "Sunday": "Domenica"} %}
 {% set month_map = {"January": "GENNAIO", "February": "FEBBRAIO", "March": "MARZO", "April": "APRILE", "May": "MAGGIO", "June": "GIUGNO", "July": "LUGLIO", "August": "AGOSTO", "September": "SETTEMBRE", "October": "OTTOBRE", "November": "NOVEMBRE", "December": "DICEMBRE"} %}
-{% set cinema_colors = {
-  "Lumiere": {"grad": "linear-gradient(135deg, #0d1b2a, #1b3a5c)", "badge": "#1b3a5c"},
-  "Modernissimo": {"grad": "linear-gradient(135deg, #0d1b2a, #1b3a5c)", "badge": "#1b3a5c"},
-  "Cineteca": {"grad": "linear-gradient(135deg, #0d1b2a, #1b3a5c)", "badge": "#1b3a5c"},
-  "Rialto": {"grad": "linear-gradient(135deg, #3d0000, #8a1a1a)", "badge": "#8a1a1a"},
-  "Odeon": {"grad": "linear-gradient(135deg, #3d0000, #8a1a1a)", "badge": "#8a1a1a"},
-  "Europa": {"grad": "linear-gradient(135deg, #3d0000, #8a1a1a)", "badge": "#8a1a1a"},
-  "Roma": {"grad": "linear-gradient(135deg, #3d0000, #8a1a1a)", "badge": "#8a1a1a"},
-  "Pop Up": {"grad": "linear-gradient(135deg, #0d2d1a, #1a5c3a)", "badge": "#1a5c3a"},
-  "Medica": {"grad": "linear-gradient(135deg, #0d2d1a, #1a5c3a)", "badge": "#1a5c3a"},
-  "Jolly": {"grad": "linear-gradient(135deg, #0d2d1a, #1a5c3a)", "badge": "#1a5c3a"},
-  "Nosadella": {"grad": "linear-gradient(135deg, #2a0d2d, #5a1a5c)", "badge": "#5a1a5c"},
-  "Berti": {"grad": "linear-gradient(135deg, #2a0d2d, #5a1a5c)", "badge": "#5a1a5c"},
-  "Scalo": {"grad": "linear-gradient(135deg, #2a0d2d, #5a1a5c)", "badge": "#5a1a5c"},
-  "UCI": {"grad": "linear-gradient(135deg, #0a1c3a, #1a3a6a)", "badge": "#c8a000"},
-  "Meridiana": {"grad": "linear-gradient(135deg, #0a1c3a, #1a3a6a)", "badge": "#c8a000"},
-} %}
-{% set default_grad = "linear-gradient(135deg, #1a1a2e, #2d2d44)" %}
-{% set default_badge = "#2d2d44" %}
-
-{% macro cinema_style(name) %}
-{% set key = namespace(found="") %}
-{% for k, v in cinema_colors.items() %}
-{% if k.lower() in name.lower() %}{% set found = k %}{% endif %}
-{% endfor %}
-{% if found %}
-gradient: {{ cinema_colors[found].grad }}; badge: {{ cinema_colors[found].badge }}
-{% else %}
-gradient: {{ default_grad }}; badge: {{ default_badge }}
-{% endif %}
-{% endmacro %}
 
 <html lang="it">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BOS - Bologna On Screen - {{ date }}</title>
+<title>BOS // BOLOGNA ON SCREEN - {{ date }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{
-  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  background:#0f0f11;color:#f3f4f6;line-height:1.5;min-height:100vh;
-  -webkit-font-smoothing:antialiased
-}
-.container{max-width:1200px;margin:0 auto;padding:0 20px}
-
-/* header */
-.header{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:20px 0;border-bottom:1px solid rgba(255,255,255,0.06)
-}
-.logo{
-  position:relative;display:inline-block;text-decoration:none;
-  line-height:1
-}
-.logo-bos{
-  font-family:'Abril Fatface',Georgia,serif;
-  font-size:3.2rem;color:rgba(226,178,80,0.12);text-transform:uppercase;
-  letter-spacing:0.08em;font-weight:400;
-  line-height:1;user-select:none
-}
-.logo-sub{
-  position:absolute;left:50%;top:50%;
-  transform:translate(-50%,-50%);
-  font-family:'Inter',sans-serif;font-size:0.65rem;
-  color:#71717a;letter-spacing:0.25em;text-transform:uppercase;
-  white-space:nowrap
-}
-.nav{display:flex;gap:24px}
-.nav a{
-  color:#71717a;text-decoration:none;font-size:0.85rem;
-  text-transform:uppercase;letter-spacing:0.08em;transition:color .2s
-}
-.nav a:hover{color:#e2b250}
-
-/* hero */
-.hero{
-  padding:32px 0 24px;text-align:left
-}
-.hero h2{
-  font-family:'Abril Fatface',Georgia,serif;
-  font-size:2.8rem;text-transform:uppercase;
-  letter-spacing:0.06em;color:#f3f4f6;
-  font-weight:400
+/* === STRICT BRUTALIST SYSTEM === */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border-radius: 0px !important;
+  font-family: 'Space Mono', monospace;
 }
 
-/* control bar */
-.control-bar{
-  display:flex;align-items:center;gap:12px;
-  padding:0 0 16px
+:root {
+  --bg-black: #080808;
+  --surface-black: #121212;
+  --accent-orange: #FF3500;
+  --text-white: #FFFFFF;
+  --text-gray: #777777;
+  --border-dim: #262626;
+  --border-bright: #FFFFFF;
 }
-.tabs{display:flex;gap:0;border:1px solid rgba(255,255,255,0.1);border-radius:8px;overflow:hidden}
-.tab{
-  padding:8px 20px;font-size:0.8rem;font-weight:700;
-  text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;
-  transition:all .2s;border:none;background:transparent;color:#71717a
-}
-.tab.active{background:rgba(226,178,80,0.15);color:#e2b250;border:1px solid rgba(226,178,80,0.3)}
-.tab:not(.active):hover{color:#f3f4f6}
 
-/* date bar */
-.date-bar{
-  display:flex;gap:8px;overflow-x:auto;padding:0 0 16px;
-  scrollbar-width:none;-ms-overflow-style:none;
-  -webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory
+body {
+  background-color: var(--bg-black);
+  color: var(--text-white);
+  padding: 20px 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+  -webkit-font-smoothing: antialiased;
 }
-.date-bar::-webkit-scrollbar{display:none}
-.date-card{
-  flex-shrink:0;width:90px;padding:10px 6px;
-  border-radius:10px;cursor:pointer;text-align:center;
-  border:1.5px solid rgba(255,255,255,0.08);background:#18181b;
-  transition:all .2s;text-decoration:none;display:block;scroll-snap-align:start;
-  position:relative
+
+.container { width: 100%; }
+
+/* === HEADER === */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-dim);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
-.date-card:hover{border-color:rgba(255,255,255,0.15);background:#1f1f23}
-.date-card.active{
-  background:#e2b250;border-color:#e2b250
+
+.logo {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.date-card.active::after{
-  content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);
-  width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;
-  border-top:5px solid #e2b250
+
+.tape-label {
+  display: inline-block;
+  padding: 4px 10px;
+  font-weight: 700;
+  font-size: 1.4rem;
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
 }
+
+.tape-black {
+  background: #000;
+  color: var(--text-white);
+  border: 1px solid var(--border-bright);
+}
+
+.tape-orange {
+  background: var(--accent-orange);
+  color: #000;
+  font-weight: 700;
+}
+
+.nav { display: flex; gap: 8px; }
+
+.nav a {
+  color: var(--text-white);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  background: #000;
+  border: 1px solid var(--border-dim);
+}
+
+.nav a:hover {
+  background: var(--text-white);
+  color: #000;
+  border-color: var(--text-white);
+}
+
+/* === HERO === */
+.hero { margin-bottom: 16px; }
+
+.hero h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-gray);
+  letter-spacing: -0.5px;
+}
+
+/* === DATE BAR === */
+.date-bar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  scrollbar-width: none;
+}
+
+.date-bar::-webkit-scrollbar { display: none; }
+
+.date-card {
+  flex-shrink: 0;
+  background: #000000;
+  color: var(--text-white);
+  border: 1px solid var(--border-dim);
+  padding: 8px 14px;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.date-card:hover {
+  background: var(--text-white);
+  color: #000000;
+  border-color: var(--text-white);
+}
+
+.date-card.active {
+  background: var(--accent-orange);
+  color: #000000;
+  border-color: var(--accent-orange);
+  font-weight: 700;
+}
+
 .date-card.active .date-day,
 .date-card.active .date-num,
-.date-card.active .date-month{color:#0f0f11}
-.date-day{font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:#71717a}
-.date-num{font-size:1.3rem;font-weight:800;color:#f3f4f6;line-height:1.2;margin-top:2px}
-.date-month{font-size:0.65rem;text-transform:uppercase;color:#71717a;letter-spacing:0.06em}
+.date-card.active .date-month { color: #000000; }
 
-/* filter bar */
-.filter-bar{
-  display:flex;gap:10px;padding:0 0 20px;flex-wrap:wrap;align-items:center
-}
-.filter-btn{
-  display:flex;align-items:center;gap:6px;
-  padding:7px 14px;border-radius:8px;font-size:0.78rem;font-weight:600;
-  text-transform:uppercase;letter-spacing:0.04em;
-  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
-  color:#a1a1aa;cursor:pointer;backdrop-filter:blur(10px);
-  transition:all .2s ease
-}
-.filter-btn:hover{border-color:rgba(226,178,80,0.4);color:#e2b250}
-.filter-btn.active{background:rgba(226,178,80,0.15);border-color:rgba(226,178,80,0.3);color:#e2b250}
-.filter-btn .arrow{font-size:0.6rem;margin-left:4px}
+.date-day { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; }
+.date-num { font-size: 1.2rem; font-weight: 700; line-height: 1; margin: 2px 0; }
+.date-month { font-size: 0.65rem; text-transform: uppercase; }
 
-/* day header */
-.day-header{
-  display:inline-block;
-  color:#71717a;padding:6px 16px;
-  font-weight:700;font-size:0.8rem;text-transform:uppercase;
-  letter-spacing:0.08em;margin-bottom:20px;border-radius:6px;
-  border:1px solid rgba(255,255,255,0.08)
+/* === FILTER BAR === */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
-/* film grid */
-.film-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-  gap:20px;padding-bottom:60px;align-items:start
-}
-.film-card{
-  border-radius:12px;overflow:hidden;background:#18181c;
-  transition:transform .2s,box-shadow .2s;
-  position:relative;border:1px solid rgba(255,255,255,0.07);
-  display:flex;flex-direction:column;color:inherit
-}
-.film-card:hover{
-  transform:translateY(-4px);
-  box-shadow:0 12px 30px rgba(0,0,0,0.6)
-}
-.film-poster{
-  aspect-ratio:2/3;width:100%;position:relative;
-  display:flex;align-items:flex-end;
-  padding:12px 12px 0;
-  background:linear-gradient(135deg, #1a1a2e, #2d2d44)
-}
-.film-genres-overlay{
-  position:absolute;top:10px;right:10px;z-index:2;
-  display:flex;flex-direction:column;align-items:flex-end;gap:3px;
-  opacity:0;transition:opacity .2s ease
-}
-.film-card:hover .film-genres-overlay{opacity:1}
-.film-genres-overlay .genre-chip{
-  font-size:0.55rem;font-weight:600;
-  padding:2px 8px;border-radius:6px;
-  background:rgba(0,0,0,0.7);
-  backdrop-filter:blur(4px);white-space:nowrap;
-  border:1px solid rgba(255,255,255,0.1)
-}
-.film-rating{
-  position:absolute;top:10px;left:10px;
-  padding:4px 10px;border-radius:20px;
-  font-size:0.7rem;font-weight:700;
-  background:rgba(0,0,0,0.6);color:#e2b250;
-  backdrop-filter:blur(8px);
-  display:flex;align-items:center;gap:4px;
-  border:1px solid rgba(255,255,255,0.1)
-}
-.film-rating::before{content:'★';font-size:0.65rem;color:#e2b250}
-.film-rating-nd{color:#71717a}
-.film-rating-nd::before{color:#71717a}
-.film-title-overlay{
-  width:100%;position:relative;z-index:1;
-  opacity:0;transition:opacity .3s ease
-}
-.film-card:hover .film-title-overlay{opacity:1}
-.film-title-overlay h3{
-  font-size:0.9rem;font-weight:600;color:#f3f4f6;line-height:1.3;
-  text-transform:uppercase;letter-spacing:0.04em;
-  background:linear-gradient(to top,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.5) 60%,transparent 100%);
-  padding:28px 0 6px;margin:0 -12px;padding-left:12px;padding-right:12px
-}
-/* palette generi */
-.genre-commedia{color:#e2b250;border-color:rgba(226,178,80,0.3)}
-.genre-horror,.genre-terror{color:#ef4444;border-color:rgba(239,68,68,0.3)}
-.genre-dramma,.genre-drama{color:#60a5fa;border-color:rgba(96,165,250,0.3)}
-.genre-avventura,.genre-adventure{color:#34d399;border-color:rgba(52,211,153,0.3)}
-.genre-famiglia,.genre-family{color:#fb923c;border-color:rgba(251,146,60,0.3)}
-.genre-romance,.genre-romantico{color:#f472b6;border-color:rgba(244,114,182,0.3)}
-.genre-animazione,.genre-animation{color:#a78bfa;border-color:rgba(167,139,250,0.3)}
-.genre-azione,.genre-action{color:#f87171;border-color:rgba(248,113,113,0.3)}
-.genre-thriller{color:#e2b250;border-color:rgba(226,178,80,0.3)}
-.genre-giallo,.genre-mystery{color:#94a3b8;border-color:rgba(148,163,184,0.3)}
-.genre-documentario,.genre-documentary{color:#2dd4bf;border-color:rgba(45,212,191,0.3)}
-.genre-musical,.genre-musicale{color:#e879f9;border-color:rgba(232,121,249,0.3)}
-.genre-guerra,.genre-war{color:#a8a29e;border-color:rgba(168,162,158,0.3)}
-.genre-western{color:#d97706;border-color:rgba(217,119,6,0.3)}
-.genre-sportivo,.genre-sport{color:#4ade80;border-color:rgba(74,222,128,0.3)}
-.genre-fantascienza,.genre-science-fiction,.genre-sci-fi{color:#38bdf8;border-color:rgba(56,189,248,0.3)}
-.genre-fantasy{color:#c084fc;border-color:rgba(192,132,252,0.3)}
-.genre-storia,.genre-history{color:#a8a29e;border-color:rgba(168,162,158,0.3)}
-.genre-biografico,.genre-biography{color:#d4a574;border-color:rgba(212,165,116,0.3)}
-.film-cinemas{
-  padding:0 12px 8px;display:flex;flex-direction:column;gap:6px;
-  margin-top:auto
-}
-.film-cinema-row{
-  display:flex;flex-direction:column;gap:3px;
-  padding:5px 0;border-top:1px solid rgba(255,255,255,0.04)
-}
-.cinema-name{
-  display:flex;align-items:center;gap:5px;
-  font-size:0.65rem;font-weight:700;text-transform:uppercase;
-  letter-spacing:0.04em;color:#d4d4d8
-}
-.cinema-dot{
-  width:6px;height:6px;border-radius:50%;flex-shrink:0
-}
-.cinema-times{
-  display:flex;flex-wrap:wrap;gap:6px;align-items:center
-}
-.cinema-times.times-collapsed .overflow-time{display:none}
-.expand-times{
-  display:inline-flex;align-items:center;gap:3px;
-  font-size:0.6rem;color:#71717a;background:rgba(255,255,255,0.04);
-  border:1px solid rgba(255,255,255,0.1);border-radius:6px;
-  cursor:pointer;padding:3px 10px;font-weight:600;white-space:nowrap;
-  transition:all .2s ease
-}
-.expand-times:hover{background:rgba(226,178,80,0.1);color:#e2b250;border-color:rgba(226,178,80,0.3)}
-.expand-times::after{content:" ▾";font-size:0.5rem}
-.expand-cinemas{
-  display:inline-flex;align-items:center;gap:3px;
-  font-size:0.6rem;color:#71717a;background:rgba(255,255,255,0.04);
-  border:1px solid rgba(255,255,255,0.1);border-radius:6px;
-  cursor:pointer;padding:3px 10px;font-weight:600;
-  transition:all .2s ease
-}
-.expand-cinemas:hover{background:rgba(226,178,80,0.1);color:#e2b250;border-color:rgba(226,178,80,0.3)}
-.expand-cinemas::after{content:" ▾";font-size:0.5rem}
-.film-cinemas.collapsed .overflow-row{display:none}
-.film-time{
-  display:inline-flex;align-items:center;gap:4px;
-  background:rgba(255,255,255,0.06);
-  color:#ffffff;font-size:0.72rem;font-weight:600;
-  padding:3px 10px;border-radius:6px;
-  border:1px solid rgba(255,255,255,0.1);
-  font-variant-numeric:tabular-nums;
-  text-decoration:none;cursor:pointer;white-space:nowrap;
-  transition:all .2s ease
-}
-.film-time:hover{
-  background:rgba(226,178,80,0.12);color:#e2b250;
-  border-color:rgba(226,178,80,0.3);transform:translateY(-1px)
-}
-.film-time-vo{
-  background:rgba(168,85,247,0.08);border-color:rgba(168,85,247,0.2)
-}
-.film-time-vo:hover{
-  background:rgba(168,85,247,0.15);color:#c084fc;
-  border-color:rgba(168,85,247,0.4)
-}
-.pill-vo{
-  font-size:0.45rem;font-weight:700;text-transform:uppercase;
-  color:#a78bfa;letter-spacing:0.03em;
-  background:rgba(168,85,247,0.15);padding:1px 4px;border-radius:3px
+.filter-wrapper { position: relative; }
+
+.filter-btn {
+  background: #000000;
+  color: var(--text-white);
+  border: 1px solid var(--border-dim);
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-/* empty */
-.empty-state{
-  text-align:center;padding:80px 20px;color:#52525b
+.filter-btn:hover, .filter-btn.active {
+  border-color: var(--text-white);
 }
-.empty-state h3{font-size:1.5rem;margin-bottom:8px;color:#71717a}
-.empty-state p{font-size:0.9rem}
 
-/* footer */
-.footer{
-  text-align:center;padding:30px 0;
-  border-top:1px solid rgba(255,255,255,0.06);margin-top:20px
+.filter-btn.active {
+  background: var(--text-white);
+  color: #000000;
 }
-.footer p{font-size:0.75rem;color:#52525b}
 
-/* dropdown menu */
-.dropdown-menu{
-  position:absolute;top:100%;left:0;margin-top:4px;
-  background:#18181b;border:1px solid rgba(255,255,255,0.1);border-radius:8px;
-  padding:6px;min-width:180px;z-index:50;display:none;
-  backdrop-filter:blur(10px)
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: #000000;
+  border: 1px solid var(--text-white);
+  padding: 4px 0;
+  min-width: 200px;
+  z-index: 50;
+  display: none;
+  max-height: 300px;
+  overflow-y: auto;
 }
-.dropdown-menu.open{display:block}
-.dropdown-item{
-  display:block;width:100%;padding:8px 12px;
-  font-size:0.8rem;color:#a1a1aa;background:none;border:none;
-  text-align:left;cursor:pointer;border-radius:6px;transition:all .15s
-}
-.dropdown-item:hover{background:rgba(226,178,80,0.1);color:#e2b250}
-.dropdown-item.active{background:rgba(226,178,80,0.15);color:#e2b250;font-weight:700}
-.filter-wrapper{position:relative}
 
-/* responsive */
-@media(max-width:768px){
-  .film-grid{
-    display:flex;flex-direction:column;gap:14px;
-    grid-template-columns:none
-  }
-  .film-card{
-    flex-direction:row;padding:12px;gap:12px
-  }
-  .film-poster{
-    width:95px;flex-shrink:0;aspect-ratio:2/3;
-    border-radius:8px;overflow:hidden;
-    padding:0;position:relative
-  }
-  .film-poster::after{
-    content:'';position:absolute;inset:0;
-    background:linear-gradient(135deg,rgba(26,26,46,0.3),rgba(45,45,68,0.3));
-    border-radius:8px;pointer-events:none
-  }
-  .film-rating{
-    font-size:0.55rem;padding:2px 5px;top:4px;left:4px;
-    border-radius:10px;z-index:2
-  }
-  .film-title-overlay{
-    position:absolute;bottom:0;left:0;right:0;z-index:2;
-    opacity:1
-  }
-  .film-title-overlay h3{
-    font-size:0.8rem;line-height:1.2;
-    padding:16px 6px 4px;margin:0;
-    background:linear-gradient(to top,rgba(0,0,0,0.9) 0%,transparent 100%)
-  }
-  .film-genres-overlay{
-    position:absolute;top:4px;right:4px;z-index:2;
-    opacity:1;flex-direction:row;gap:2px
-  }
-  .film-genres-overlay .genre-chip{
-    font-size:0.45rem;padding:1px 5px;
-    background:rgba(0,0,0,0.7)
-  }
-  .film-card > .film-cinemas{
-    flex:1;display:flex;flex-direction:column;gap:8px;
-    padding:0;min-width:0
-  }
-  .film-cinema-row{
-    display:flex;flex-direction:column;gap:3px;
-    padding:4px 0;border-top:1px solid rgba(255,255,255,0.04)
-  }
-  .cinema-name{font-size:0.65rem}
-  .cinema-times{
-    display:flex;flex-wrap:wrap;gap:8px;margin-top:2px
-  }
-  .film-time{
-    padding:6px 12px;min-height:36px;font-size:0.8rem;
-    border-radius:6px;display:inline-flex;align-items:center;
-    white-space:nowrap
-  }
-  .pill-vo{font-size:0.45rem}
-  .expand-times{font-size:0.55rem;padding:4px 8px}
-  .expand-cinemas{font-size:0.55rem;padding:4px 8px}
-  .header{padding:12px 0}
-  .logo-bos{font-size:2.2rem}
-  .logo-sub{font-size:0.55rem;letter-spacing:0.2em}
-  .nav{gap:10px}
-  .nav a{font-size:0.7rem}
-  .hero{padding:20px 0 16px}
-  .hero h2{font-size:1.6rem;letter-spacing:0.04em}
-  .date-bar{gap:6px;padding:0 0 12px}
-  .date-card{width:64px;padding:8px 4px;border-radius:8px}
-  .date-num{font-size:1rem}
-  .date-day{font-size:0.6rem}
-  .date-month{font-size:0.55rem}
-  .filter-bar{padding:0 0 14px}
-  .filter-btn{padding:6px 10px;font-size:0.7rem}
-  .day-header{font-size:0.75rem;padding:5px 14px;margin-bottom:14px}
-  .footer{padding:20px 0}
+.dropdown-menu.open { display: block; }
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  color: var(--text-white);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-weight: 700;
 }
-@media(max-width:380px){
-  .film-poster{width:80px}
-  .date-card{width:56px;padding:6px 2px}
-  .nav{gap:8px}
+
+.dropdown-item:hover, .dropdown-item.active {
+  background: var(--accent-orange);
+  color: #000000;
+}
+
+/* === DAY HEADER === */
+.day-header {
+  font-size: 0.8rem;
+  color: var(--text-gray);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+/* === FILM GRID === */
+.film-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 16px;
+  padding-bottom: 60px;
+  align-items: start;
+}
+
+/* === CARD === */
+.film-card {
+  background: var(--surface-black);
+  border: 1px solid var(--border-dim);
+  display: flex;
+  flex-direction: column;
+}
+
+.film-card:hover { border-color: var(--accent-orange); }
+
+.film-poster {
+  aspect-ratio: 2/3;
+  width: 100%;
+  position: relative;
+  background-color: #000000;
+  border-bottom: 1px solid var(--border-dim);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.film-rating {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--accent-orange);
+  color: #000000;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 3px 8px;
+  z-index: 2;
+}
+
+.film-genres-overlay {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.genre-chip {
+  background: #000000;
+  color: var(--text-white);
+  border: 1px solid var(--text-gray);
+  font-size: 0.6rem;
+  padding: 2px 5px;
+  text-transform: uppercase;
+}
+
+.card-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title-tape {
+  background: var(--accent-orange);
+  color: #000000;
+  padding: 4px 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.film-cinemas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.film-cinema-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cinema-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cinema-times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.cinema-times.times-collapsed .overflow-time { display: none !important; }
+
+.film-time {
+  background: #000000;
+  color: var(--text-white);
+  border: 1px solid var(--border-dim);
+  padding: 5px 9px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.film-time:hover {
+  background: var(--text-white);
+  color: #000000;
+  border-color: var(--text-white);
+}
+
+.pill-vo {
+  font-size: 0.6rem;
+  background: var(--border-dim);
+  color: var(--text-white);
+  padding: 0 3px;
+}
+
+.film-time:hover .pill-vo {
+  background: #000000;
+  color: var(--text-white);
+}
+
+.expand-times, .expand-cinemas {
+  background: transparent;
+  border: 1px dashed var(--text-gray);
+  color: var(--text-gray);
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.expand-times:hover, .expand-cinemas:hover {
+  border-color: var(--accent-orange);
+  color: var(--accent-orange);
+}
+
+.film-cinemas.collapsed .overflow-row { display: none !important; }
+
+/* === EMPTY STATE & FOOTER === */
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  border: 1px dashed var(--border-dim);
+  color: var(--text-gray);
+  text-transform: uppercase;
+}
+
+.footer {
+  border-top: 1px solid var(--border-dim);
+  padding: 20px 0;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-gray);
+  text-transform: uppercase;
+}
+
+/* === MOBILE === */
+@media (max-width: 768px) {
+  .film-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .film-card { flex-direction: row; }
+
+  .film-poster {
+    width: 115px;
+    aspect-ratio: 2/3;
+    flex-shrink: 0;
+    border-bottom: none;
+    border-right: 1px solid var(--border-dim);
+  }
+
+  .card-body {
+    flex: 1;
+    min-width: 0;
+    padding: 10px;
+  }
+
+  .title-tape { font-size: 0.85rem; }
+
+  .film-time {
+    padding: 8px 10px;
+    min-height: 36px;
+  }
 }
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <div class="container">
 
-  <!-- header -->
+  <!-- HEADER -->
   <header class="header">
     <a href="/" class="logo">
-      <span class="logo-bos">BOS</span>
-      <span class="logo-sub">bologna on screen</span>
+      <span class="tape-label tape-black">BOS</span>
+      <span class="tape-label tape-orange">BOLOGNA ON SCREEN</span>
     </a>
     <nav class="nav">
-      <a href="/">Oggi</a>
-      <a href="https://t.me/bolocinescraperbot" target="_blank">Telegram</a>
+      <a href="/">OGGI</a>
+      <a href="https://t.me/bolocinescraperbot" target="_blank">TELEGRAM</a>
       <a href="/docs">API</a>
     </nav>
   </header>
 
-  <!-- hero -->
+  <!-- HERO -->
   <section class="hero">
-    <h2>Programmazione Cinema</h2>
+    <h2>// PROGRAMMAZIONE CINEMA</h2>
   </section>
 
-  <!-- date bar -->
+  <!-- DATE BAR -->
   <div class="date-bar" id="dateBar">
     {% for i in range(7) %}
       {% set d = today.fromordinal(today.toordinal() + i) %}
@@ -448,19 +476,19 @@ body{
       <a href="/{{ d.isoformat() }}"
          class="date-card {{ active_class }}"
          data-date="{{ d.isoformat() }}">
-        <div class="date-day">{{ "OGGI" if is_today else day_map[d.strftime("%A")][:3].upper() }}</div>
-        <div class="date-num">{{ d.day }}</div>
-        <div class="date-month">{{ month_map[d.strftime("%B")][:3] }}</div>
+        <span class="date-day">{{ "OGGI" if is_today else day_map[d.strftime("%A")][:3].upper() }}</span>
+        <span class="date-num">{{ d.day }}</span>
+        <span class="date-month">{{ month_map[d.strftime("%B")][:3] }}</span>
       </a>
     {% endfor %}
   </div>
 
-  <!-- filter bar -->
+  <!-- FILTER BAR -->
   <div class="filter-bar">
     <div class="filter-wrapper" id="filterWrapper">
       <button class="filter-btn active" id="filterToggle">
-        <span id="filterLabel">Tutti i cinema</span>
-        <span class="arrow">▾</span>
+        <span id="filterLabel">■ TUTTI I CINEMA</span>
+        <span>▾</span>
       </button>
       <div class="dropdown-menu" id="filterMenu">
         <button class="dropdown-item active" data-filter="all">Tutti i cinema</button>
@@ -480,8 +508,8 @@ body{
 
     <div class="filter-wrapper" id="sortWrapper">
       <button class="filter-btn" id="sortToggle">
-        <span id="sortLabel">Ordine</span>
-        <span class="arrow">▾</span>
+        <span id="sortLabel">// ORDINE</span>
+        <span>▾</span>
       </button>
       <div class="dropdown-menu" id="sortMenu">
         <button class="dropdown-item active" data-sort="default">Predefinito</button>
@@ -493,8 +521,8 @@ body{
     {% if genres %}
     <div class="filter-wrapper" id="genreWrapper">
       <button class="filter-btn" id="genreToggle">
-        <span id="genreLabel">Genere</span>
-        <span class="arrow">▾</span>
+        <span id="genreLabel">// GENERE</span>
+        <span>▾</span>
       </button>
       <div class="dropdown-menu" id="genreMenu">
         <button class="dropdown-item active" data-genre="all">Tutti i generi</button>
@@ -506,85 +534,93 @@ body{
     {% endif %}
   </div>
 
-  <!-- day header -->
+  <!-- DAY HEADER -->
   {% set dt_parts = date.split('-') %}
-  {% set d_obj = date_obj if date_obj is defined else today_obj %}
-  <div class="day-header">{{ day_map[d_obj.strftime("%A")]|upper }} / {{ d_obj.day }} {{ month_map[d_obj.strftime("%B")] }}</div>
+  {% set d_obj = date_obj if date_obj is defined else today %}
+  <div class="day-header">
+    >> STATUS: {{ day_map[d_obj.strftime("%A")]|upper }} {{ d_obj.day }} {{ month_map[d_obj.strftime("%B")] }} // BOLOGNA
+  </div>
 
-  <!-- film grid -->
-  <div class="film-grid" id="filmGrid">
+  <!-- FILM GRID -->
+  <main class="film-grid" id="filmGrid">
     {% if films %}
       {% for film in films %}
-        <div class="film-card"
+        <article class="film-card"
              data-title="{{ film.titolo|lower }}"
              data-times="{{ film.cinemas[0].times[0].ora if film.cinemas and film.cinemas[0].times else '99:99' }}"
              data-cinemas="{{ film.cinemas|map(attribute='name')|join(',')|lower }}"
              data-genre="{{ (film.genre or '')|lower }}">
-          <div class="film-poster"{% if film.poster_url %} style="background: url('{{ film.poster_url }}') center/cover no-repeat"{% endif %}>
-            {% if film.rating and film.rating != "0.0" %}<span class="film-rating">{{ film.rating }}</span>{% else %}<span class="film-rating film-rating-nd">N/D</span>{% endif %}
+
+          <div class="film-poster"{% if film.poster_url %} style="background-image: url('{{ film.poster_url }}')"{% endif %}>
+            {% if film.rating and film.rating != "0.0" %}
+              <span class="film-rating">★ {{ film.rating }}</span>
+            {% else %}
+              <span class="film-rating" style="background: var(--text-gray); color: #000;">N/D</span>
+            {% endif %}
+
             {% if film.genre %}
             <div class="film-genres-overlay">
               {% for g in film.genre.split("/")|truncate(2, True, '') %}
                 {% set g = g.strip() %}
-                <span class="genre-chip genre-{{ g|lower|replace(' ', '-') }}">{{ g }}</span>
+                <span class="genre-chip">{{ g }}</span>
               {% endfor %}
             </div>
             {% endif %}
-            <div class="film-title-overlay">
-              <h3>{{ film.titolo }}</h3>
-            </div>
           </div>
-          <div class="film-cinemas{% if film.cinemas|length > 3 %} collapsed{% endif %}">
-            {% set total_cinemas = film.cinemas|length %}
-            {% for c in film.cinemas %}
-              {% set c_lower = c.name|lower %}
-              {% set matched = namespace(dot=default_badge) %}
-              {% for k, v in cinema_colors.items() %}
-                {% if k.lower() in c_lower %}
-                  {% set matched.dot = v.badge %}
-                {% endif %}
-              {% endfor %}
-              <div class="film-cinema-row{% if total_cinemas > 3 and loop.index > 3 %} overflow-row{% endif %}" data-cinema="{{ c.name|lower }}">
-                {% set short_name = c.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
-                <div class="cinema-name"><span class="cinema-dot" style="background:{{ matched.dot }}"></span>{{ short_name }}</div>
-                <div class="cinema-times{% if c.times|length > 2 %} times-collapsed{% endif %}">
-                  {% for t in c.times %}
-                  <a href="{{ t.url }}" target="_blank" rel="noopener" class="film-time{% if t.vo %} film-time-vo{% endif %}{% if c.times|length > 2 and loop.index > 2 %} overflow-time{% endif %}">
-                    {% if t.vo %}<span class="pill-vo">VO</span>{% endif %}{{ t.ora }}
-                  </a>
-                  {% endfor %}
-                  {% if c.times|length > 2 %}
-                  <button class="expand-times" onclick="this.parentElement.classList.toggle('times-collapsed');this.textContent=this.parentElement.classList.contains('times-collapsed') ? '+{{ c.times|length - 2 }} altri' : 'Mostra meno'">+{{ c.times|length - 2 }} altri</button>
-                  {% endif %}
+
+          <div class="card-body">
+            <div class="title-tape">{{ film.titolo }}</div>
+
+            <div class="film-cinemas{% if film.cinemas|length > 3 %} collapsed{% endif %}">
+              {% set total_cinemas = film.cinemas|length %}
+              {% for c in film.cinemas %}
+                <div class="film-cinema-row{% if total_cinemas > 3 and loop.index > 3 %} overflow-row{% endif %}" data-cinema="{{ c.name|lower }}">
+                  {% set short_name = c.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
+                  <span class="cinema-name">■ {{ short_name }}</span>
+
+                  <div class="cinema-times{% if c.times|length > 2 %} times-collapsed{% endif %}">
+                    {% for t in c.times %}
+                    <a href="{{ t.url }}" target="_blank" rel="noopener" class="film-time{% if c.times|length > 2 and loop.index > 2 %} overflow-time{% endif %}">
+                      {{ t.ora }}
+                      {% if t.vo %}<span class="pill-vo">VO</span>{% endif %}
+                    </a>
+                    {% endfor %}
+
+                    {% if c.times|length > 2 %}
+                    <button class="expand-times" onclick="this.parentElement.classList.toggle('times-collapsed');this.textContent=this.parentElement.classList.contains('times-collapsed') ? '+{{ c.times|length - 2 }} altri' : 'Meno'">+{{ c.times|length - 2 }} altri</button>
+                    {% endif %}
+                  </div>
                 </div>
-              </div>
-            {% endfor %}
-            {% if total_cinemas > 3 %}
-            <button class="expand-cinemas" onclick="this.parentElement.classList.toggle('collapsed');this.textContent=this.parentElement.classList.contains('collapsed') ? '+ altri {{ total_cinemas - 3 }} cinema' : 'Mostra meno'">
-              + altri {{ total_cinemas - 3 }} cinema
-            </button>
-            {% endif %}
+              {% endfor %}
+
+              {% if total_cinemas > 3 %}
+              <button class="expand-cinemas" onclick="this.parentElement.classList.toggle('collapsed');this.textContent=this.parentElement.classList.contains('collapsed') ? '+ altri {{ total_cinemas - 3 }} cinema' : 'Meno'">
+                + altri {{ total_cinemas - 3 }} cinema
+              </button>
+              {% endif %}
+            </div>
           </div>
-        </div>
+
+        </article>
       {% endfor %}
     {% else %}
-      <div class="empty-state" style="grid-column:1/-1">
-        <h3>Nessuna programmazione</h3>
+      <div class="empty-state">
+        <h3>// NESSUNA PROGRAMMAZIONE</h3>
         <p>Non ci sono film disponibili per questa data.</p>
       </div>
     {% endif %}
-  </div>
+  </main>
 
-  <!-- footer -->
+  <!-- FOOTER -->
   <footer class="footer">
-    <p>Dati forniti dai circuiti cinematografici di Bologna &middot; Aggiornato: {{ updated_at if updated_at else "—" }}</p>
+    <p>DATI FORNITI DAI CIRCUITI CINEMATOGRAFICI DI BOLOGNA &middot; AGGIORNATO: {{ updated_at if updated_at else "—" }}</p>
   </footer>
 
 </div>
 
 <script>
 (function() {
-  // dropdown toggle
+  // Dropdown toggle
   function setupDropdown(btnId, menuId) {
     const btn = document.getElementById(btnId);
     const menu = document.getElementById(menuId);
@@ -601,7 +637,7 @@ body{
   setupDropdown('sortToggle', 'sortMenu');
   setupDropdown('genreToggle', 'genreMenu');
 
-  // auto-refresh: fetch nuovi dati ogni 15 minuti
+  // Auto-refresh
   function autoRefresh() {
     fetch('/api/refresh', {method: 'POST'})
       .then(function(r) { return r.json(); })
@@ -630,7 +666,7 @@ body{
 
   setInterval(autoRefresh, 15 * 60 * 1000);
 
-  // filter
+  // Filter & Sort
   const filterItems = document.querySelectorAll('#filterMenu .dropdown-item');
   const filterLabel = document.getElementById('filterLabel');
   const cards = document.querySelectorAll('.film-card');
@@ -640,14 +676,11 @@ body{
     item.addEventListener('click', function() {
       filterItems.forEach(i => i.classList.remove('active'));
       this.classList.add('active');
-      const filter = this.dataset.filter;
-      filterLabel.textContent = this.textContent.trim();
-
+      filterLabel.textContent = "\u25A0 " + this.textContent.trim().toUpperCase();
       applyFiltersAndSort();
     });
   });
 
-  // sort
   const sortItems = document.querySelectorAll('#sortMenu .dropdown-item');
   const sortLabel = document.getElementById('sortLabel');
 
@@ -655,25 +688,24 @@ body{
     item.addEventListener('click', function() {
       sortItems.forEach(i => i.classList.remove('active'));
       this.classList.add('active');
-      sortLabel.textContent = this.textContent.trim();
-
+      sortLabel.textContent = "// " + this.textContent.trim().toUpperCase();
       applyFiltersAndSort();
     });
   });
 
-  // genre filter
   const genreItems = document.querySelectorAll('#genreMenu .dropdown-item');
   const genreLabel = document.getElementById('genreLabel');
 
-  genreItems.forEach(function(item) {
-    item.addEventListener('click', function() {
-      genreItems.forEach(i => i.classList.remove('active'));
-      this.classList.add('active');
-      genreLabel.textContent = this.textContent.trim();
-
-      applyFiltersAndSort();
+  if (genreItems) {
+    genreItems.forEach(function(item) {
+      item.addEventListener('click', function() {
+        genreItems.forEach(i => i.classList.remove('active'));
+        this.classList.add('active');
+        genreLabel.textContent = "// " + this.textContent.trim().toUpperCase();
+        applyFiltersAndSort();
+      });
     });
-  });
+  }
 
   function applyFiltersAndSort() {
     const activeFilter = document.querySelector('#filterMenu .dropdown-item.active');
@@ -685,16 +717,14 @@ body{
 
     let visible = 0;
     const parent = document.getElementById('filmGrid');
-
-    // collect visible cards
     const visibleCards = [];
+
     cards.forEach(function(card) {
       const cinemas = card.dataset.cinemas || '';
       const filmGenre = card.dataset.genre || '';
       const filmHasCinema = (filter === 'all' || cinemas.includes(filter));
       const filmHasGenre = (genre === 'all' || filmGenre.includes(genre));
 
-      // filter cinema rows within card
       const rows = card.querySelectorAll('.film-cinema-row');
       rows.forEach(function(row) {
         if (filter === 'all' || row.dataset.cinema.includes(filter)) {
@@ -710,20 +740,17 @@ body{
       }
     });
 
-    // sort
     if (sort === 'title') {
-      visibleCards.sort((a, b) => (a.dataset.title || '').localeCompare(b.dataset.title || ''));
+      visibleCards.sort(function(a, b) { return (a.dataset.title || '').localeCompare(b.dataset.title || ''); });
     } else if (sort === 'time') {
-      visibleCards.sort((a, b) => (a.dataset.times || '99:99').localeCompare(b.dataset.times || '99:99'));
+      visibleCards.sort(function(a, b) { return (a.dataset.times || '99:99').localeCompare(b.dataset.times || '99:99'); });
     }
 
-    // reorder: hide all, then append visible in order
     cards.forEach(function(c) { c.style.display = 'none'; });
     visibleCards.forEach(function(c) { parent.appendChild(c); c.style.display = ''; });
 
-    // empty state
     if (emptyState) {
-      emptyState.style.display = (visible === 0 && cards.length > 0) ? '' : 'none';
+      emptyState.style.display = (visible === 0 && cards.length > 0) ? 'block' : 'none';
     }
   }
 
