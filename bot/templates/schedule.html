@@ -265,26 +265,6 @@ body{
 .cinema-times{
   display:flex;flex-wrap:wrap;gap:6px;align-items:center
 }
-.cinema-times.times-collapsed .overflow-time{display:none}
-.expand-times{
-  display:inline-flex;align-items:center;gap:3px;
-  font-size:0.6rem;color:#71717a;background:rgba(255,255,255,0.04);
-  border:1px solid rgba(255,255,255,0.1);border-radius:6px;
-  cursor:pointer;padding:3px 10px;font-weight:600;white-space:nowrap;
-  transition:all .2s ease
-}
-.expand-times:hover{background:rgba(226,178,80,0.1);color:#e2b250;border-color:rgba(226,178,80,0.3)}
-.expand-times::after{content:" ▾";font-size:0.5rem}
-.expand-cinemas{
-  display:inline-flex;align-items:center;gap:3px;
-  font-size:0.6rem;color:#71717a;background:rgba(255,255,255,0.04);
-  border:1px solid rgba(255,255,255,0.1);border-radius:6px;
-  cursor:pointer;padding:3px 10px;font-weight:600;
-  transition:all .2s ease
-}
-.expand-cinemas:hover{background:rgba(226,178,80,0.1);color:#e2b250;border-color:rgba(226,178,80,0.3)}
-.expand-cinemas::after{content:" ▾";font-size:0.5rem}
-.film-cinemas.collapsed .overflow-row{display:none}
 .film-time{
   display:inline-flex;align-items:center;gap:4px;
   background:rgba(255,255,255,0.06);
@@ -401,8 +381,6 @@ body{
     white-space:nowrap
   }
   .pill-vo{font-size:0.45rem}
-  .expand-times{font-size:0.55rem;padding:4px 8px}
-  .expand-cinemas{font-size:0.55rem;padding:4px 8px}
   .header{padding:12px 0}
   .logo-bos{font-size:2.2rem}
   .logo-sub{font-size:0.55rem;letter-spacing:0.2em}
@@ -558,8 +536,7 @@ body{
               <h3>{{ film.titolo }}</h3>
             </div>
           </div>
-          <div class="film-cinemas{% if film.cinemas|length > 3 %} collapsed{% endif %}">
-            {% set total_cinemas = film.cinemas|length %}
+          <div class="film-cinemas">
             {% for c in film.cinemas %}
               {% set c_lower = c.name|lower %}
               {% set matched = namespace(dot=default_badge) %}
@@ -568,26 +545,18 @@ body{
                   {% set matched.dot = v.badge %}
                 {% endif %}
               {% endfor %}
-              <div class="film-cinema-row{% if total_cinemas > 3 and loop.index > 3 %} overflow-row{% endif %}" data-cinema="{{ c.name|lower }}">
+              <div class="film-cinema-row" data-cinema="{{ c.name|lower }}">
                 {% set short_name = c.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
                 <div class="cinema-name"><span class="cinema-dot" style="background:{{ matched.dot }}"></span>{{ short_name }}</div>
-                <div class="cinema-times{% if c.times|length > 2 %} times-collapsed{% endif %}">
+                <div class="cinema-times">
                   {% for t in c.times %}
-                  <a href="{{ t.url }}" target="_blank" rel="noopener" class="film-time{% if t.vo %} film-time-vo{% endif %}{% if c.times|length > 2 and loop.index > 2 %} overflow-time{% endif %}">
+                  <a href="{{ t.url }}" target="_blank" rel="noopener" class="film-time{% if t.vo %} film-time-vo{% endif %}">
                     {% if t.vo %}<span class="pill-vo">VO</span>{% endif %}{{ t.ora }}
                   </a>
                   {% endfor %}
-                  {% if c.times|length > 2 %}
-                  <button class="expand-times" onclick="this.parentElement.classList.toggle('times-collapsed');this.textContent=this.parentElement.classList.contains('times-collapsed') ? '+{{ c.times|length - 2 }} altri' : 'Mostra meno'">+{{ c.times|length - 2 }} altri</button>
-                  {% endif %}
                 </div>
               </div>
             {% endfor %}
-            {% if total_cinemas > 3 %}
-            <button class="expand-cinemas" onclick="this.parentElement.classList.toggle('collapsed');this.textContent=this.parentElement.classList.contains('collapsed') ? '+ altri {{ total_cinemas - 3 }} cinema' : 'Mostra meno'">
-              + altri {{ total_cinemas - 3 }} cinema
-            </button>
-            {% endif %}
           </div>
         </div>
       {% endfor %}
