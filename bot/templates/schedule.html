@@ -499,6 +499,21 @@ body{
         <button class="dropdown-item" data-sort="time">Orario</button>
       </div>
     </div>
+
+    {% if genres %}
+    <div class="filter-wrapper" id="genreWrapper">
+      <button class="filter-btn" id="genreToggle">
+        <span id="genreLabel">Genere</span>
+        <span class="arrow">▾</span>
+      </button>
+      <div class="dropdown-menu" id="genreMenu">
+        <button class="dropdown-item active" data-genre="all">Tutti i generi</button>
+        {% for genre_name in genres %}
+        <button class="dropdown-item" data-genre="{{ genre_name|lower }}">{{ genre_name }}</button>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
   </div>
 
   <!-- day header -->
@@ -513,7 +528,8 @@ body{
         <div class="film-card"
              data-title="{{ film.titolo|lower }}"
              data-times="{{ film.cinemas[0].times[0].ora if film.cinemas and film.cinemas[0].times else '99:99' }}"
-             data-cinemas="{{ film.cinemas|map(attribute='name')|join(',')|lower }}">
+             data-cinemas="{{ film.cinemas|map(attribute='name')|join(',')|lower }}"
+             data-genre="{{ (film.genre or '')|lower }}">
           <div class="film-poster"{% if film.poster_url %} style="background: url('{{ film.poster_url }}') center/cover no-repeat"{% endif %}>
             {% if film.rating and film.rating != "0.0" %}<span class="film-rating">{{ film.rating }}</span>{% else %}<span class="film-rating film-rating-nd">N/D</span>{% endif %}
             {% if film.genre %}
@@ -593,6 +609,7 @@ body{
   }
   setupDropdown('filterToggle', 'filterMenu');
   setupDropdown('sortToggle', 'sortMenu');
+  setupDropdown('genreToggle', 'genreMenu');
 
   // refresh
   window.doRefresh = function() {
@@ -668,11 +685,27 @@ body{
     });
   });
 
+  // genre filter
+  const genreItems = document.querySelectorAll('#genreMenu .dropdown-item');
+  const genreLabel = document.getElementById('genreLabel');
+
+  genreItems.forEach(function(item) {
+    item.addEventListener('click', function() {
+      genreItems.forEach(i => i.classList.remove('active'));
+      this.classList.add('active');
+      genreLabel.textContent = this.textContent.trim();
+
+      applyFiltersAndSort();
+    });
+  });
+
   function applyFiltersAndSort() {
     const activeFilter = document.querySelector('#filterMenu .dropdown-item.active');
     const filter = activeFilter ? activeFilter.dataset.filter : 'all';
     const activeSort = document.querySelector('#sortMenu .dropdown-item.active');
     const sort = activeSort ? activeSort.dataset.sort : 'default';
+    const activeGenre = document.querySelector('#genreMenu .dropdown-item.active');
+    const genre = activeGenre ? activeGenre.dataset.genre : 'all';
 
     let visible = 0;
     const parent = document.getElementById('filmGrid');
@@ -681,7 +714,9 @@ body{
     const visibleCards = [];
     cards.forEach(function(card) {
       const cinemas = card.dataset.cinemas || '';
+      const filmGenre = card.dataset.genre || '';
       const filmHasCinema = (filter === 'all' || cinemas.includes(filter));
+      const filmHasGenre = (genre === 'all' || filmGenre.includes(genre));
 
       // filter cinema rows within card
       const rows = card.querySelectorAll('.film-cinema-row');
@@ -693,7 +728,7 @@ body{
         }
       });
 
-      if (filmHasCinema) {
+      if (filmHasCinema && filmHasGenre) {
         visibleCards.push(card);
         visible++;
       }

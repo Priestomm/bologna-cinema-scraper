@@ -376,6 +376,16 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
 
     film_list = sorted(film_groups.values(), key=lambda f: f["titolo"].lower())
 
+    # Estrai generi unici per il filtro
+    all_genres: set[str] = set()
+    for fg in film_list:
+        if fg["genre"]:
+            for g in fg["genre"].split("/"):
+                g = g.strip()
+                if g:
+                    all_genres.add(g)
+    genres_sorted = sorted(all_genres, key=str.lower)
+
     return templates.TemplateResponse(
         request=request,
         name="schedule.html",
@@ -386,6 +396,7 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
             **_date_params(target),
             "updated_at": snapshot.updated_at.strftime("%H:%M"),
             "films": film_list,
+            "genres": genres_sorted,
             "warnings": snapshot.warnings,
         },
     )
