@@ -11,12 +11,14 @@ Base: https://myuci---uci-backend-production-nfluwp7wga-oc.a.run.app/api
 from __future__ import annotations
 
 import re
+from collections import defaultdict
 from datetime import date, timedelta
 
 from .base import BaseScraper, Screening
 
 _UCI_API_BASE = "https://myuci---uci-backend-production-nfluwp7wga-oc.a.run.app/api"
 _UCI_THEATRE_SLUG = "uci-cinemas-meridiana-bologna"
+_UCI_CINEMA_PAGE = "https://ucicinemas.it/cinema/uci-cinemas-meridiana-bologna"
 _TIME_RE = re.compile(r"(\d{2}):(\d{2})")
 
 
@@ -38,15 +40,27 @@ class UCIScraper(BaseScraper):
         resp = self._get(url, headers={"Accept": "application/json"})
         data = resp.json().get("data", [])
 
-        screenings: list[Screening] = []
+        # Raggruppa per film: tutti gli orari e formati insieme
+        films: dict[str, dict] = {}
         for movie in data:
             title = movie.get("title", "").strip()
             if not title:
                 continue
 
-            poster = movie.get("poster", "")
-            genres = [g.get("name", "") for g in movie.get("genres", [])]
-            genre = " / ".join(g for g in genres if g)
+            if title not in films:
+                poster = movie.get("poster", "")
+                genres = [g.get("name", "") for g in movie.get("genres", [])]
+                genre = " / ".join(g for g in genres if g)
+                slug = movie.get("slug", "")
+                films[title] = {
+                    "poster": poster,
+                    "genre": genre,
+                    "slug": slug,
+                    "formats": defaultdict(list),
+                    "orari": [],
+                }
+
+            film = films[title]
 
             for screen_group in movie.get("screens", []):
                 for format_name, versions in screen_group.items():
@@ -56,38 +70,51 @@ class UCIScraper(BaseScraper):
                         subs = version.get("subtitles")
                         sub_name = subs.get("name", "") if subs else ""
 
-                        note = sala
+                        fmt_key = sala
                         if lang:
-                            note += f" - {lang}"
+                            fmt_key += f" - {lang}"
                         if sub_name:
-                            note += f" / Sub {sub_name}"
+                            fmt_key += f" / Sub {sub_name}"
 
-                        orari: list[str] = []
+                        orari_raw: list[str] = []
                         for perf in version.get("performances", []):
                             raw = perf.get("starts_at", "")
                             m = _TIME_RE.search(raw)
                             if m:
                                 t = f"{m.group(1)}:{m.group(2)}"
-                                if t not in orari:
-                                    orari.append(t)
+                                if t not in orari_raw:
+                                    orari_raw.append(t)
 
-                        if not orari:
-                            continue
+                        film["formats"][fmt_key].extend(orari_raw)
+                        film["orari"].extend(orari_raw)
 
-                        slug = movie.get("slug", "")
-                        url_film = f"https://ucicinemas.it/film/{slug}" if slug else ""
+        # Costruisci Screening unificati
+        screenings: list[Screening] = []
+        for title, info in films.items():
+            if not info["orari"]:
+                continue
 
-                        screenings.append(
-                            Screening(
-                                cinema="UCI Cinemas",
-                                titolo=title,
-                                orari=sorted(orari),
-                                note=note,
-                                poster_url=poster,
-                                genre=genre,
-                                url=url_film,
-                            )
-                        )
+            # Unisci formati nella nota (es. "XL - ITA / 2D - ITA")
+            note_parts = list(info["formats"].keys())
+            note = " / ".join(note_parts) if note_parts else ""
+
+            url_film = (
+                f"{_UCI_CINEMA_PAGE}?film={info['slug']}"
+                if info["slug"]
+                else _UCI_CINEMA_PAGE
+            )
+
+            screenings.append(
+                Screening(
+                    cinema="UCI Cinemas",
+                    titolo=title,
+                    orari=sorted(set(info["orari"])),
+                    note=note,
+                    poster_url=info["poster"],
+                    genre=info["genre"],
+                    url=url_film,
+                )
+            )
 
         return screenings
 
