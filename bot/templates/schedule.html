@@ -189,13 +189,6 @@ body{
   padding:12px;
   background:linear-gradient(135deg, #1a1a2e, #2d2d44)
 }
-.film-badge{
-  position:absolute;top:10px;right:10px;
-  padding:3px 10px;border-radius:4px;
-  font-size:0.65rem;font-weight:700;text-transform:uppercase;
-  letter-spacing:0.05em;color:#fff;background:rgba(0,0,0,0.7);
-  backdrop-filter:blur(4px)
-}
 .film-rating{
   position:absolute;top:10px;left:10px;
   padding:3px 8px;border-radius:4px;
@@ -237,6 +230,25 @@ body{
 .film-genre{
   font-size:0.65rem;color:#a78bfa;padding:0 12px 2px;
   font-weight:600;letter-spacing:0.03em
+}
+.film-cinemas{
+  padding:0 12px 8px;display:flex;flex-direction:column;gap:6px
+}
+.film-cinema-row{
+  display:flex;align-items:center;gap:8px;
+  padding:4px 0;border-top:1px solid rgba(255,255,255,0.06)
+}
+.cinema-badge{
+  padding:2px 8px;border-radius:4px;flex-shrink:0;
+  font-size:0.6rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:0.04em;color:#fff;min-width:0;
+  max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.cinema-times{
+  display:flex;flex-wrap:wrap;gap:4px
+}
+.cinema-times .film-time{
+  padding:2px 8px;font-size:0.72rem
 }
 
 /* empty */
@@ -285,7 +297,6 @@ body{
   .date-day{font-size:0.6rem}
   .date-month{font-size:0.55rem}
   .film-poster{padding:6px;aspect-ratio:2/3}
-  .film-badge{font-size:0.5rem;padding:2px 5px;top:4px;right:4px;max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .film-rating{font-size:0.55rem;padding:2px 5px;top:4px;left:4px}
   .film-lang{font-size:0.45rem;padding:2px 5px;top:22px;right:4px}
   .film-title-overlay h3{font-size:0.75rem;line-height:1.15}
@@ -293,6 +304,9 @@ body{
   .film-time{font-size:0.65rem;padding:2px 6px}
   .film-note{font-size:0.6rem;padding:0 6px 6px}
   .film-genre{font-size:0.55rem;padding:0 6px 2px}
+  .film-cinemas{padding:0 6px 6px;gap:4px}
+  .cinema-badge{font-size:0.5rem;padding:1px 5px;max-width:80px}
+  .cinema-times .film-time{font-size:0.6rem;padding:2px 5px}
   .filter-bar{padding:0 0 14px}
   .refresh-btn{padding:6px 10px;font-size:0.7rem}
   .filter-btn{padding:6px 10px;font-size:0.7rem}
@@ -366,8 +380,15 @@ body{
       </button>
       <div class="dropdown-menu" id="filterMenu">
         <button class="dropdown-item active" data-filter="all">Tutti i cinema</button>
-        {% set all_cinemas = cinemas|map(attribute='name')|list %}
-        {% for cinema_name in all_cinemas %}
+        {% set ns = namespace(cinema_names=[]) %}
+        {% for film in films %}
+          {% for c in film.cinemas %}
+            {% if c.name not in ns.cinema_names %}
+              {% set ns.cinema_names = ns.cinema_names + [c.name] %}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+        {% for cinema_name in ns.cinema_names|sort %}
         <button class="dropdown-item" data-filter="{{ cinema_name|lower }}">{{ cinema_name }}</button>
         {% endfor %}
       </div>
@@ -382,7 +403,6 @@ body{
         <button class="dropdown-item active" data-sort="default">Predefinito</button>
         <button class="dropdown-item" data-sort="title">Titolo A-Z</button>
         <button class="dropdown-item" data-sort="time">Orario</button>
-        <button class="dropdown-item" data-sort="cinema">Cinema</button>
       </div>
     </div>
   </div>
@@ -394,43 +414,52 @@ body{
 
   <!-- film grid -->
   <div class="film-grid" id="filmGrid">
-    {% if cinemas %}
-      {% for cinema in cinemas %}
-        {% for film in cinema.films %}
-          {% set cinema_lower = cinema.name|lower %}
-          {% set matched = namespace(color=default_grad, badge_bg=default_badge) %}
-          {% for k, v in cinema_colors.items() %}
-            {% if k.lower() in cinema_lower %}
-              {% set matched.color = v.grad %}
-              {% set matched.badge_bg = v.badge %}
-            {% endif %}
-          {% endfor %}
-          <a href="{{ film.url }}" target="_blank" rel="noopener" class="film-card" data-cinema="{{ cinema.name|lower }}" data-title="{{ film.titolo|lower }}" data-times="{{ film.orari|first|default('99:99') }}">
-            <div class="film-poster"{% if film.poster_url %} style="background: url('{{ film.poster_url }}') center/cover no-repeat"{% endif %}>
-              {% if film.rating and film.rating != "0.0" %}<span class="film-rating">&#9733; {{ film.rating }}</span>{% else %}<span class="film-rating" style="background:rgba(100,100,100,0.7);color:#aaa">&#9733; N/D</span>{% endif %}
-              {% set badge_name = cinema.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
-              <span class="film-badge" style="background: {{ matched.badge_bg }}">{{ badge_name|upper }}</span>
-              {% set note_lower = film.note|lower %}
+    {% if films %}
+      {% for film in films %}
+        <a href="{{ film.url }}" target="_blank" rel="noopener" class="film-card"
+           data-title="{{ film.titolo|lower }}"
+           data-times="{{ film.cinemas[0].orari[0] if film.cinemas and film.cinemas[0].orari else '99:99' }}"
+           data-cinemas="{{ film.cinemas|map(attribute='name')|join(',')|lower }}">
+          <div class="film-poster"{% if film.poster_url %} style="background: url('{{ film.poster_url }}') center/cover no-repeat"{% endif %}>
+            {% if film.rating and film.rating != "0.0" %}<span class="film-rating">&#9733; {{ film.rating }}</span>{% else %}<span class="film-rating" style="background:rgba(100,100,100,0.7);color:#aaa">&#9733; N/D</span>{% endif %}
+            {% set has_vo = namespace(found=false) %}
+            {% for c in film.cinemas %}
+              {% set note_lower = c.note|lower %}
               {% if "vo" in note_lower or "sub ita" in note_lower or "sub eng" in note_lower %}
-              <span class="film-lang">VO</span>
+                {% set has_vo.found = true %}
               {% endif %}
-              <div class="film-title-overlay">
-                <h3>{{ film.titolo }}</h3>
-              </div>
+            {% endfor %}
+            {% if has_vo.found %}
+            <span class="film-lang">VO</span>
+            {% endif %}
+            <div class="film-title-overlay">
+              <h3>{{ film.titolo }}</h3>
             </div>
-            <div class="film-times">
-              {% for ora in film.orari %}
-              <span class="film-time">{{ ora }}</span>
+          </div>
+          <div class="film-cinemas">
+            {% for c in film.cinemas %}
+              {% set c_lower = c.name|lower %}
+              {% set matched = namespace(color=default_grad, badge_bg=default_badge) %}
+              {% for k, v in cinema_colors.items() %}
+                {% if k.lower() in c_lower %}
+                  {% set matched.color = v.grad %}
+                  {% set matched.badge_bg = v.badge %}
+                {% endif %}
               {% endfor %}
-            </div>
-            {% if film.genre %}
-            <div class="film-genre">{{ film.genre }}</div>
-            {% endif %}
-            {% if film.note %}
-            <div class="film-note">{{ film.note }}</div>
-            {% endif %}
-          </a>
-        {% endfor %}
+              <div class="film-cinema-row" data-cinema="{{ c.name|lower }}">
+                <span class="cinema-badge" style="background: {{ matched.badge_bg }}">{{ c.name|upper }}</span>
+                <div class="cinema-times">
+                  {% for ora in c.orari %}
+                  <span class="film-time">{{ ora }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          {% if film.genre %}
+          <div class="film-genre">{{ film.genre }}</div>
+          {% endif %}
+        </a>
       {% endfor %}
     {% else %}
       <div class="empty-state" style="grid-column:1/-1">
@@ -551,9 +580,20 @@ body{
     // collect visible cards
     const visibleCards = [];
     cards.forEach(function(card) {
-      const cinema = card.dataset.cinema;
-      const match = (filter === 'all' || cinema.includes(filter));
-      if (match) {
+      const cinemas = card.dataset.cinemas || '';
+      const filmHasCinema = (filter === 'all' || cinemas.includes(filter));
+
+      // filter cinema rows within card
+      const rows = card.querySelectorAll('.film-cinema-row');
+      rows.forEach(function(row) {
+        if (filter === 'all' || row.dataset.cinema.includes(filter)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      if (filmHasCinema) {
         visibleCards.push(card);
         visible++;
       }
@@ -564,8 +604,6 @@ body{
       visibleCards.sort((a, b) => (a.dataset.title || '').localeCompare(b.dataset.title || ''));
     } else if (sort === 'time') {
       visibleCards.sort((a, b) => (a.dataset.times || '99:99').localeCompare(b.dataset.times || '99:99'));
-    } else if (sort === 'cinema') {
-      visibleCards.sort((a, b) => (a.dataset.cinema || '').localeCompare(b.dataset.cinema || ''));
     }
 
     // reorder: hide all, then append visible in order

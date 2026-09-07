@@ -14,6 +14,7 @@ Include:
 
 from __future__ import annotations
 
+import re
 import threading
 import time
 from datetime import date, datetime, timedelta
@@ -36,6 +37,18 @@ _TZ = pytz.timezone(settings.timezone)
 _start_time = time.time()
 
 _cache: Cache | None = None
+
+
+def _normalize_title(title: str) -> str:
+    """Normalizza il titolo per il raggruppamento film duplicati."""
+    t = title.lower()
+    t = re.sub(r"\s*\(.*?\)\s*", " ", t)
+    for prefix in ("original version - ", "original version: ", "original: ", "v.o.: "):
+        t = t.removeprefix(prefix)
+    t = re.sub(r"\s*-\s*v\.?\s*o\.?\s*$", "", t)
+    t = re.sub(r"\s*-\s*versione originale\s*$", "", t)
+    t = re.sub(r"[^a-z0-9\s]", " ", t)
+    return " ".join(t.split())
 
 
 def _get_cache() -> Cache:
@@ -292,19 +305,49 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
                 "next": (target + timedelta(days=1)).isoformat(),
                 "prev": (target - timedelta(days=1)).isoformat(),
                 "updated_at": "",
-                "cinemas": [],
+                "films": [],
                 "warnings": ["Nessun dato disponibile per questa data."],
             },
         )
 
-    cinemas: dict[str, list[dict]] = {}
+    # Raggruppa per film normalizzato
+    film_groups: dict[str, dict] = {}
     for s in snapshot.screenings:
-        cinemas.setdefault(s.cinema, []).append(_screening_dict(s))
+        norm = _normalize_title(s.titolo)
+        if not norm:
+            continue
 
-    cinema_list = [
-        {"name": name, "count": len(films), "films": films}
-        for name, films in sorted(cinemas.items())
-    ]
+        if norm not in film_groups:
+            film_groups[norm] = {
+                "titolo": s.titolo,
+                "normalized": norm,
+                "poster_url": s.poster_url,
+                "rating": s.rating,
+                "genre": s.genre,
+                "url": s.url,
+                "cinemas": [],
+            }
+
+        # Aggiungi cinema con i suoi orari
+        cinema_entry = {
+            "name": s.cinema,
+            "orari": s.orari,
+            "note": s.note,
+        }
+        film_groups[norm]["cinemas"].append(cinema_entry)
+
+        # Aggiorna dati film con quelli del cinema che ha piu' info
+        fg = film_groups[norm]
+        if s.poster_url and not fg["poster_url"]:
+            fg["poster_url"] = s.poster_url
+        if s.rating and not fg["rating"]:
+            fg["rating"] = s.rating
+        if s.genre and not fg["genre"]:
+            fg["genre"] = s.genre
+        if s.url and not fg["url"]:
+            fg["url"] = s.url
+
+    film_list = sorted(film_groups.values(), key=lambda f: f["titolo"].lower())
 
     return templates.TemplateResponse(
         request=request,
@@ -315,7 +358,7 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
             "today": today,
             **_date_params(target),
             "updated_at": snapshot.updated_at.strftime("%H:%M"),
-            "cinemas": cinema_list,
+            "films": film_list,
             "warnings": snapshot.warnings,
         },
     )
