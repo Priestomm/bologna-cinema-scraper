@@ -47,7 +47,7 @@ def _clean_title_for_search(title: str) -> str:
         t = t.removeprefix(prefix)
     t = re.sub(r"\s*-\s*v\.?\s*o\.?\s*$", "", t)
     t = re.sub(r"\s*-\s*versione originale\s*$", "", t)
-    t = re.sub(r"\s*\(.*?\)\s*", " ", t)
+    t = re.sub(r"[()]", " ", t)
     return " ".join(t.split()).strip()
 
 
