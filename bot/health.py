@@ -46,11 +46,15 @@ def _normalize_title(title: str) -> str:
     t = re.sub(r"\s*\(.*?\)\s*", " ", t)
     for prefix in ("original version - ", "original version: ", "original: ", "v.o.: "):
         t = t.removeprefix(prefix)
-    t = re.sub(r"\s*-\s*v\.?\s*o\.?\s*$", "", t)
     t = re.sub(r"\s*-\s*versione originale\s*$", "", t)
-    # Rimuovi sottotitolo dopo " - " (es. "ONE NIGHT ONLY - QUANDO TUTTO È POSSIBILE")
+    t = re.sub(r"\s*-\s*original version\s*$", "", t)
+    t = re.sub(r"\s*-\s*v\.?\s*o\.?\s*$", "", t)
+    t = re.sub(r"\s*-\s*sub\s+(ita|eng)\s*$", "", t)
+    # Rimuovi sottotitolo dopo " - " solo se il risultato contiene marker VO
     if " - " in t:
-        t = t.rsplit(" - ", 1)[0]
+        candidate = t.rsplit(" - ", 1)[0]
+        if any(m in candidate for m in ("original version", "original", "v.o.", "v o")):
+            t = candidate
     t = re.sub(r"[^a-z0-9\s]", " ", t)
     return " ".join(t.split())
 
