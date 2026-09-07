@@ -42,7 +42,7 @@ gradient: {{ default_grad }}; badge: {{ default_badge }}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{
   font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  background:#121212;color:#fff;line-height:1.5;min-height:100vh;
+  background:#0f0f11;color:#f3f4f6;line-height:1.5;min-height:100vh;
   -webkit-font-smoothing:antialiased
 }
 .container{max-width:1200px;margin:0 auto;padding:0 20px}
@@ -50,64 +50,46 @@ body{
 /* header */
 .header{
   display:flex;justify-content:space-between;align-items:center;
-  padding:20px 0;border-bottom:1px solid #222
+  padding:20px 0;border-bottom:1px solid rgba(255,255,255,0.06)
 }
 .logo{
   font-family:'Abril Fatface',Georgia,serif;
-  font-size:1.8rem;color:#FF9F1C;text-transform:uppercase;
-  letter-spacing:0.05em;text-decoration:none;font-weight:400
+  font-size:1.8rem;color:#e2b250;text-transform:uppercase;
+  letter-spacing:0.05em;text-decoration:none;font-weight:400;
+  display:flex;align-items:baseline;gap:10px
 }
-.logo span{color:#FFD166}
+.logo span{font-size:0.6rem;font-family:'Inter',sans-serif;color:#71717a;letter-spacing:0.2em;text-transform:uppercase}
 .nav{display:flex;gap:24px}
 .nav a{
-  color:#999;text-decoration:none;font-size:0.85rem;
+  color:#71717a;text-decoration:none;font-size:0.85rem;
   text-transform:uppercase;letter-spacing:0.08em;transition:color .2s
 }
-.nav a:hover{color:#FF9F1C}
+.nav a:hover{color:#e2b250}
 
 /* hero */
 .hero{
-  background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);
-  margin:20px -20px 0;padding:60px 20px 50px;
-  position:relative;overflow:hidden;
-  border-bottom:3px solid #FF9F1C
-}
-.hero::after{
-  content:'';position:absolute;inset:0;
-  background:repeating-linear-gradient(
-    0deg,transparent,transparent 40px,rgba(255,159,28,0.03) 40px,rgba(255,159,28,0.03) 41px
-  );
-  pointer-events:none
+  padding:48px 0 32px;text-align:center
 }
 .hero h2{
   font-family:'Abril Fatface',Georgia,serif;
-  font-size:3.5rem;text-transform:uppercase;
-  letter-spacing:0.08em;color:#fff;position:relative;z-index:1;
-  text-align:center;line-height:1.1
-}
-.hero h2 span{
-  display:block;font-size:1rem;
-  font-family:'Inter',sans-serif;font-weight:400;color:#FFD166;
-  letter-spacing:0.3em;margin-top:8px;text-transform:uppercase
-}
-@media(max-width:600px){
-  .hero h2{font-size:2.2rem}
-  .hero{padding:40px 20px 35px}
+  font-size:2.8rem;text-transform:uppercase;
+  letter-spacing:0.06em;color:#f3f4f6;
+  font-weight:400
 }
 
 /* control bar */
 .control-bar{
   display:flex;align-items:center;gap:12px;
-  padding:20px 0 16px
+  padding:0 0 16px
 }
-.tabs{display:flex;gap:0;border:1px solid #333;border-radius:8px;overflow:hidden}
+.tabs{display:flex;gap:0;border:1px solid rgba(255,255,255,0.1);border-radius:8px;overflow:hidden}
 .tab{
   padding:8px 20px;font-size:0.8rem;font-weight:700;
   text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;
-  transition:all .2s;border:none;background:transparent;color:#666
+  transition:all .2s;border:none;background:transparent;color:#71717a
 }
-.tab.active{background:#FF9F1C;color:#000}
-.tab:not(.active):hover{color:#fff}
+.tab.active{background:rgba(226,178,80,0.15);color:#e2b250;border:1px solid rgba(226,178,80,0.3)}
+.tab:not(.active):hover{color:#f3f4f6}
 
 /* date bar */
 .date-bar{
@@ -119,19 +101,25 @@ body{
 .date-card{
   flex-shrink:0;width:90px;padding:10px 6px;
   border-radius:10px;cursor:pointer;text-align:center;
-  border:1.5px solid #333;background:#1a1a1a;transition:all .2s;
-  text-decoration:none;display:block;scroll-snap-align:start
+  border:1.5px solid rgba(255,255,255,0.08);background:#18181b;
+  transition:all .2s;text-decoration:none;display:block;scroll-snap-align:start;
+  position:relative
 }
-.date-card:hover{border-color:#555;background:#222}
+.date-card:hover{border-color:rgba(255,255,255,0.15);background:#1f1f23}
 .date-card.active{
-  background:#FF9F1C;border-color:#FF9F1C
+  background:#e2b250;border-color:#e2b250
+}
+.date-card.active::after{
+  content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);
+  width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;
+  border-top:5px solid #e2b250
 }
 .date-card.active .date-day,
 .date-card.active .date-num,
-.date-card.active .date-month{color:#000}
-.date-day{font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:#888}
-.date-num{font-size:1.3rem;font-weight:800;color:#fff;line-height:1.2;margin-top:2px}
-.date-month{font-size:0.65rem;text-transform:uppercase;color:#888;letter-spacing:0.06em}
+.date-card.active .date-month{color:#0f0f11}
+.date-day{font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:#71717a}
+.date-num{font-size:1.3rem;font-weight:800;color:#f3f4f6;line-height:1.2;margin-top:2px}
+.date-month{font-size:0.65rem;text-transform:uppercase;color:#71717a;letter-spacing:0.06em}
 
 /* filter bar */
 .filter-bar{
@@ -141,10 +129,11 @@ body{
   display:flex;align-items:center;gap:6px;
   padding:7px 14px;border-radius:8px;font-size:0.78rem;font-weight:600;
   text-transform:uppercase;letter-spacing:0.04em;
-  background:#1a1a1a;border:1px solid #333;color:#ccc;cursor:pointer;
-  transition:all .2s
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
+  color:#a1a1aa;cursor:pointer;backdrop-filter:blur(10px);
+  transition:all .2s ease
 }
-.refresh-btn:hover{border-color:#FF9F1C;color:#FF9F1C}
+.refresh-btn:hover{border-color:rgba(226,178,80,0.4);color:#e2b250}
 .refresh-btn.loading{opacity:0.5;pointer-events:none}
 .refresh-btn .spin{animation:spin 1s linear infinite;display:inline-block}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
@@ -152,36 +141,38 @@ body{
   display:flex;align-items:center;gap:6px;
   padding:7px 14px;border-radius:8px;font-size:0.78rem;font-weight:600;
   text-transform:uppercase;letter-spacing:0.04em;
-  background:#1a1a1a;border:1px solid #333;color:#ccc;cursor:pointer;
-  transition:all .2s
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
+  color:#a1a1aa;cursor:pointer;backdrop-filter:blur(10px);
+  transition:all .2s ease
 }
-.filter-btn:hover{border-color:#FF9F1C;color:#FF9F1C}
-.filter-btn.active{background:#FF9F1C;border-color:#FF9F1C;color:#000}
+.filter-btn:hover{border-color:rgba(226,178,80,0.4);color:#e2b250}
+.filter-btn.active{background:rgba(226,178,80,0.15);border-color:rgba(226,178,80,0.3);color:#e2b250}
 .filter-btn .arrow{font-size:0.6rem;margin-left:4px}
 
 /* day header */
 .day-header{
   display:inline-block;
-  background:#FF9F1C;color:#000;padding:6px 20px;
-  font-weight:800;font-size:0.85rem;text-transform:uppercase;
-  letter-spacing:0.08em;margin-bottom:20px;border-radius:6px
+  color:#71717a;padding:6px 16px;
+  font-weight:700;font-size:0.8rem;text-transform:uppercase;
+  letter-spacing:0.08em;margin-bottom:20px;border-radius:6px;
+  border:1px solid rgba(255,255,255,0.08)
 }
 
 /* film grid */
 .film-grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-  gap:20px;padding-bottom:60px;align-items:start
+  gap:20px;padding-bottom:60px;align-items:stretch
 }
 .film-card{
-  border-radius:12px;overflow:hidden;background:#1a1a1a;
+  border-radius:12px;overflow:hidden;background:#18181c;
   transition:transform .2s,box-shadow .2s;
-  position:relative;border:1px solid #2a2a2a;
-  display:block;color:inherit
+  position:relative;border:1px solid rgba(255,255,255,0.07);
+  display:flex;flex-direction:column;color:inherit
 }
 .film-card:hover{
   transform:translateY(-4px);
-  box-shadow:0 12px 30px rgba(0,0,0,0.5)
+  box-shadow:0 12px 30px rgba(0,0,0,0.6)
 }
 .film-poster{
   aspect-ratio:2/3;width:100%;position:relative;
@@ -191,65 +182,74 @@ body{
 }
 .film-rating{
   position:absolute;top:10px;left:10px;
-  padding:3px 8px;border-radius:4px;
+  padding:4px 10px;border-radius:20px;
   font-size:0.7rem;font-weight:700;
-  background:rgba(255,159,28,0.9);color:#000;
-  backdrop-filter:blur(4px);display:flex;align-items:center;gap:3px
+  background:rgba(0,0,0,0.6);color:#e2b250;
+  backdrop-filter:blur(8px);
+  display:flex;align-items:center;gap:4px;
+  border:1px solid rgba(255,255,255,0.1)
 }
+.film-rating::before{content:'★';font-size:0.65rem;color:#e2b250}
+.film-rating-nd{color:#71717a}
+.film-rating-nd::before{color:#71717a}
 .film-title-overlay{
-  width:100%;position:relative;z-index:1
+  width:100%;position:relative;z-index:1;
+  opacity:0;transition:opacity .3s ease
 }
+.film-card:hover .film-title-overlay{opacity:1}
 .film-title-overlay h3{
-  font-size:1rem;font-weight:700;color:#fff;line-height:1.3;
-  text-shadow:0 1px 4px rgba(0,0,0,0.9);
-  text-transform:uppercase;letter-spacing:0.03em;
-  background:linear-gradient(transparent 0%,rgba(0,0,0,0.3) 30%,rgba(0,0,0,0.85) 70%,rgba(0,0,0,0.95) 100%);
-  padding:24px 0 2px;margin:0 -12px;padding-left:12px;padding-right:12px
+  font-size:0.9rem;font-weight:600;color:#f3f4f6;line-height:1.3;
+  text-transform:uppercase;letter-spacing:0.04em;
+  background:linear-gradient(to top,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.5) 60%,transparent 100%);
+  padding:28px 0 6px;margin:0 -12px;padding-left:12px;padding-right:12px
 }
 .film-genres{
-  display:flex;flex-wrap:wrap;gap:4px;padding:6px 12px 8px
+  display:flex;flex-wrap:wrap;gap:4px;padding:8px 12px 4px
 }
 .genre-chip{
   font-size:0.55rem;font-weight:600;letter-spacing:0.02em;
-  padding:2px 8px;border-radius:10px;
+  padding:2px 8px;border-radius:6px;
   cursor:default;transition:opacity .15s;
-  color:#9ca3af;background:rgba(156,163,175,0.12)
+  color:#a1a1aa;background:transparent;
+  border:1px solid rgba(255,255,255,0.12)
 }
 .genre-chip:hover{opacity:0.8}
 /* palette generi */
-.genre-commedia{color:#fbbf24;background:rgba(251,191,36,0.12)}
-.genre-horror,.genre-terror{color:#ef4444;background:rgba(239,68,68,0.12)}
-.genre-dramma,.genre-drama{color:#60a5fa;background:rgba(96,165,250,0.12)}
-.genre-avventura,.genre-adventure{color:#34d399;background:rgba(52,211,153,0.12)}
-.genre-famiglia,.genre-family{color:#fb923c;background:rgba(251,146,60,0.12)}
-.genre-romance,.genre-romantico{color:#f472b6;background:rgba(244,114,182,0.12)}
-.genre-animazione,.genre-animation{color:#a78bfa;background:rgba(167,139,250,0.12)}
-.genre-azione,.genre-action{color:#f87171;background:rgba(248,113,113,0.12)}
-.genre-thriller{color:#fbbf24;background:rgba(251,191,36,0.12)}
-.genre-giallo,.genre-mystery{color:#94a3b8;background:rgba(148,163,184,0.12)}
-.genre-documentario,.genre-documentary{color:#2dd4bf;background:rgba(45,212,191,0.12)}
-.genre-musical,.genre-musicale{color:#e879f9;background:rgba(232,121,249,0.12)}
-.genre-guerra,.genre-war{color:#a8a29e;background:rgba(168,162,158,0.12)}
-.genre-western{color:#d97706;background:rgba(217,119,6,0.12)}
-.genre-sportivo,.genre-sport{color:#4ade80;background:rgba(74,222,128,0.12)}
-.genre-fantascienza,.genre-science-fiction,.genre-sci-fi{color:#38bdf8;background:rgba(56,189,248,0.12)}
-.genre-fantasy{color:#c084fc;background:rgba(192,132,252,0.12)}
-.genre-storia,.genre-history{color:#a8a29e;background:rgba(168,162,158,0.12)}
-.genre-biografico,.genre-biography{color:#d4a574;background:rgba(212,165,116,0.12)}
-.genre-guerra,.genre-war{color:#a8a29e;background:rgba(168,162,158,0.12)}
+.genre-commedia{color:#e2b250;border-color:rgba(226,178,80,0.3)}
+.genre-horror,.genre-terror{color:#ef4444;border-color:rgba(239,68,68,0.3)}
+.genre-dramma,.genre-drama{color:#60a5fa;border-color:rgba(96,165,250,0.3)}
+.genre-avventura,.genre-adventure{color:#34d399;border-color:rgba(52,211,153,0.3)}
+.genre-famiglia,.genre-family{color:#fb923c;border-color:rgba(251,146,60,0.3)}
+.genre-romance,.genre-romantico{color:#f472b6;border-color:rgba(244,114,182,0.3)}
+.genre-animazione,.genre-animation{color:#a78bfa;border-color:rgba(167,139,250,0.3)}
+.genre-azione,.genre-action{color:#f87171;border-color:rgba(248,113,113,0.3)}
+.genre-thriller{color:#e2b250;border-color:rgba(226,178,80,0.3)}
+.genre-giallo,.genre-mystery{color:#94a3b8;border-color:rgba(148,163,184,0.3)}
+.genre-documentario,.genre-documentary{color:#2dd4bf;border-color:rgba(45,212,191,0.3)}
+.genre-musical,.genre-musicale{color:#e879f9;border-color:rgba(232,121,249,0.3)}
+.genre-guerra,.genre-war{color:#a8a29e;border-color:rgba(168,162,158,0.3)}
+.genre-western{color:#d97706;border-color:rgba(217,119,6,0.3)}
+.genre-sportivo,.genre-sport{color:#4ade80;border-color:rgba(74,222,128,0.3)}
+.genre-fantascienza,.genre-science-fiction,.genre-sci-fi{color:#38bdf8;border-color:rgba(56,189,248,0.3)}
+.genre-fantasy{color:#c084fc;border-color:rgba(192,132,252,0.3)}
+.genre-storia,.genre-history{color:#a8a29e;border-color:rgba(168,162,158,0.3)}
+.genre-biografico,.genre-biography{color:#d4a574;border-color:rgba(212,165,116,0.3)}
 .film-cinemas{
-  padding:0 12px 8px;display:flex;flex-direction:column;gap:6px
+  padding:0 12px 8px;display:flex;flex-direction:column;gap:6px;
+  margin-top:auto
 }
 .film-cinema-row{
   display:flex;align-items:center;gap:8px;
-  padding:4px 0;border-top:1px solid rgba(255,255,255,0.06)
+  padding:4px 0;border-top:1px solid rgba(255,255,255,0.04)
 }
 .cinema-badge{
-  padding:2px 8px;border-radius:0 4px 4px 0;flex-shrink:0;
-  font-size:0.6rem;font-weight:700;text-transform:uppercase;
-  letter-spacing:0.04em;color:#eee;
-  border-left:3px solid #FF9F1C;background:rgba(255,255,255,0.05);
+  display:flex;align-items:center;gap:5px;
+  font-size:0.6rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:0.04em;color:#a1a1aa;flex-shrink:0;
   max-width:140px;word-wrap:break-word;line-height:1.3
+}
+.cinema-dot{
+  width:6px;height:6px;border-radius:50%;flex-shrink:0
 }
 .cinema-times{
   display:flex;flex-wrap:wrap;gap:4px;align-items:center
@@ -257,75 +257,79 @@ body{
 .cinema-times.times-collapsed .overflow-time{display:none}
 .expand-times{
   display:inline-flex;align-items:center;gap:3px;
-  font-size:0.6rem;color:#888;background:rgba(255,255,255,0.05);
-  border:1px solid rgba(255,255,255,0.12);border-radius:5px;
-  cursor:pointer;padding:2px 8px;font-weight:600;white-space:nowrap;
-  transition:background .15s,color .15s,border-color .15s
+  font-size:0.6rem;color:#71717a;background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.1);border-radius:6px;
+  cursor:pointer;padding:3px 10px;font-weight:600;white-space:nowrap;
+  transition:all .2s ease
 }
-.expand-times:hover{background:rgba(255,159,28,0.12);color:#FF9F1C;border-color:rgba(255,159,28,0.3)}
+.expand-times:hover{background:rgba(226,178,80,0.1);color:#e2b250;border-color:rgba(226,178,80,0.3)}
 .expand-times::after{content:" ▾";font-size:0.5rem}
-.expand-cinemas:hover{background:rgba(255,159,28,0.12);color:#FF9F1C;border-color:rgba(255,159,28,0.3)}
-.expand-cinemas::after{content:" ▾";font-size:0.5rem}
-.film-time{
-  display:inline-flex;align-items:center;gap:4px;
-  background:rgba(255,255,255,0.08);
-  color:#ccc;font-size:0.72rem;font-weight:600;
-  padding:3px 10px;border-radius:5px;
-  font-variant-numeric:tabular-nums;
-  text-decoration:none;cursor:pointer;
-  transition:background .15s,color .15s,transform .15s
-}
-.film-time:hover{
-  background:rgba(255,159,28,0.2);color:#FF9F1C;
-  transform:scale(1.05)
-}
-.film-time-vo{
-  background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3)
-}
-.film-time-vo:hover{
-  background:rgba(168,85,247,0.25);color:#c084fc
-}
-.pill-vo{
-  font-size:0.5rem;font-weight:800;text-transform:uppercase;
-  color:#a78bfa;letter-spacing:0.03em
-}
 .expand-cinemas{
   display:inline-flex;align-items:center;gap:3px;
-  font-size:0.6rem;color:#888;background:rgba(255,255,255,0.05);
-  border:1px solid rgba(255,255,255,0.12);border-radius:5px;
-  cursor:pointer;padding:2px 8px;font-weight:600;
-  transition:background .15s,color .15s,border-color .15s
+  font-size:0.6rem;color:#71717a;background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.1);border-radius:6px;
+  cursor:pointer;padding:3px 10px;font-weight:600;
+  transition:all .2s ease
 }
+.expand-cinemas:hover{background:rgba(226,178,80,0.1);color:#e2b250;border-color:rgba(226,178,80,0.3)}
+.expand-cinemas::after{content:" ▾";font-size:0.5rem}
 .film-cinemas.collapsed .overflow-row{display:none}
+.film-time{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(255,255,255,0.06);
+  color:#ffffff;font-size:0.72rem;font-weight:600;
+  padding:3px 10px;border-radius:6px;
+  border:1px solid rgba(255,255,255,0.1);
+  font-variant-numeric:tabular-nums;
+  text-decoration:none;cursor:pointer;
+  transition:all .2s ease
+}
+.film-time:hover{
+  background:rgba(226,178,80,0.12);color:#e2b250;
+  border-color:rgba(226,178,80,0.3);transform:translateY(-1px)
+}
+.film-time-vo{
+  background:rgba(168,85,247,0.08);border-color:rgba(168,85,247,0.2)
+}
+.film-time-vo:hover{
+  background:rgba(168,85,247,0.15);color:#c084fc;
+  border-color:rgba(168,85,247,0.4)
+}
+.pill-vo{
+  font-size:0.45rem;font-weight:700;text-transform:uppercase;
+  color:#a78bfa;letter-spacing:0.03em;
+  background:rgba(168,85,247,0.15);padding:1px 4px;border-radius:3px
+}
 
 /* empty */
 .empty-state{
-  text-align:center;padding:80px 20px;color:#555
+  text-align:center;padding:80px 20px;color:#52525b
 }
-.empty-state h3{font-size:1.5rem;margin-bottom:8px;color:#888}
+.empty-state h3{font-size:1.5rem;margin-bottom:8px;color:#71717a}
 .empty-state p{font-size:0.9rem}
 
 /* footer */
 .footer{
   text-align:center;padding:30px 0;
-  border-top:1px solid #222;margin-top:20px
+  border-top:1px solid rgba(255,255,255,0.06);margin-top:20px
 }
-.footer p{font-size:0.75rem;color:#555}
+.footer p{font-size:0.75rem;color:#52525b}
 
 /* dropdown menu */
 .dropdown-menu{
   position:absolute;top:100%;left:0;margin-top:4px;
-  background:#1a1a1a;border:1px solid #333;border-radius:8px;
-  padding:6px;min-width:180px;z-index:50;display:none
+  background:#18181b;border:1px solid rgba(255,255,255,0.1);border-radius:8px;
+  padding:6px;min-width:180px;z-index:50;display:none;
+  backdrop-filter:blur(10px)
 }
 .dropdown-menu.open{display:block}
 .dropdown-item{
   display:block;width:100%;padding:8px 12px;
-  font-size:0.8rem;color:#ccc;background:none;border:none;
+  font-size:0.8rem;color:#a1a1aa;background:none;border:none;
   text-align:left;cursor:pointer;border-radius:6px;transition:all .15s
 }
-.dropdown-item:hover{background:#FF9F1C;color:#000}
-.dropdown-item.active{background:#FF9F1C;color:#000;font-weight:700}
+.dropdown-item:hover{background:rgba(226,178,80,0.1);color:#e2b250}
+.dropdown-item.active{background:rgba(226,178,80,0.15);color:#e2b250;font-weight:700}
 .filter-wrapper{position:relative}
 
 /* responsive */
@@ -335,24 +339,23 @@ body{
   .logo{font-size:1.2rem}
   .nav{gap:10px}
   .nav a{font-size:0.7rem}
-  .hero{padding:30px 20px 25px;margin:12px -20px 0}
+  .hero{padding:24px 0 20px}
   .hero h2{font-size:1.8rem;letter-spacing:0.04em}
-  .hero h2 span{font-size:0.7rem;letter-spacing:0.2em}
   .date-bar{gap:6px;padding:0 0 12px}
   .date-card{width:64px;padding:8px 4px;border-radius:8px}
   .date-num{font-size:1rem}
   .date-day{font-size:0.6rem}
   .date-month{font-size:0.55rem}
-  .film-poster{padding:6px;aspect-ratio:2/3}
+  .film-poster{padding:6px 6px 0;aspect-ratio:2/3}
   .film-rating{font-size:0.55rem;padding:2px 5px;top:4px;left:4px}
   .film-title-overlay h3{font-size:0.75rem;line-height:1.15}
-  .film-genres{padding:4px 6px 6px;gap:3px}
+  .film-genres{padding:4px 6px 4px;gap:3px}
   .genre-chip{font-size:0.45rem;padding:1px 6px}
   .film-cinemas{padding:0 6px 6px;gap:4px}
-  .cinema-badge{font-size:0.5rem;padding:1px 5px;max-width:120px}
+  .cinema-badge{font-size:0.5rem;max-width:120px}
   .film-time{font-size:0.6rem;padding:2px 5px}
-  .expand-times{font-size:0.5rem}
-  .pill-vo{font-size:0.4rem}
+  .expand-times{font-size:0.5rem;padding:2px 6px}
+  .pill-vo{font-size:0.35rem}
   .filter-bar{padding:0 0 14px}
   .refresh-btn{padding:6px 10px;font-size:0.7rem}
   .filter-btn{padding:6px 10px;font-size:0.7rem}
@@ -384,10 +387,7 @@ body{
 
   <!-- hero -->
   <section class="hero">
-    <h2>
-      PROGRAMMAZIONE
-      <span>PROGRAMMAZIONE CINEMA A BOLOGNA</span>
-    </h2>
+    <h2>Programmazione Cinema</h2>
   </section>
 
   <!-- tabs -->
@@ -467,24 +467,32 @@ body{
              data-times="{{ film.cinemas[0].times[0].ora if film.cinemas and film.cinemas[0].times else '99:99' }}"
              data-cinemas="{{ film.cinemas|map(attribute='name')|join(',')|lower }}">
           <div class="film-poster"{% if film.poster_url %} style="background: url('{{ film.poster_url }}') center/cover no-repeat"{% endif %}>
-            {% if film.rating and film.rating != "0.0" %}<span class="film-rating">&#9733; {{ film.rating }}</span>{% else %}<span class="film-rating" style="background:rgba(100,100,100,0.7);color:#aaa">&#9733; N/D</span>{% endif %}
+            {% if film.rating and film.rating != "0.0" %}<span class="film-rating">{{ film.rating }}</span>{% else %}<span class="film-rating film-rating-nd">N/D</span>{% endif %}
             <div class="film-title-overlay">
               <h3>{{ film.titolo }}</h3>
             </div>
           </div>
+          {% if film.genre %}
+          <div class="film-genres">
+            {% for g in film.genre.split("/") %}
+              {% set g = g.strip() %}
+              <span class="genre-chip genre-{{ g|lower|replace(' ', '-') }}">{{ g }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
           <div class="film-cinemas{% if film.cinemas|length > 3 %} collapsed{% endif %}">
             {% set total_cinemas = film.cinemas|length %}
             {% for c in film.cinemas %}
               {% set c_lower = c.name|lower %}
-              {% set matched = namespace(border=default_badge) %}
+              {% set matched = namespace(dot=default_badge) %}
               {% for k, v in cinema_colors.items() %}
                 {% if k.lower() in c_lower %}
-                  {% set matched.border = v.badge %}
+                  {% set matched.dot = v.badge %}
                 {% endif %}
               {% endfor %}
               <div class="film-cinema-row{% if total_cinemas > 3 and loop.index > 3 %} overflow-row{% endif %}" data-cinema="{{ c.name|lower }}">
                 {% set short_name = c.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
-                <span class="cinema-badge" style="border-left-color: {{ matched.border }}">{{ short_name|upper }}</span>
+                <span class="cinema-badge"><span class="cinema-dot" style="background:{{ matched.dot }}"></span>{{ short_name }}</span>
                 <div class="cinema-times{% if c.times|length > 2 %} times-collapsed{% endif %}">
                   {% for t in c.times %}
                   <a href="{{ t.url }}" target="_blank" rel="noopener" class="film-time{% if t.vo %} film-time-vo{% endif %}{% if c.times|length > 2 and loop.index > 2 %} overflow-time{% endif %}">
@@ -503,14 +511,6 @@ body{
             </button>
             {% endif %}
           </div>
-          {% if film.genre %}
-          <div class="film-genres">
-            {% for g in film.genre.split("/") %}
-              {% set g = g.strip() %}
-              <span class="genre-chip genre-{{ g|lower|replace(' ', '-') }}">{{ g }}</span>
-            {% endfor %}
-          </div>
-          {% endif %}
         </div>
       {% endfor %}
     {% else %}
