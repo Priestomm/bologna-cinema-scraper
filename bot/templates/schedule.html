@@ -601,10 +601,34 @@ body{
   setupDropdown('sortToggle', 'sortMenu');
   setupDropdown('genreToggle', 'genreMenu');
 
-  // auto-refresh ogni 15 minuti
-  setInterval(function() {
-    window.location.reload();
-  }, 15 * 60 * 1000);
+  // auto-refresh: fetch nuovi dati ogni 15 minuti
+  function autoRefresh() {
+    fetch('/api/refresh', {method: 'POST'})
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.status === 'started' || d.status === 'already_running') {
+          pollAutoRefresh();
+        }
+      })
+      .catch(function() {});
+  }
+
+  function pollAutoRefresh() {
+    setTimeout(function() {
+      fetch('/api/refresh/status')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.in_progress) {
+            pollAutoRefresh();
+          } else {
+            window.location.reload();
+          }
+        })
+        .catch(function() { window.location.reload(); });
+    }, 2000);
+  }
+
+  setInterval(autoRefresh, 15 * 60 * 1000);
 
   // filter
   const filterItems = document.querySelectorAll('#filterMenu .dropdown-item');
