@@ -5,12 +5,14 @@ from .cineteca import CinetecaScraper
 from .circuito import CircuitoCinemaScraper
 from .nosadella import NosadellaScraper
 from .popup import PopUpCinemaScraper
+from .uci import UCIScraper
 
 ALL_SCRAPERS: list[type[BaseScraper]] = [
     CinetecaScraper,
     PopUpCinemaScraper,
     CircuitoCinemaScraper,
     NosadellaScraper,
+    UCIScraper,
 ]
 
 __all__ = [
@@ -22,4 +24,5 @@ __all__ = [
     "PopUpCinemaScraper",
     "ScraperResult",
     "Screening",
+    "UCIScraper",
 ]
