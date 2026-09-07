@@ -39,8 +39,9 @@ _start_time = time.time()
 _cache: Cache | None = None
 
 
-def _normalize_title(title: str) -> str:
-    """Normalizza il titolo per il raggruppamento film duplicati."""
+def _normalize_title(title: str, note: str = "") -> str:
+    """Normalizza il titolo per il raggruppamento film duplicati.
+    Titoli OV e non-OV restano separati."""
     t = title.lower()
     t = re.sub(r"\s*\(.*?\)\s*", " ", t)
     for prefix in ("original version - ", "original version: ", "original: ", "v.o.: "):
@@ -48,7 +49,13 @@ def _normalize_title(title: str) -> str:
     t = re.sub(r"\s*-\s*v\.?\s*o\.?\s*$", "", t)
     t = re.sub(r"\s*-\s*versione originale\s*$", "", t)
     t = re.sub(r"[^a-z0-9\s]", " ", t)
-    return " ".join(t.split())
+    t = " ".join(t.split())
+
+    # Separa OV da versione italiana
+    note_lower = note.lower()
+    is_ov = "vo" in note_lower or "sub ita" in note_lower or "sub eng" in note_lower
+    suffix = "-ov" if is_ov else "-it"
+    return t + suffix
 
 
 def _get_cache() -> Cache:
@@ -313,7 +320,7 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
     # Raggruppa per film normalizzato
     film_groups: dict[str, dict] = {}
     for s in snapshot.screenings:
-        norm = _normalize_title(s.titolo)
+        norm = _normalize_title(s.titolo, s.note)
         if not norm:
             continue
 
