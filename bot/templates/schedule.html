@@ -232,6 +232,10 @@ body{
   font-size:0.72rem;color:#777;padding:0 12px 12px;
   margin-top:-4px
 }
+.film-genre{
+  font-size:0.65rem;color:#a78bfa;padding:0 12px 2px;
+  font-weight:600;letter-spacing:0.03em
+}
 
 /* empty */
 .empty-state{
@@ -286,6 +290,7 @@ body{
   .film-times{padding:4px 6px 8px;gap:3px}
   .film-time{font-size:0.65rem;padding:2px 6px}
   .film-note{font-size:0.6rem;padding:0 6px 6px}
+  .film-genre{font-size:0.55rem;padding:0 6px 2px}
   .filter-bar{padding:0 0 14px}
   .refresh-btn{padding:6px 10px;font-size:0.7rem}
   .filter-btn{padding:6px 10px;font-size:0.7rem}
@@ -416,6 +421,9 @@ body{
               <span class="film-time">{{ ora }}</span>
               {% endfor %}
             </div>
+            {% if film.genre %}
+            <div class="film-genre">{{ film.genre }}</div>
+            {% endif %}
             {% if film.note %}
             <div class="film-note">{{ film.note }}</div>
             {% endif %}

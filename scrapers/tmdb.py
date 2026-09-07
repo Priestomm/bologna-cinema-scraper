@@ -26,6 +26,27 @@ logger = get_logger("scrapers.tmdb")
 _TMDB_SEARCH_URL = "https://api.themoviedb.org/3/search/movie"
 _CACHE_TTL_DAYS = 7
 
+_TMDB_GENRES: dict[int, str] = {
+    28: "Azione",
+    12: "Avventura",
+    16: "Animazione",
+    35: "Commedia",
+    80: "Crime",
+    99: "Documentario",
+    18: "Dramma",
+    10751: "Famiglia",
+    14: "Fantasy",
+    36: "Storia",
+    27: "Horror",
+    10402: "Musica",
+    9648: "Mistero",
+    10749: "Romance",
+    878: "Fantascienza",
+    53: "Thriller",
+    10752: "Guerra",
+    37: "Western",
+}
+
 
 def _normalize(text: str) -> str:
     """Lowercase, senza punteggiatura, trim."""
@@ -75,10 +96,17 @@ class TmdbClient:
                     title TEXT NOT NULL,
                     rating REAL,
                     tmdb_title TEXT,
+                    genres TEXT NOT NULL DEFAULT '',
                     fetched_at REAL NOT NULL
                 )
                 """
             )
+            # Migrazione: aggiungi colonna genres se manca
+            cols = {row[1] for row in conn.execute("PRAGMA table_info(ratings)")}
+            if "genres" not in cols:
+                conn.execute(
+                    "ALTER TABLE ratings ADD COLUMN genres TEXT NOT NULL DEFAULT ''"
+                )
 
     @contextmanager
     def _conn(self) -> Iterator[sqlite3.Connection]:
@@ -89,34 +117,40 @@ class TmdbClient:
         finally:
             conn.close()
 
-    def _cache_get(self, cache_key: str) -> tuple[float | None, str] | None:
+    def _cache_get(self, cache_key: str) -> tuple[float | None, str, str] | None:
         with self._conn() as conn:
             row = conn.execute(
-                "SELECT rating, tmdb_title, fetched_at FROM ratings WHERE cache_key = ?",
+                "SELECT rating, tmdb_title, genres, fetched_at FROM ratings WHERE cache_key = ?",
                 (cache_key,),
             ).fetchone()
         if not row:
             return None
-        rating, tmdb_title, fetched_at = row
+        rating, tmdb_title, genres, fetched_at = row
         age_days = (time.time() - fetched_at) / 86400
         if age_days > _CACHE_TTL_DAYS:
             return None
-        return rating, tmdb_title or ""
+        return rating, tmdb_title or "", genres or ""
 
     def _cache_put(
-        self, cache_key: str, title: str, rating: float | None, tmdb_title: str
+        self,
+        cache_key: str,
+        title: str,
+        rating: float | None,
+        tmdb_title: str,
+        genres: str = "",
     ) -> None:
         with self._conn() as conn:
             conn.execute(
                 """
-                INSERT INTO ratings (cache_key, title, rating, tmdb_title, fetched_at)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO ratings (cache_key, title, rating, tmdb_title, genres, fetched_at)
+                VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(cache_key) DO UPDATE SET
                     rating = excluded.rating,
                     tmdb_title = excluded.tmdb_title,
+                    genres = excluded.genres,
                     fetched_at = excluded.fetched_at
                 """,
-                (cache_key, title, rating, tmdb_title, time.time()),
+                (cache_key, title, rating, tmdb_title, genres, time.time()),
             )
 
     # ---- TMDb API ---------------------------------------------------
@@ -185,22 +219,23 @@ class TmdbClient:
             return best
         return None
 
-    def _get_rating(self, title: str, regista: str) -> str:
-        """Cerca il rating per un film dato titolo e regista."""
+    def _get_movie_info(self, title: str, regista: str) -> tuple[str, str]:
+        """Cerca rating + genere per un film dato titolo e regista."""
         if not self.enabled:
-            return ""
+            return "", ""
 
         cache_key = (
             f"{_normalize(_clean_title_for_search(title))}|{_normalize(regista)}"
         )
         if not cache_key.strip("|"):
-            return ""
+            return "", ""
 
         # Check cache
         cached = self._cache_get(cache_key)
         if cached is not None:
-            rating, _tmdb_title = cached
-            return f"{rating:.1f}" if rating is not None else ""
+            rating, _tmdb_title, genres = cached
+            rating_str = f"{rating:.1f}" if rating is not None else ""
+            return rating_str, genres
 
         # Search TMDb
         search_query = _clean_title_for_search(title)
@@ -214,7 +249,7 @@ class TmdbClient:
 
         if not results:
             self._cache_put(cache_key, title, None, "")
-            return ""
+            return "", ""
 
         # Find best match
         match = self._find_best_match(title, regista, results)
@@ -223,37 +258,44 @@ class TmdbClient:
 
         rating = match.get("vote_average")
         tmdb_title = match.get("title", "")
+        genre_ids = match.get("genre_ids", [])
+        genres = " / ".join(
+            _TMDB_GENRES[gid] for gid in genre_ids if gid in _TMDB_GENRES
+        )
 
-        self._cache_put(cache_key, title, rating, tmdb_title)
+        self._cache_put(cache_key, title, rating, tmdb_title, genres)
 
+        rating_str = ""
         if rating is not None and rating > 0:
-            return f"{rating:.1f}"
-        return ""
+            rating_str = f"{rating:.1f}"
+        return rating_str, genres
 
     def enrich_screenings(self, screenings: list[Screening]) -> list[Screening]:
-        """Aggiunge il rating a ogni Screening (muta in-place e restituisce)."""
+        """Aggiunge rating e genere a ogni Screening (muta in-place e restituisce)."""
         if not self.enabled:
             logger.info("TMDb disabilitato (nessuna API key)")
             return screenings
 
         # Deduplica per (titolo, regista) per evitare ricerche multiple
-        unique: dict[tuple[str, str], str] = {}
+        unique: dict[tuple[str, str], tuple[str, str]] = {}
         for s in screenings:
             key = (s.titolo, s.regista)
             if key not in unique:
-                unique[key] = ""
+                unique[key] = ("", "")
 
-        logger.info("Cerco rating per %d film unici su TMDb", len(unique))
+        logger.info("Cerco rating + genere per %d film unici su TMDb", len(unique))
 
         for i, (titolo, regista) in enumerate(unique):
-            rating = self._get_rating(titolo, regista)
-            unique[(titolo, regista)] = rating
-            if rating:
-                logger.debug("  %s (%s) → %s", titolo, regista, rating)
+            rating, genre = self._get_movie_info(titolo, regista)
+            unique[(titolo, regista)] = (rating, genre)
+            if rating or genre:
+                logger.debug("  %s (%s) → %s | %s", titolo, regista, rating, genre)
             if (i + 1) % 5 == 0:
                 logger.info("  %d/%d film cercati", i + 1, len(unique))
 
         for s in screenings:
-            s.rating = unique.get((s.titolo, s.regista), "")
+            rating, genre = unique.get((s.titolo, s.regista), ("", ""))
+            s.rating = rating
+            s.genre = genre
 
         return screenings

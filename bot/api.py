@@ -50,6 +50,8 @@ def _screening_dict(s: Screening) -> dict[str, Any]:
         "titolo": s.titolo,
         "orari": s.orari,
         "note": s.note,
+        "rating": s.rating,
+        "genre": s.genre,
     }
 
 

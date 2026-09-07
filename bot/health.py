@@ -334,6 +334,7 @@ def _screening_dict(s: Screening) -> dict[str, Any]:
         "rating": s.rating,
         "regista": s.regista,
         "url": s.url,
+        "genre": s.genre,
     }
 
 
