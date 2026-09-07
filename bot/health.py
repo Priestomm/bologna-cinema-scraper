@@ -364,11 +364,13 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
                 "times": [],
             }
         for ora in s.orari:
-            fg["cinemas"][cinema_key]["times"].append({
-                "ora": ora,
-                "vo": vo_flag,
-                "url": s.url,
-            })
+            fg["cinemas"][cinema_key]["times"].append(
+                {
+                    "ora": ora,
+                    "vo": vo_flag,
+                    "url": s.url,
+                }
+            )
 
     # Converti a lista, ordina orari per ora e cinema per numero di orari
     for fg in film_groups.values():
