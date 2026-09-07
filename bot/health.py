@@ -348,20 +348,20 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
         if s.genre and not fg["genre"]:
             fg["genre"] = s.genre
 
-        # Merge per cinema: ogni orario porta il suo flag vo
+        # Merge per cinema: ogni orario porta il suo flag vo e il suo URL
         cinema_key = s.cinema
         vo_flag = _is_vo(s.note)
         if cinema_key not in fg["cinemas"]:
             fg["cinemas"][cinema_key] = {
                 "name": s.cinema,
                 "times": [],
-                "url": s.url,
             }
         for ora in s.orari:
-            fg["cinemas"][cinema_key]["times"].append({"ora": ora, "vo": vo_flag})
-        # Aggiorna URL se quello nuovo e' piu' specifico
-        if s.url and not fg["cinemas"][cinema_key]["url"]:
-            fg["cinemas"][cinema_key]["url"] = s.url
+            fg["cinemas"][cinema_key]["times"].append({
+                "ora": ora,
+                "vo": vo_flag,
+                "url": s.url,
+            })
 
     # Converti a lista e ordina per numero di orari
     for fg in film_groups.values():

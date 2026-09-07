@@ -201,9 +201,9 @@ body{
 }
 .film-title-overlay h3{
   font-size:1rem;font-weight:700;color:#fff;line-height:1.3;
-  text-shadow:0 2px 8px rgba(0,0,0,0.7);
-  background:linear-gradient(transparent,rgba(0,0,0,0.8) 40%);
-  padding:20px 0 4px;margin:0 -12px;padding-left:12px;padding-right:12px
+  text-shadow:0 1px 4px rgba(0,0,0,0.9);
+  background:linear-gradient(transparent 0%,rgba(0,0,0,0.3) 30%,rgba(0,0,0,0.85) 70%,rgba(0,0,0,0.95) 100%);
+  padding:24px 0 6px;margin:0 -12px;padding-left:12px;padding-right:12px
 }
 .film-genres{
   display:flex;flex-wrap:wrap;gap:4px;padding:6px 12px 8px
@@ -255,10 +255,16 @@ body{
 }
 .cinema-times.times-collapsed .overflow-time{display:none}
 .expand-times{
-  font-size:0.55rem;color:#888;background:none;border:none;
-  cursor:pointer;padding:2px 0;font-weight:600;white-space:nowrap
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:0.6rem;color:#888;background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.12);border-radius:5px;
+  cursor:pointer;padding:2px 8px;font-weight:600;white-space:nowrap;
+  transition:background .15s,color .15s,border-color .15s
 }
-.expand-times:hover{color:#FF9F1C}
+.expand-times:hover{background:rgba(255,159,28,0.12);color:#FF9F1C;border-color:rgba(255,159,28,0.3)}
+.expand-times::after{content:" ▾";font-size:0.5rem}
+.expand-cinemas:hover{background:rgba(255,159,28,0.12);color:#FF9F1C;border-color:rgba(255,159,28,0.3)}
+.expand-cinemas::after{content:" ▾";font-size:0.5rem}
 .film-time{
   display:inline-flex;align-items:center;gap:4px;
   background:rgba(255,255,255,0.08);
@@ -283,11 +289,12 @@ body{
   color:#a78bfa;letter-spacing:0.03em
 }
 .expand-cinemas{
-  display:inline-block;margin-top:2px;
-  font-size:0.65rem;color:#888;background:none;border:none;
-  cursor:pointer;padding:2px 0;font-weight:600
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:0.6rem;color:#888;background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.12);border-radius:5px;
+  cursor:pointer;padding:2px 8px;font-weight:600;
+  transition:background .15s,color .15s,border-color .15s
 }
-.expand-cinemas:hover{color:#FF9F1C}
 .film-cinemas.collapsed .overflow-row{display:none}
 
 /* empty */
@@ -479,7 +486,7 @@ body{
                 <span class="cinema-badge" style="border-left-color: {{ matched.border }}">{{ short_name|upper }}</span>
                 <div class="cinema-times{% if c.times|length > 2 %} times-collapsed{% endif %}">
                   {% for t in c.times %}
-                  <a href="{{ c.url }}" target="_blank" rel="noopener" class="film-time{% if t.vo %} film-time-vo{% endif %}{% if c.times|length > 2 and loop.index > 2 %} overflow-time{% endif %}">
+                  <a href="{{ t.url }}" target="_blank" rel="noopener" class="film-time{% if t.vo %} film-time-vo{% endif %}{% if c.times|length > 2 and loop.index > 2 %} overflow-time{% endif %}">
                     {% if t.vo %}<span class="pill-vo">VO</span>{% endif %}{{ t.ora }}
                   </a>
                   {% endfor %}
