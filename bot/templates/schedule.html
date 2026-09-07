@@ -53,12 +53,22 @@ body{
   padding:20px 0;border-bottom:1px solid rgba(255,255,255,0.06)
 }
 .logo{
-  font-family:'Abril Fatface',Georgia,serif;
-  font-size:1.8rem;color:#e2b250;text-transform:uppercase;
-  letter-spacing:0.05em;text-decoration:none;font-weight:400;
-  display:flex;align-items:baseline;gap:10px
+  position:relative;display:inline-block;text-decoration:none;
+  line-height:1
 }
-.logo span{font-size:0.6rem;font-family:'Inter',sans-serif;color:#71717a;letter-spacing:0.2em;text-transform:uppercase}
+.logo-bos{
+  font-family:'Abril Fatface',Georgia,serif;
+  font-size:3.2rem;color:rgba(226,178,80,0.12);text-transform:uppercase;
+  letter-spacing:0.08em;font-weight:400;
+  line-height:1;user-select:none
+}
+.logo-sub{
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  font-family:'Inter',sans-serif;font-size:0.65rem;
+  color:#71717a;letter-spacing:0.25em;text-transform:uppercase;
+  white-space:nowrap
+}
 .nav{display:flex;gap:24px}
 .nav a{
   color:#71717a;text-decoration:none;font-size:0.85rem;
@@ -394,7 +404,8 @@ body{
   .expand-times{font-size:0.55rem;padding:4px 8px}
   .expand-cinemas{font-size:0.55rem;padding:4px 8px}
   .header{padding:12px 0}
-  .logo{font-size:1.2rem}
+  .logo-bos{font-size:2.2rem}
+  .logo-sub{font-size:0.55rem;letter-spacing:0.2em}
   .nav{gap:10px}
   .nav a{font-size:0.7rem}
   .hero{padding:20px 0 16px}
@@ -425,7 +436,10 @@ body{
 
   <!-- header -->
   <header class="header">
-    <a href="/" class="logo">BOS<span>BOLOGNA ON SCREEN</span></a>
+    <a href="/" class="logo">
+      <span class="logo-bos">BOS</span>
+      <span class="logo-sub">bologna on screen</span>
+    </a>
     <nav class="nav">
       <a href="/">Oggi</a>
       <a href="https://t.me/bolocinescraperbot" target="_blank">Telegram</a>
