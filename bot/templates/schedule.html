@@ -177,7 +177,7 @@ body{
   border-radius:12px;overflow:hidden;background:#1a1a1a;
   transition:transform .2s,box-shadow .2s;
   position:relative;border:1px solid #2a2a2a;
-  text-decoration:none;color:inherit;display:block
+  display:block;color:inherit
 }
 .film-card:hover{
   transform:translateY(-4px);
@@ -196,13 +196,6 @@ body{
   background:rgba(255,159,28,0.9);color:#000;
   backdrop-filter:blur(4px);display:flex;align-items:center;gap:3px
 }
-.film-lang{
-  position:absolute;top:36px;right:10px;z-index:3;
-  padding:3px 10px;border-radius:4px;
-  font-size:0.65rem;font-weight:700;text-transform:uppercase;
-  letter-spacing:0.05em;color:#fff;
-  background:rgba(168,85,247,0.9);backdrop-filter:blur(4px)
-}
 .film-title-overlay{
   width:100%;position:relative;z-index:1
 }
@@ -211,21 +204,6 @@ body{
   text-shadow:0 2px 8px rgba(0,0,0,0.7);
   background:linear-gradient(transparent,rgba(0,0,0,0.8) 40%);
   padding:20px 0 4px;margin:0 -12px;padding-left:12px;padding-right:12px
-}
-.film-times{
-  display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;
-  padding:4px 12px 12px
-}
-.film-time{
-  background:rgba(255,255,255,0.08);
-  color:#ccc;font-size:0.78rem;font-weight:600;
-  padding:3px 10px;border-radius:5px;
-  font-variant-numeric:tabular-nums
-}
-.film-card:hover .film-time{background:rgba(255,159,28,0.15);color:#FF9F1C}
-.film-note{
-  font-size:0.72rem;color:#777;padding:0 12px 12px;
-  margin-top:-4px
 }
 .film-genre{
   font-size:0.65rem;color:#a78bfa;padding:0 12px 2px;
@@ -239,17 +217,45 @@ body{
   padding:4px 0;border-top:1px solid rgba(255,255,255,0.06)
 }
 .cinema-badge{
-  padding:2px 8px;border-radius:4px;flex-shrink:0;
+  padding:2px 8px;border-radius:0 4px 4px 0;flex-shrink:0;
   font-size:0.6rem;font-weight:700;text-transform:uppercase;
-  letter-spacing:0.04em;color:#fff;min-width:0;
-  max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+  letter-spacing:0.04em;color:#eee;min-width:0;
+  max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  border-left:3px solid #FF9F1C;background:rgba(255,255,255,0.05)
 }
 .cinema-times{
   display:flex;flex-wrap:wrap;gap:4px
 }
-.cinema-times .film-time{
-  padding:2px 8px;font-size:0.72rem
+.film-time{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(255,255,255,0.08);
+  color:#ccc;font-size:0.72rem;font-weight:600;
+  padding:3px 10px;border-radius:5px;
+  font-variant-numeric:tabular-nums;
+  text-decoration:none;cursor:pointer;
+  transition:background .15s,color .15s,transform .15s
 }
+.film-time:hover{
+  background:rgba(255,159,28,0.2);color:#FF9F1C;
+  transform:scale(1.05)
+}
+.film-time-vo{
+  background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3)
+}
+.film-time-vo:hover{
+  background:rgba(168,85,247,0.25);color:#c084fc
+}
+.pill-vo{
+  font-size:0.5rem;font-weight:800;text-transform:uppercase;
+  color:#a78bfa;letter-spacing:0.03em
+}
+.expand-cinemas{
+  display:inline-block;margin-top:2px;
+  font-size:0.65rem;color:#888;background:none;border:none;
+  cursor:pointer;padding:2px 0;font-weight:600
+}
+.expand-cinemas:hover{color:#FF9F1C}
+.film-cinemas.collapsed .overflow-row{display:none}
 
 /* empty */
 .empty-state{
@@ -298,15 +304,12 @@ body{
   .date-month{font-size:0.55rem}
   .film-poster{padding:6px;aspect-ratio:2/3}
   .film-rating{font-size:0.55rem;padding:2px 5px;top:4px;left:4px}
-  .film-lang{font-size:0.45rem;padding:2px 5px;top:22px;right:4px}
   .film-title-overlay h3{font-size:0.75rem;line-height:1.15}
-  .film-times{padding:4px 6px 8px;gap:3px}
-  .film-time{font-size:0.65rem;padding:2px 6px}
-  .film-note{font-size:0.6rem;padding:0 6px 6px}
   .film-genre{font-size:0.55rem;padding:0 6px 2px}
   .film-cinemas{padding:0 6px 6px;gap:4px}
   .cinema-badge{font-size:0.5rem;padding:1px 5px;max-width:80px}
-  .cinema-times .film-time{font-size:0.6rem;padding:2px 5px}
+  .film-time{font-size:0.6rem;padding:2px 5px}
+  .pill-vo{font-size:0.4rem}
   .filter-bar{padding:0 0 14px}
   .refresh-btn{padding:6px 10px;font-size:0.7rem}
   .filter-btn{padding:6px 10px;font-size:0.7rem}
@@ -416,51 +419,50 @@ body{
   <div class="film-grid" id="filmGrid">
     {% if films %}
       {% for film in films %}
-        <a href="{{ film.url }}" target="_blank" rel="noopener" class="film-card"
-           data-title="{{ film.titolo|lower }}"
-           data-times="{{ film.cinemas[0].orari[0] if film.cinemas and film.cinemas[0].orari else '99:99' }}"
-           data-cinemas="{{ film.cinemas|map(attribute='name')|join(',')|lower }}">
+        <div class="film-card"
+             data-title="{{ film.titolo|lower }}"
+             data-times="{{ film.cinemas[0].orari[0] if film.cinemas and film.cinemas[0].orari else '99:99' }}"
+             data-cinemas="{{ film.cinemas|map(attribute='name')|join(',')|lower }}">
           <div class="film-poster"{% if film.poster_url %} style="background: url('{{ film.poster_url }}') center/cover no-repeat"{% endif %}>
             {% if film.rating and film.rating != "0.0" %}<span class="film-rating">&#9733; {{ film.rating }}</span>{% else %}<span class="film-rating" style="background:rgba(100,100,100,0.7);color:#aaa">&#9733; N/D</span>{% endif %}
-            {% set has_vo = namespace(found=false) %}
-            {% for c in film.cinemas %}
-              {% set note_lower = c.note|lower %}
-              {% if "vo" in note_lower or "sub ita" in note_lower or "sub eng" in note_lower %}
-                {% set has_vo.found = true %}
-              {% endif %}
-            {% endfor %}
-            {% if has_vo.found %}
-            <span class="film-lang">VO</span>
-            {% endif %}
             <div class="film-title-overlay">
               <h3>{{ film.titolo }}</h3>
             </div>
           </div>
-          <div class="film-cinemas">
+          <div class="film-cinemas{% if film.cinemas|length > 3 %} collapsed{% endif %}">
+            {% set total_cinemas = film.cinemas|length %}
             {% for c in film.cinemas %}
               {% set c_lower = c.name|lower %}
-              {% set matched = namespace(color=default_grad, badge_bg=default_badge) %}
+              {% set matched = namespace(border=default_badge) %}
               {% for k, v in cinema_colors.items() %}
                 {% if k.lower() in c_lower %}
-                  {% set matched.color = v.grad %}
-                  {% set matched.badge_bg = v.badge %}
+                  {% set matched.border = v.badge %}
                 {% endif %}
               {% endfor %}
-              <div class="film-cinema-row" data-cinema="{{ c.name|lower }}">
+              {% set note_lower = c.note|lower %}
+              {% set is_vo = "vo" in note_lower or "sub ita" in note_lower or "sub eng" in note_lower %}
+              <div class="film-cinema-row{% if total_cinemas > 3 and loop.index > 3 %} overflow-row{% endif %}" data-cinema="{{ c.name|lower }}">
                 {% set short_name = c.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
-                <span class="cinema-badge" style="background: {{ matched.badge_bg }}">{{ short_name|upper }}</span>
+                <span class="cinema-badge" style="border-left-color: {{ matched.border }}">{{ short_name|upper }}</span>
                 <div class="cinema-times">
                   {% for ora in c.orari %}
-                  <span class="film-time">{{ ora }}</span>
+                  <a href="{{ c.url }}" target="_blank" rel="noopener" class="film-time{% if is_vo %} film-time-vo{% endif %}">
+                    {% if is_vo %}<span class="pill-vo">VO</span>{% endif %}{{ ora }}
+                  </a>
                   {% endfor %}
                 </div>
               </div>
             {% endfor %}
+            {% if total_cinemas > 3 %}
+            <button class="expand-cinemas" onclick="this.parentElement.classList.toggle('collapsed');this.textContent=this.parentElement.classList.contains('collapsed') ? '+ altri {{ total_cinemas - 3 }} cinema' : 'Mostra meno'">
+              + altri {{ total_cinemas - 3 }} cinema
+            </button>
+            {% endif %}
           </div>
           {% if film.genre %}
           <div class="film-genre">{{ film.genre }}</div>
           {% endif %}
-        </a>
+        </div>
       {% endfor %}
     {% else %}
       <div class="empty-state" style="grid-column:1/-1">

@@ -331,15 +331,15 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
                 "poster_url": s.poster_url,
                 "rating": s.rating,
                 "genre": s.genre,
-                "url": s.url,
                 "cinemas": [],
             }
 
-        # Aggiungi cinema con i suoi orari
+        # Aggiungi cinema con i suoi orari e URL per biglietteria
         cinema_entry = {
             "name": s.cinema,
             "orari": s.orari,
             "note": s.note,
+            "url": s.url,
         }
         film_groups[norm]["cinemas"].append(cinema_entry)
 
@@ -351,9 +351,10 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
             fg["rating"] = s.rating
         if s.genre and not fg["genre"]:
             fg["genre"] = s.genre
-        if s.url and not fg["url"]:
-            fg["url"] = s.url
 
+    # Ordina cinema per numero di orari (decrescente) e film per titolo
+    for fg in film_groups.values():
+        fg["cinemas"].sort(key=lambda c: len(c["orari"]), reverse=True)
     film_list = sorted(film_groups.values(), key=lambda f: f["titolo"].lower())
 
     return templates.TemplateResponse(
