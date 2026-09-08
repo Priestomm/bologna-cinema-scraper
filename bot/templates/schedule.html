@@ -12,7 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 
 <style>
-/* === STRICT BRUTALIST SYSTEM === */
+/* === STRICT BRUTALIST SYSTEM — RISOGRAPH LIGHT MODE === */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -22,22 +22,36 @@
 }
 
 :root {
-  --bg-black: #080808;
-  --surface-black: #121212;
+  --bg-paper: #E2DFD8;
+  --surface-card: #EAE7E1;
   --accent-orange: #FF3500;
-  --text-white: #FFFFFF;
-  --text-gray: #777777;
-  --border-dim: #262626;
-  --border-bright: #FFFFFF;
+  --text-black: #000000;
+  --text-gray: #6B6660;
+  --border-dim: #C4BFB8;
+  --border-hard: #000000;
 }
 
 body {
-  background-color: var(--bg-black);
-  color: var(--text-white);
+  background-color: var(--bg-paper);
+  color: var(--text-black);
   padding: 20px 16px;
   max-width: 1400px;
   margin: 0 auto;
   -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+/* Grain / noise texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.08;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
 }
 
 .container { width: 100%; }
@@ -48,7 +62,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding-bottom: 20px;
-  border-bottom: 1px solid var(--border-dim);
+  border-bottom: 2px solid var(--border-hard);
   margin-bottom: 20px;
   flex-wrap: wrap;
   gap: 12px;
@@ -72,8 +86,8 @@ body {
 
 .tape-black {
   background: #000;
-  color: var(--text-white);
-  border: 1px solid var(--border-bright);
+  color: #fff;
+  border: 2px solid var(--border-hard);
 }
 
 .tape-orange {
@@ -85,20 +99,22 @@ body {
 .nav { display: flex; gap: 8px; }
 
 .nav a {
-  color: var(--text-white);
+  color: var(--text-black);
   text-decoration: none;
   font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
   padding: 6px 12px;
-  background: #000;
-  border: 1px solid var(--border-dim);
+  background: #fff;
+  border: 2px solid var(--border-hard);
+  box-shadow: 2px 2px 0px #000;
 }
 
 .nav a:hover {
-  background: var(--text-white);
+  background: var(--accent-orange);
   color: #000;
-  border-color: var(--text-white);
+  box-shadow: 1px 1px 0px #000;
+  transform: translate(1px, 1px);
 }
 
 /* === HERO === */
@@ -125,9 +141,10 @@ body {
 
 .date-card {
   flex-shrink: 0;
-  background: #000000;
-  color: var(--text-white);
-  border: 1px solid var(--border-dim);
+  background: #fff;
+  color: var(--text-black);
+  border: 2px solid var(--border-hard);
+  box-shadow: 3px 3px 0px #000;
   padding: 8px 14px;
   text-align: center;
   text-decoration: none;
@@ -138,21 +155,23 @@ body {
 }
 
 .date-card:hover {
-  background: var(--text-white);
-  color: #000000;
-  border-color: var(--text-white);
+  background: var(--accent-orange);
+  color: #000;
+  box-shadow: 1px 1px 0px #000;
+  transform: translate(2px, 2px);
 }
 
 .date-card.active {
   background: var(--accent-orange);
-  color: #000000;
-  border-color: var(--accent-orange);
+  color: #000;
+  border-color: var(--border-hard);
   font-weight: 700;
+  box-shadow: 3px 3px 0px #000;
 }
 
 .date-card.active .date-day,
 .date-card.active .date-num,
-.date-card.active .date-month { color: #000000; }
+.date-card.active .date-month { color: #000; }
 
 .date-day { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; }
 .date-num { font-size: 1.2rem; font-weight: 700; line-height: 1; margin: 2px 0; }
@@ -169,9 +188,10 @@ body {
 .filter-wrapper { position: relative; }
 
 .filter-btn {
-  background: #000000;
-  color: var(--text-white);
-  border: 1px solid var(--border-dim);
+  background: #fff;
+  color: var(--text-black);
+  border: 2px solid var(--border-hard);
+  box-shadow: 2px 2px 0px #000;
   padding: 8px 12px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -183,12 +203,14 @@ body {
 }
 
 .filter-btn:hover, .filter-btn.active {
-  border-color: var(--text-white);
+  background: var(--accent-orange);
+  box-shadow: 1px 1px 0px #000;
+  transform: translate(1px, 1px);
 }
 
 .filter-btn.active {
-  background: var(--text-white);
-  color: #000000;
+  background: var(--accent-orange);
+  color: #000;
 }
 
 .dropdown-menu {
@@ -196,8 +218,9 @@ body {
   top: 100%;
   left: 0;
   margin-top: 4px;
-  background: #000000;
-  border: 1px solid var(--text-white);
+  background: #fff;
+  border: 2px solid var(--border-hard);
+  box-shadow: 3px 3px 0px #000;
   padding: 4px 0;
   min-width: 200px;
   z-index: 50;
@@ -213,7 +236,7 @@ body {
   width: 100%;
   padding: 8px 12px;
   font-size: 0.75rem;
-  color: var(--text-white);
+  color: var(--text-black);
   background: none;
   border: none;
   text-align: left;
@@ -224,7 +247,7 @@ body {
 
 .dropdown-item:hover, .dropdown-item.active {
   background: var(--accent-orange);
-  color: #000000;
+  color: #000;
 }
 
 /* === DAY HEADER === */
@@ -247,20 +270,24 @@ body {
 
 /* === CARD === */
 .film-card {
-  background: var(--surface-black);
-  border: 1px solid var(--border-dim);
+  background: var(--surface-card);
+  border: 2px solid var(--border-hard);
+  box-shadow: 3px 3px 0px #000;
   display: flex;
   flex-direction: column;
 }
 
-.film-card:hover { border-color: var(--accent-orange); }
+.film-card:hover {
+  box-shadow: 1px 1px 0px #000;
+  transform: translate(2px, 2px);
+}
 
 .film-poster {
   aspect-ratio: 2/3;
   width: 100%;
   position: relative;
-  background-color: #000000;
-  border-bottom: 1px solid var(--border-dim);
+  background-color: #D5D0C9;
+  border-bottom: 2px solid var(--border-hard);
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
@@ -271,11 +298,13 @@ body {
   top: 0;
   left: 0;
   background: var(--accent-orange);
-  color: #000000;
+  color: #000;
   font-weight: 700;
   font-size: 0.8rem;
   padding: 3px 8px;
   z-index: 2;
+  border-right: 2px solid var(--border-hard);
+  border-bottom: 2px solid var(--border-hard);
 }
 
 .film-genres-overlay {
@@ -290,9 +319,9 @@ body {
 }
 
 .genre-chip {
-  background: #000000;
-  color: var(--text-white);
-  border: 1px solid var(--text-gray);
+  background: #fff;
+  color: var(--text-black);
+  border: 1px solid var(--border-hard);
   font-size: 0.6rem;
   padding: 2px 5px;
   text-transform: uppercase;
@@ -307,13 +336,14 @@ body {
 
 .title-tape {
   background: var(--accent-orange);
-  color: #000000;
+  color: #000;
   padding: 4px 8px;
   font-weight: 700;
   font-size: 0.95rem;
   text-transform: uppercase;
   line-height: 1.2;
   word-break: break-word;
+  border: 1px solid var(--border-hard);
 }
 
 .film-cinemas {
@@ -346,9 +376,10 @@ body {
 .cinema-times.times-collapsed .overflow-time { display: none !important; }
 
 .film-time {
-  background: #000000;
-  color: var(--text-white);
-  border: 1px solid var(--border-dim);
+  background: #fff;
+  color: var(--text-black);
+  border: 2px solid var(--border-hard);
+  box-shadow: 2px 2px 0px #000;
   padding: 5px 9px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -359,26 +390,26 @@ body {
 }
 
 .film-time:hover {
-  background: var(--text-white);
-  color: #000000;
-  border-color: var(--text-white);
+  background: var(--accent-orange);
+  box-shadow: 1px 1px 0px #000;
+  transform: translate(1px, 1px);
 }
 
 .pill-vo {
   font-size: 0.6rem;
-  background: var(--border-dim);
-  color: var(--text-white);
+  background: var(--border-hard);
+  color: #fff;
   padding: 0 3px;
 }
 
 .film-time:hover .pill-vo {
-  background: #000000;
-  color: var(--text-white);
+  background: #000;
+  color: #fff;
 }
 
 .expand-times, .expand-cinemas {
   background: transparent;
-  border: 1px dashed var(--text-gray);
+  border: 2px dashed var(--text-gray);
   color: var(--text-gray);
   padding: 4px 8px;
   font-size: 0.7rem;
@@ -399,13 +430,13 @@ body {
   grid-column: 1 / -1;
   text-align: center;
   padding: 60px 20px;
-  border: 1px dashed var(--border-dim);
+  border: 2px dashed var(--text-gray);
   color: var(--text-gray);
   text-transform: uppercase;
 }
 
 .footer {
-  border-top: 1px solid var(--border-dim);
+  border-top: 2px solid var(--border-hard);
   padding: 20px 0;
   text-align: center;
   font-size: 0.7rem;
@@ -427,7 +458,7 @@ body {
     aspect-ratio: 2/3;
     flex-shrink: 0;
     border-bottom: none;
-    border-right: 1px solid var(--border-dim);
+    border-right: 2px solid var(--border-hard);
   }
 
   .card-body {
@@ -555,7 +586,7 @@ body {
             {% if film.rating and film.rating != "0.0" %}
               <span class="film-rating">★ {{ film.rating }}</span>
             {% else %}
-              <span class="film-rating" style="background: var(--text-gray); color: #000;">N/D</span>
+              <span class="film-rating" style="background: var(--border-dim); color: #000;">N/D</span>
             {% endif %}
 
             {% if film.genre %}
