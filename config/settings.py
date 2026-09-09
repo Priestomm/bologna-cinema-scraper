@@ -36,6 +36,7 @@ class Settings:
     http_user_agent: str
     cache_db_path: Path
     log_level: str
+    refresh_interval_minutes: int = 15
     health_port: int = 8080
     timezone: str = "Europe/Rome"
     tmdb_api_key: str = ""
@@ -57,6 +58,7 @@ def _load() -> Settings:
         ),
         cache_db_path=PROJECT_ROOT / _env("CACHE_DB_PATH", "data/cache.sqlite3"),
         log_level=_env("LOG_LEVEL", "INFO"),
+        refresh_interval_minutes=_int("REFRESH_INTERVAL_MINUTES", 15),
         health_port=_int("HEALTH_PORT", 8080),
         tmdb_api_key=_env("TMDB_API_KEY"),
     )
