@@ -39,8 +39,8 @@ class UCIScraper(BaseScraper):
         resp = self._get(url, headers={"Accept": "application/json"})
         data = resp.json().get("data", [])
 
-        # Raggruppa per (titolo, lingua): XL+2D si uniscono, VO/Sub restano separati
-        groups: dict[tuple[str, str], dict] = {}
+        # Costruisci Screening: uno per performance per avere URL di acquisto
+        screenings: list[Screening] = []
         for movie in data:
             title = movie.get("title", "").strip()
             if not title:
@@ -59,63 +59,44 @@ class UCIScraper(BaseScraper):
                         subs = version.get("subtitles")
                         sub_name = subs.get("name", "") if subs else ""
 
-                        # Chiave di raggruppamento: titolo + lingua+subs
                         lang_key = lang
                         if sub_name:
                             lang_key += f" / Sub {sub_name}"
 
-                        key = (title, lang_key)
-                        if key not in groups:
-                            groups[key] = {
-                                "poster": poster,
-                                "genre": genre,
-                                "slug": slug,
-                                "formats": [],
-                                "orari": [],
-                            }
+                        fmts = sala
+                        note = f"{fmts} - {lang_key}" if lang_key else fmts
 
-                        group = groups[key]
-
-                        # Aggiungi formato se nuovo (XL, 2D)
-                        if sala not in group["formats"]:
-                            group["formats"].append(sala)
-
-                        # Raccogli orari
                         for perf in version.get("performances", []):
                             raw = perf.get("starts_at", "")
                             m = _TIME_RE.search(raw)
-                            if m:
-                                t = f"{m.group(1)}:{m.group(2)}"
-                                if t not in group["orari"]:
-                                    group["orari"].append(t)
+                            if not m:
+                                continue
 
-        # Costruisci Screening
-        screenings: list[Screening] = []
-        for (title, lang_key), info in groups.items():
-            if not info["orari"]:
-                continue
+                            t = f"{m.group(1)}:{m.group(2)}"
 
-            # Nota: formati uniti + lingua (es. "XL / 2D - ITA" oppure "2D - VO / Sub ITA")
-            fmts = " / ".join(info["formats"])
-            note = f"{fmts} - {lang_key}" if lang_key else fmts
+                            # URL di acquisto diretto se disponibile
+                            cart_link = perf.get("cart_link", "")
+                            if cart_link:
+                                perf_url = f"https://ucicinemas.it{cart_link}"
+                            elif slug:
+                                perf_url = (
+                                    f"{_UCI_CINEMA_PAGE}?film={slug}"
+                                    f"&date={target_date.isoformat()}"
+                                )
+                            else:
+                                perf_url = _UCI_CINEMA_PAGE
 
-            url_film = (
-                f"{_UCI_CINEMA_PAGE}?film={info['slug']}&date={target_date.isoformat()}"
-                if info["slug"]
-                else _UCI_CINEMA_PAGE
-            )
-
-            screenings.append(
-                Screening(
-                    cinema="UCI Cinemas",
-                    titolo=title,
-                    orari=sorted(info["orari"]),
-                    note=note,
-                    poster_url=info["poster"],
-                    genre=info["genre"],
-                    url=url_film,
-                )
-            )
+                            screenings.append(
+                                Screening(
+                                    cinema="UCI Cinemas",
+                                    titolo=title,
+                                    orari=[t],
+                                    note=note,
+                                    poster_url=poster,
+                                    genre=genre,
+                                    url=perf_url,
+                                )
+                            )
 
         return screenings
 
