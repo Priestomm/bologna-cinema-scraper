@@ -444,6 +444,82 @@ body::before {
   text-transform: uppercase;
 }
 
+/* === POSTER OVERLAY (mobile) === */
+.poster-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 10000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  cursor: pointer;
+}
+
+.poster-overlay.open { display: flex; }
+
+.poster-overlay-img {
+  max-height: 70vh;
+  max-width: 90vw;
+  object-fit: contain;
+  border: 3px solid #fff;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+}
+
+.poster-overlay-meta {
+  color: #fff;
+  text-align: center;
+  margin-top: 16px;
+  max-width: 90vw;
+}
+
+.poster-overlay-title {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.poster-overlay-rating {
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  color: var(--accent-orange);
+}
+
+.poster-overlay-genres {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.poster-overlay-genres .genre-chip {
+  background: var(--accent-orange);
+  color: #000;
+  border: 1px solid #fff;
+  font-size: 0.7rem;
+  padding: 3px 8px;
+}
+
+.poster-overlay-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: var(--accent-orange);
+  color: #000;
+  border: 2px solid #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* === MOBILE === */
 @media (max-width: 768px) {
   .film-grid {
@@ -459,7 +535,11 @@ body::before {
     flex-shrink: 0;
     border-bottom: none;
     border-right: 2px solid var(--border-hard);
+    cursor: pointer;
   }
+
+  .film-rating { display: none; }
+  .film-genres-overlay { display: none; }
 
   .card-body {
     flex: 1;
@@ -649,6 +729,17 @@ body::before {
 
 </div>
 
+<!-- POSTER OVERLAY (mobile) -->
+<div class="poster-overlay" id="posterOverlay">
+  <button class="poster-overlay-close" id="posterClose">&times;</button>
+  <img class="poster-overlay-img" id="posterImg" src="" alt="">
+  <div class="poster-overlay-meta">
+    <div class="poster-overlay-title" id="posterTitle"></div>
+    <div class="poster-overlay-rating" id="posterRating"></div>
+    <div class="poster-overlay-genres" id="posterGenres"></div>
+  </div>
+</div>
+
 <script>
 (function() {
   // Dropdown toggle
@@ -784,6 +875,63 @@ body::before {
       emptyState.style.display = (visible === 0 && cards.length > 0) ? 'block' : 'none';
     }
   }
+
+  // Poster overlay (mobile)
+  var overlay = document.getElementById('posterOverlay');
+  var overlayImg = document.getElementById('posterImg');
+  var overlayTitle = document.getElementById('posterTitle');
+  var overlayRating = document.getElementById('posterRating');
+  var overlayGenres = document.getElementById('posterGenres');
+  var closeBtn = document.getElementById('posterClose');
+
+  function openPoster(poster) {
+    var card = poster.closest('.film-card');
+    if (!card) return;
+    var style = poster.getAttribute('style') || '';
+    var match = style.match(/url\(['"]?(.+?)['"]?\)/);
+    if (!match) return;
+
+    overlayImg.src = match[1];
+    overlayTitle.textContent = card.querySelector('.title-tape').textContent.trim();
+
+    var ratingEl = card.querySelector('.film-rating');
+    if (ratingEl) {
+      overlayRating.textContent = ratingEl.textContent.trim();
+      overlayRating.style.display = '';
+    } else {
+      overlayRating.style.display = 'none';
+    }
+
+    var genre = card.dataset.genre || '';
+    if (genre) {
+      overlayGenres.innerHTML = genre.split('/')
+        .map(function(g) { return '<span class="genre-chip">' + g.trim() + '</span>'; })
+        .join('');
+      overlayGenres.style.display = '';
+    } else {
+      overlayGenres.innerHTML = '';
+      overlayGenres.style.display = 'none';
+    }
+
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePoster() {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.film-poster').forEach(function(poster) {
+    poster.addEventListener('click', function() {
+      if (window.innerWidth <= 768) openPoster(poster);
+    });
+  });
+
+  closeBtn.addEventListener('click', closePoster);
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closePoster();
+  });
 
 })();
 </script>
