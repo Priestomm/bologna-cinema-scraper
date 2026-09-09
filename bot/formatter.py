@@ -105,16 +105,6 @@ def _timeslot_label() -> str:
     return " · ".join(f"{name}" for name, _, _ in _TIMESLOTS)
 
 
-def _assign_slot(orari: list[str]) -> int:
-    """Restituisce l'indice della prima fascia oraria trovata, o 0 se vuoto."""
-    for o in orari:
-        minutes = _parse_time(o)
-        for i, (_, start, end) in enumerate(_TIMESLOTS):
-            if _parse_time(start) <= minutes < _parse_time(end):
-                return i
-    return 0
-
-
 def _group_by_timeslot(
     screenings: list[Screening],
 ) -> dict[str, dict[str, list[Screening]]]:
