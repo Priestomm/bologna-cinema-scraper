@@ -173,12 +173,40 @@ class CinemaBot:
                 )
             except Exception:
                 logger.exception("Invio broadcast fallito")
+        self._cache.mark_broadcast_done(target)
 
     # ---- ciclo di vita -----------------------------------------------
 
     async def _post_init(self, _app: Application) -> None:
         self._scheduler.start()
         self._health_server = start_api_server()
+
+        # All'avvio, recupera eventuali job persi (es. crash/restart)
+        target = today()
+
+        # 1) Se la cache di oggi non esiste, esegui lo scrape
+        if self._cache.load(target) is None:
+            logger.info("Cache vuota all'avvio: eseguo scraping di emergenza")
+            await asyncio.to_thread(run_scrape_pipeline, target)
+
+        # 2) Se il broadcast di oggi non e' stato mandato, mandalo subito
+        if not self._cache.is_broadcast_done_today(target):
+            logger.info("Broadcast di oggi non inviato: lo invio ora")
+            snapshot = self._cache.load(target)
+            if snapshot is not None:
+                for chunk in render_snapshot(snapshot):
+                    try:
+                        await self._app.bot.send_message(
+                            chat_id=settings.telegram_chat_id,
+                            text=chunk,
+                            parse_mode=ParseMode.HTML,
+                            disable_web_page_preview=True,
+                        )
+                    except Exception:
+                        logger.exception("Invio broadcast di avvio fallito")
+                self._cache.mark_broadcast_done(target)
+            else:
+                logger.warning("Cache ancora vuota dopo scrape, broadcast saltato")
 
     async def _post_shutdown(self, _app: Application) -> None:
         self._scheduler.shutdown()

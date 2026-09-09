@@ -60,7 +60,8 @@ class Cache:
                 CREATE TABLE IF NOT EXISTS snapshots (
                     date TEXT PRIMARY KEY,
                     updated_at TEXT NOT NULL,
-                    payload TEXT NOT NULL
+                    payload TEXT NOT NULL,
+                    last_broadcast_at TEXT
                 )
                 """
             )
@@ -141,3 +142,30 @@ class Cache:
             screenings=screenings,
             warnings=warnings,
         )
+
+    def is_broadcast_done_today(self, target_date: date) -> bool:
+        with self._conn() as conn:
+            row = conn.execute(
+                "SELECT last_broadcast_at FROM snapshots WHERE date = ?",
+                (target_date.isoformat(),),
+            ).fetchone()
+        if not row or not row[0]:
+            return False
+        try:
+            broadcast_at = datetime.fromisoformat(row[0])
+            return broadcast_at.date() == target_date
+        except (ValueError, TypeError):
+            return False
+
+    def mark_broadcast_done(self, target_date: date) -> None:
+        now = datetime.now(_TZ).isoformat()
+        with self._conn() as conn:
+            conn.execute(
+                """
+                INSERT INTO snapshots (date, updated_at, payload, last_broadcast_at)
+                VALUES (?, ?, '{}', ?)
+                ON CONFLICT(date) DO UPDATE SET
+                    last_broadcast_at = excluded.last_broadcast_at
+                """,
+                (target_date.isoformat(), now, now),
+            )
