@@ -60,11 +60,16 @@ class Cache:
                 CREATE TABLE IF NOT EXISTS snapshots (
                     date TEXT PRIMARY KEY,
                     updated_at TEXT NOT NULL,
-                    payload TEXT NOT NULL,
-                    last_broadcast_at TEXT
+                    payload TEXT NOT NULL
                 )
                 """
             )
+            # Migrazione: aggiunge last_broadcast_at se manca
+            cols = {row[1] for row in conn.execute("PRAGMA table_info(snapshots)")}
+            if "last_broadcast_at" not in cols:
+                conn.execute(
+                    "ALTER TABLE snapshots ADD COLUMN last_broadcast_at TEXT"
+                )
 
     @contextmanager
     def _conn(self) -> Iterator[sqlite3.Connection]:
