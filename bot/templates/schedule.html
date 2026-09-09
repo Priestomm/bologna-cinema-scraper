@@ -671,7 +671,7 @@ body::before {
 
             {% if film.genre %}
             <div class="film-genres-overlay">
-              {% for g in film.genre.split("/")|truncate(3, True, '') %}
+              {% for g in film.genre.split("/")[:3] %}
                 {% set g = g.strip() %}
                 <span class="genre-chip">{{ g }}</span>
               {% endfor %}
