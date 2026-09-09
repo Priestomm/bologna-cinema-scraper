@@ -45,17 +45,23 @@ def _normalize_title(title: str) -> str:
     t = title.lower()
     t = re.sub(r"\s*\(.*?\)\s*", " ", t)
 
-    # Detect VO markers on original title (before stripping)
+    # Prima rimuovi prefissi VO
+    for prefix in ("original version - ", "original version: ", "original: ", "v.o.: "):
+        t = t.removeprefix(prefix)
+
+    # Detect VO markers (dopo aver rimosso i prefissi)
     has_vo = bool(
         re.search(r"original version|versione originale|v\.?\s*o\.?|sub\s+(ita|eng)", t)
     )
 
-    # Strip subtitles after " - " only if original had VO markers
-    if has_vo and " - " in t:
-        t = t.rsplit(" - ", 1)[0]
+    # Strip after " - " solo se la parte dopo contiene marcatori VO
+    if " - " in t:
+        before, after = t.rsplit(" - ", 1)
+        if has_vo or re.search(
+            r"v\.?\s*o\.?|original version|versione originale|sub\s+(ita|eng)", after
+        ):
+            t = before
 
-    for prefix in ("original version - ", "original version: ", "original: ", "v.o.: "):
-        t = t.removeprefix(prefix)
     t = re.sub(r"\s*[-–]\s*versione originale\s*$", "", t)
     t = re.sub(r"\s*[-–]\s*original version\s*$", "", t)
     t = re.sub(r"\s*[-–]\s*v\.?\s*o\.?\s*$", "", t)
@@ -73,6 +79,21 @@ def _normalize_poster_url(url: str | None) -> str:
     if not url:
         return ""
     return re.sub(r"/(?:w\d+|original|preview)/", "/", url)
+
+
+def _strip_vo_markers(title: str) -> str:
+    """Rimuove marcatori VO/versione originale dal titolo normalizzato.
+    Usato come chiave di raggruppamento: 'odissea' e 'odissea - v.o.'
+    producono la stessa chiave.
+    """
+    t = title
+    # Rimuovi suffissi VO dopo " - "
+    t = re.sub(r"\s*[-–]\s*(?:v\.?\s*o\.?|original version|versione originale)\s*$", "", t, flags=re.IGNORECASE)
+    # Rimuovi prefissi VO all'inizio
+    for prefix in ("original version - ", "original version: ", "original: ", "v.o.: "):
+        t = t.removeprefix(prefix)
+    t = t.strip(" -:")
+    return t
 
 
 def _is_vo(note: str) -> bool:
@@ -355,19 +376,20 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
         if norm_poster and norm_poster in poster_to_key:
             matched_key = poster_to_key[norm_poster]
 
-        # 2) Fallback: match per titolo normalizzato
+        # 2) Fallback: match per titolo normalizzato (VO strippato come chiave)
         if matched_key is None:
             norm_title = _normalize_title(s.titolo)
             if not norm_title:
                 continue
-            if norm_title in film_groups:
-                matched_key = norm_title
+            group_key = _strip_vo_markers(norm_title)
+            if group_key in film_groups:
+                matched_key = group_key
             else:
                 for existing_key in film_groups:
                     short, long = (
-                        (norm_title, existing_key)
-                        if len(norm_title) <= len(existing_key)
-                        else (existing_key, norm_title)
+                        (group_key, existing_key)
+                        if len(group_key) <= len(existing_key)
+                        else (existing_key, group_key)
                     )
                     if long.startswith(short + " "):
                         matched_key = existing_key
@@ -378,10 +400,11 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
 
         # 3) Nessun match → crea nuovo gruppo
         if matched_key is None:
-            matched_key = norm_poster or _normalize_title(s.titolo)
+            norm_title = _normalize_title(s.titolo)
+            matched_key = norm_poster or _strip_vo_markers(norm_title)
             film_groups[matched_key] = {
                 "titolo": s.titolo,
-                "normalized": _normalize_title(s.titolo),
+                "normalized": norm_title,
                 "poster_url": s.poster_url,
                 "rating": s.rating,
                 "genre": s.genre,
