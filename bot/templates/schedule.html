@@ -293,7 +293,7 @@ body::after {
   display: flex;
   flex-direction: column;
   box-shadow: 4px 4px 0px #000;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: none;
 }
 
 .film-card:hover {
@@ -406,6 +406,9 @@ body::after {
 }
 
 .film-time:hover {
+  background: var(--accent-orange);
+  color: #000;
+  border-color: var(--accent-orange);
   box-shadow: 3px 3px 0px #000;
   transform: translate(-1px, -1px);
 }
