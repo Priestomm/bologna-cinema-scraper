@@ -137,6 +137,9 @@ class TmdbClient:
         age_days = (time.time() - fetched_at) / 86400
         if age_days > _CACHE_TTL_DAYS:
             return None
+        # Entry vecchie senza poster_path: trattare come cache miss
+        if not poster_path:
+            return None
         return rating, tmdb_title or "", genres or "", poster_path or ""
 
     def _cache_put(
