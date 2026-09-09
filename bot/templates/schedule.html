@@ -286,10 +286,15 @@ body::before {
   border: 2px solid var(--border-hard);
   display: flex;
   flex-direction: column;
-  box-shadow: 3px 3px 0px #000;
+  box-shadow: 4px 4px 0px #000;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
 
-.film-card:hover { border-color: var(--accent-orange); }
+.film-card:hover {
+  border-color: var(--accent-orange);
+  box-shadow: 6px 6px 0px var(--accent-orange);
+  transform: translate(-2px, -2px);
+}
 
 .film-poster {
   aspect-ratio: 2/3;
