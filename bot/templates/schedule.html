@@ -671,7 +671,7 @@ body::before {
 
             {% if film.genre %}
             <div class="film-genres-overlay">
-              {% for g in film.genre.split("/")|truncate(2, True, '') %}
+              {% for g in film.genre.split("/")|truncate(3, True, '') %}
                 {% set g = g.strip() %}
                 <span class="genre-chip">{{ g }}</span>
               {% endfor %}
@@ -905,6 +905,7 @@ body::before {
     var genre = card.dataset.genre || '';
     if (genre) {
       overlayGenres.innerHTML = genre.split('/')
+        .slice(0, 3)
         .map(function(g) { return '<span class="genre-chip">' + g.trim() + '</span>'; })
         .join('');
       overlayGenres.style.display = '';
