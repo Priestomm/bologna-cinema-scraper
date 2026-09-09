@@ -361,7 +361,7 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
             },
         )
 
-    # Raggruppa per poster URL normalizzato, fallback su titolo normalizzato
+    # Raggruppa: poster TMDB > poster scraper > titolo normalizzato
     film_groups: dict[str, dict] = {}
     poster_to_key: dict[str, str] = {}  # poster normalizzato -> chiave del gruppo
 
@@ -369,7 +369,8 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
         if not s.titolo:
             continue
 
-        norm_poster = _normalize_poster_url(s.poster_url)
+        # Priorita: poster TMDB, poi poster scraper
+        norm_poster = _normalize_poster_url(s.poster_url_tmdb or s.poster_url)
         matched_key = None
 
         # 1) Match per poster URL (criterio principale)
@@ -402,10 +403,12 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
         if matched_key is None:
             norm_title = _normalize_title(s.titolo)
             matched_key = norm_poster or _strip_vo_markers(norm_title)
+            # Titolo display: preferisci TMDB, poi scraper
+            display_title = s.clean_title_tmdb or s.titolo
             film_groups[matched_key] = {
-                "titolo": s.titolo,
+                "titolo": display_title,
                 "normalized": norm_title,
-                "poster_url": s.poster_url,
+                "poster_url": s.poster_url_tmdb or s.poster_url,
                 "rating": s.rating,
                 "genre": s.genre,
                 "cinemas": {},
@@ -415,13 +418,13 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
 
         fg = film_groups[matched_key]
 
-        # Preferisci titolo senza suffisso V.O. come titolo display
-        stored_vo = _is_vo(fg["titolo"]) or any(
-            m in fg["titolo"].lower()
-            for m in ("original version", "v.o.", "v. o.", "versione originale")
-        )
-        if not _is_vo(s.note) and stored_vo:
-            fg["titolo"] = s.titolo
+        # Aggiorna titolo display: preferisci TMDB se disponibile
+        if s.clean_title_tmdb and not fg["titolo"]:
+            fg["titolo"] = s.clean_title_tmdb
+
+        # Aggiorna poster: preferisci TMDB
+        if s.poster_url_tmdb and not fg["poster_url"]:
+            fg["poster_url"] = s.poster_url_tmdb
 
         # Aggiorna dati film con quelli del cinema che ha piu' info
         if s.poster_url and not fg["poster_url"]:

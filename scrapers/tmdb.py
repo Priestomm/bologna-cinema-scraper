@@ -72,6 +72,9 @@ def _clean_title_for_search(title: str) -> str:
     return " ".join(t.split()).strip()
 
 
+_TMDB_IMG_BASE = "https://image.tmdb.org/t/p/w500"
+
+
 class TmdbClient:
     """Cerca rating film su TMDb con cache SQLite."""
 
@@ -97,15 +100,20 @@ class TmdbClient:
                     rating REAL,
                     tmdb_title TEXT,
                     genres TEXT NOT NULL DEFAULT '',
+                    poster_path TEXT NOT NULL DEFAULT '',
                     fetched_at REAL NOT NULL
                 )
                 """
             )
-            # Migrazione: aggiungi colonna genres se manca
+            # Migrazioni
             cols = {row[1] for row in conn.execute("PRAGMA table_info(ratings)")}
             if "genres" not in cols:
                 conn.execute(
                     "ALTER TABLE ratings ADD COLUMN genres TEXT NOT NULL DEFAULT ''"
+                )
+            if "poster_path" not in cols:
+                conn.execute(
+                    "ALTER TABLE ratings ADD COLUMN poster_path TEXT NOT NULL DEFAULT ''"
                 )
 
     @contextmanager
@@ -117,19 +125,19 @@ class TmdbClient:
         finally:
             conn.close()
 
-    def _cache_get(self, cache_key: str) -> tuple[float | None, str, str] | None:
+    def _cache_get(self, cache_key: str) -> tuple[float | None, str, str, str] | None:
         with self._conn() as conn:
             row = conn.execute(
-                "SELECT rating, tmdb_title, genres, fetched_at FROM ratings WHERE cache_key = ?",
+                "SELECT rating, tmdb_title, genres, poster_path, fetched_at FROM ratings WHERE cache_key = ?",
                 (cache_key,),
             ).fetchone()
         if not row:
             return None
-        rating, tmdb_title, genres, fetched_at = row
+        rating, tmdb_title, genres, poster_path, fetched_at = row
         age_days = (time.time() - fetched_at) / 86400
         if age_days > _CACHE_TTL_DAYS:
             return None
-        return rating, tmdb_title or "", genres or ""
+        return rating, tmdb_title or "", genres or "", poster_path or ""
 
     def _cache_put(
         self,
@@ -138,19 +146,21 @@ class TmdbClient:
         rating: float | None,
         tmdb_title: str,
         genres: str = "",
+        poster_path: str = "",
     ) -> None:
         with self._conn() as conn:
             conn.execute(
                 """
-                INSERT INTO ratings (cache_key, title, rating, tmdb_title, genres, fetched_at)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO ratings (cache_key, title, rating, tmdb_title, genres, poster_path, fetched_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(cache_key) DO UPDATE SET
                     rating = excluded.rating,
                     tmdb_title = excluded.tmdb_title,
                     genres = excluded.genres,
+                    poster_path = excluded.poster_path,
                     fetched_at = excluded.fetched_at
                 """,
-                (cache_key, title, rating, tmdb_title, genres, time.time()),
+                (cache_key, title, rating, tmdb_title, genres, poster_path, time.time()),
             )
 
     # ---- TMDb API ---------------------------------------------------
@@ -219,23 +229,26 @@ class TmdbClient:
             return best
         return None
 
-    def _get_movie_info(self, title: str, regista: str) -> tuple[str, str]:
-        """Cerca rating + genere per un film dato titolo e regista."""
+    def _get_movie_info(
+        self, title: str, regista: str
+    ) -> tuple[str, str, str, str]:
+        """Cerca rating + genere + poster + titolo pulito per un film."""
         if not self.enabled:
-            return "", ""
+            return "", "", "", ""
 
         cache_key = (
             f"{_normalize(_clean_title_for_search(title))}|{_normalize(regista)}"
         )
         if not cache_key.strip("|"):
-            return "", ""
+            return "", "", "", ""
 
         # Check cache
         cached = self._cache_get(cache_key)
         if cached is not None:
-            rating, _tmdb_title, genres = cached
+            rating, tmdb_title, genres, poster_path = cached
             rating_str = f"{rating:.1f}" if rating is not None else ""
-            return rating_str, genres
+            poster_url = f"{_TMDB_IMG_BASE}{poster_path}" if poster_path else ""
+            return rating_str, genres, poster_url, tmdb_title
 
         # Search TMDb
         search_query = _clean_title_for_search(title)
@@ -249,7 +262,7 @@ class TmdbClient:
 
         if not results:
             self._cache_put(cache_key, title, None, "")
-            return "", ""
+            return "", "", "", ""
 
         # Find best match
         match = self._find_best_match(title, regista, results)
@@ -258,44 +271,56 @@ class TmdbClient:
 
         rating = match.get("vote_average")
         tmdb_title = match.get("title", "")
+        poster_path = match.get("poster_path", "") or ""
         genre_ids = match.get("genre_ids", [])
         genres = " / ".join(
             _TMDB_GENRES[gid] for gid in genre_ids if gid in _TMDB_GENRES
         )
 
-        self._cache_put(cache_key, title, rating, tmdb_title, genres)
+        self._cache_put(cache_key, title, rating, tmdb_title, genres, poster_path)
 
         rating_str = ""
         if rating is not None and rating > 0:
             rating_str = f"{rating:.1f}"
-        return rating_str, genres
+        poster_url = f"{_TMDB_IMG_BASE}{poster_path}" if poster_path else ""
+        return rating_str, genres, poster_url, tmdb_title
 
     def enrich_screenings(self, screenings: list[Screening]) -> list[Screening]:
-        """Aggiunge rating e genere a ogni Screening (muta in-place e restituisce)."""
+        """Aggiunge rating, genere, poster e titolo pulito da TMDb a ogni Screening."""
         if not self.enabled:
             logger.info("TMDb disabilitato (nessuna API key)")
             return screenings
 
         # Deduplica per (titolo, regista) per evitare ricerche multiple
-        unique: dict[tuple[str, str], tuple[str, str]] = {}
+        unique: dict[tuple[str, str], tuple[str, str, str, str]] = {}
         for s in screenings:
             key = (s.titolo, s.regista)
             if key not in unique:
-                unique[key] = ("", "")
+                unique[key] = ("", "", "", "")
 
         logger.info("Cerco rating + genere per %d film unici su TMDb", len(unique))
 
         for i, (titolo, regista) in enumerate(unique):
-            rating, genre = self._get_movie_info(titolo, regista)
-            unique[(titolo, regista)] = (rating, genre)
+            rating, genre, poster_url, clean_title = self._get_movie_info(
+                titolo, regista
+            )
+            unique[(titolo, regista)] = (rating, genre, poster_url, clean_title)
             if rating or genre:
-                logger.debug("  %s (%s) → %s | %s", titolo, regista, rating, genre)
+                logger.debug(
+                    "  %s (%s) -> %s | %s", titolo, regista, rating, genre
+                )
             if (i + 1) % 5 == 0:
                 logger.info("  %d/%d film cercati", i + 1, len(unique))
 
         for s in screenings:
-            rating, genre = unique.get((s.titolo, s.regista), ("", ""))
+            rating, genre, poster_url, clean_title = unique.get(
+                (s.titolo, s.regista), ("", "", "", "")
+            )
             s.rating = rating
             s.genre = genre
+            if poster_url:
+                s.poster_url_tmdb = poster_url
+            if clean_title:
+                s.clean_title_tmdb = clean_title
 
         return screenings
