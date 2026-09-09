@@ -100,7 +100,7 @@ class UCIScraper(BaseScraper):
             note = f"{fmts} - {lang_key}" if lang_key else fmts
 
             url_film = (
-                f"{_UCI_CINEMA_PAGE}?film={info['slug']}"
+                f"{_UCI_CINEMA_PAGE}?film={info['slug']}&date={target_date.isoformat()}"
                 if info["slug"]
                 else _UCI_CINEMA_PAGE
             )
