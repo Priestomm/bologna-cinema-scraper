@@ -66,6 +66,15 @@ def _normalize_title(title: str) -> str:
     return " ".join(t.split())
 
 
+def _normalize_poster_url(url: str | None) -> str:
+    """Normalizza l'URL del poster TMDB togliendo la dimensione.
+    /w500/abc.jpg -> /abc.jpg  (stessa immagine = stessa chiave)
+    """
+    if not url:
+        return ""
+    return re.sub(r"/(?:w\d+|original|preview)/", "/", url)
+
+
 def _is_vo(note: str) -> bool:
     """True se la proiezione e' in versione originale."""
     n = note.lower()
@@ -331,48 +340,57 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
             },
         )
 
-    # Raggruppa per film normalizzato, poi per cinema
+    # Raggruppa per poster URL normalizzato, fallback su titolo normalizzato
     film_groups: dict[str, dict] = {}
-    # Keep track of original titles per group for prefix matching
-    group_originals: dict[str, list[str]] = {}
+    poster_to_key: dict[str, str] = {}  # poster normalizzato -> chiave del gruppo
+
     for s in snapshot.screenings:
-        norm = _normalize_title(s.titolo)
-        if not norm:
+        if not s.titolo:
             continue
 
-        # Find existing group: exact match first, then prefix/substring match
+        norm_poster = _normalize_poster_url(s.poster_url)
         matched_key = None
-        if norm in film_groups:
-            matched_key = norm
-        else:
-            for existing_key in group_originals:
-                short, long = (
-                    (norm, existing_key)
-                    if len(norm) <= len(existing_key)
-                    else (existing_key, norm)
-                )
-                if long.startswith(short + " "):
-                    matched_key = existing_key
-                    break
-                # Substring match (min 15 chars to avoid false positives)
-                if len(short) >= 15 and short in long:
-                    matched_key = existing_key
-                    break
 
+        # 1) Match per poster URL (criterio principale)
+        if norm_poster and norm_poster in poster_to_key:
+            matched_key = poster_to_key[norm_poster]
+
+        # 2) Fallback: match per titolo normalizzato
         if matched_key is None:
-            film_groups[norm] = {
+            norm_title = _normalize_title(s.titolo)
+            if not norm_title:
+                continue
+            if norm_title in film_groups:
+                matched_key = norm_title
+            else:
+                for existing_key in film_groups:
+                    short, long = (
+                        (norm_title, existing_key)
+                        if len(norm_title) <= len(existing_key)
+                        else (existing_key, norm_title)
+                    )
+                    if long.startswith(short + " "):
+                        matched_key = existing_key
+                        break
+                    if len(short) >= 15 and short in long:
+                        matched_key = existing_key
+                        break
+
+        # 3) Nessun match → crea nuovo gruppo
+        if matched_key is None:
+            matched_key = norm_poster or _normalize_title(s.titolo)
+            film_groups[matched_key] = {
                 "titolo": s.titolo,
-                "normalized": norm,
+                "normalized": _normalize_title(s.titolo),
                 "poster_url": s.poster_url,
                 "rating": s.rating,
                 "genre": s.genre,
                 "cinemas": {},
             }
-            group_originals[norm] = [s.titolo]
-            matched_key = norm
+            if norm_poster:
+                poster_to_key[norm_poster] = matched_key
 
         fg = film_groups[matched_key]
-        group_originals[matched_key].append(s.titolo)
 
         # Preferisci titolo senza suffisso V.O. come titolo display
         stored_vo = _is_vo(fg["titolo"]) or any(
