@@ -11,22 +11,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 
-<script>
-  // Prevent flash of wrong theme
-  (function() {
-    var saved = localStorage.getItem('bos-theme');
-    if (saved) {
-      document.documentElement.setAttribute('data-theme', saved);
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-      document.documentElement.setAttribute('data-theme', 'light');
-    }
-  })();
-</script>
-
 <style>
-/* === STRICT BRUTALIST SYSTEM — DUAL THEME === */
+/* === STRICT BRUTALIST SYSTEM — RISOGRAPH LIGHT MODE === */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -35,43 +21,24 @@
   font-family: 'Space Mono', monospace;
 }
 
-/* Light Mode — Stampa Risograph */
-:root, :root[data-theme="light"] {
-  --bg-main: #E2DFD8;
-  --bg-card: #EAE7E1;
-  --border-color: #000000;
-  --text-main: #000000;
+:root {
+  --bg-paper: #E2DFD8;
+  --surface-card: #EAE7E1;
+  --accent-orange: #FF3500;
+  --text-black: #000000;
   --text-gray: #6B6660;
-  --accent-orange: #FF3500;
-  --btn-bg: #FFFFFF;
-  --poster-placeholder: #D5D0C9;
-  --shadow-color: #000000;
-  --grain-opacity: 0.08;
-}
-
-/* Dark Mode — Fotocopia in Negativo */
-:root[data-theme="dark"] {
-  --bg-main: #121212;
-  --bg-card: #1C1C1C;
-  --border-color: #333333;
-  --text-main: #F0F0F0;
-  --text-gray: #8A8A8A;
-  --accent-orange: #FF3500;
-  --btn-bg: #262626;
-  --poster-placeholder: #1A1A1A;
-  --shadow-color: #000000;
-  --grain-opacity: 0.04;
+  --border-dim: #C4BFB8;
+  --border-hard: #000000;
 }
 
 body {
-  background-color: var(--bg-main);
-  color: var(--text-main);
+  background-color: var(--bg-paper);
+  color: var(--text-black);
   padding: 20px 16px;
   max-width: 1400px;
   margin: 0 auto;
   -webkit-font-smoothing: antialiased;
   position: relative;
-  transition: background-color 0.2s, color 0.2s;
 }
 
 /* Grain / noise texture overlay */
@@ -81,7 +48,7 @@ body::before {
   inset: 0;
   pointer-events: none;
   z-index: 9999;
-  opacity: var(--grain-opacity);
+  opacity: 0.08;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 200px 200px;
@@ -95,7 +62,7 @@ body::before {
   justify-content: space-between;
   align-items: center;
   padding-bottom: 20px;
-  border-bottom: 2px solid var(--border-color);
+  border-bottom: 2px solid var(--border-hard);
   margin-bottom: 20px;
   flex-wrap: wrap;
   gap: 12px;
@@ -118,9 +85,9 @@ body::before {
 }
 
 .tape-black {
-  background: var(--border-color);
-  color: var(--btn-bg);
-  border: 2px solid var(--border-color);
+  background: #000;
+  color: #fff;
+  border: 2px solid var(--border-hard);
 }
 
 .tape-orange {
@@ -129,32 +96,25 @@ body::before {
   font-weight: 700;
 }
 
-.nav { display: flex; gap: 8px; flex-wrap: wrap; }
+.nav { display: flex; gap: 8px; }
 
-.nav a, .nav button {
-  color: var(--text-main);
+.nav a {
+  color: var(--text-black);
   text-decoration: none;
   font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
   padding: 6px 12px;
-  background: var(--btn-bg);
-  border: 2px solid var(--border-color);
-  box-shadow: 2px 2px 0px var(--shadow-color);
-  cursor: pointer;
-  font-family: 'Space Mono', monospace;
+  background: #fff;
+  border: 2px solid var(--border-hard);
+  box-shadow: 2px 2px 0px #000;
 }
 
-.nav a:hover, .nav button:hover {
+.nav a:hover {
   background: var(--accent-orange);
   color: #000;
-  box-shadow: 1px 1px 0px var(--shadow-color);
+  box-shadow: 1px 1px 0px #000;
   transform: translate(1px, 1px);
-}
-
-.theme-toggle {
-  font-size: 0.75rem;
-  letter-spacing: 0.5px;
 }
 
 /* === HERO === */
@@ -181,10 +141,10 @@ body::before {
 
 .date-card {
   flex-shrink: 0;
-  background: var(--btn-bg);
-  color: var(--text-main);
-  border: 2px solid var(--border-color);
-  box-shadow: 3px 3px 0px var(--shadow-color);
+  background: #fff;
+  color: var(--text-black);
+  border: 2px solid var(--border-hard);
+  box-shadow: 3px 3px 0px #000;
   padding: 8px 14px;
   text-align: center;
   text-decoration: none;
@@ -197,16 +157,16 @@ body::before {
 .date-card:hover {
   background: var(--accent-orange);
   color: #000;
-  box-shadow: 1px 1px 0px var(--shadow-color);
+  box-shadow: 1px 1px 0px #000;
   transform: translate(2px, 2px);
 }
 
 .date-card.active {
   background: var(--accent-orange);
   color: #000;
-  border-color: var(--border-color);
+  border-color: var(--border-hard);
   font-weight: 700;
-  box-shadow: 3px 3px 0px var(--shadow-color);
+  box-shadow: 3px 3px 0px #000;
 }
 
 .date-card.active .date-day,
@@ -228,10 +188,10 @@ body::before {
 .filter-wrapper { position: relative; }
 
 .filter-btn {
-  background: var(--btn-bg);
-  color: var(--text-main);
-  border: 2px solid var(--border-color);
-  box-shadow: 2px 2px 0px var(--shadow-color);
+  background: #fff;
+  color: var(--text-black);
+  border: 2px solid var(--border-hard);
+  box-shadow: 2px 2px 0px #000;
   padding: 8px 12px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -244,7 +204,7 @@ body::before {
 
 .filter-btn:hover, .filter-btn.active {
   background: var(--accent-orange);
-  box-shadow: 1px 1px 0px var(--shadow-color);
+  box-shadow: 1px 1px 0px #000;
   transform: translate(1px, 1px);
 }
 
@@ -258,9 +218,9 @@ body::before {
   top: 100%;
   left: 0;
   margin-top: 4px;
-  background: var(--btn-bg);
-  border: 2px solid var(--border-color);
-  box-shadow: 3px 3px 0px var(--shadow-color);
+  background: #fff;
+  border: 2px solid var(--border-hard);
+  box-shadow: 3px 3px 0px #000;
   padding: 4px 0;
   min-width: 200px;
   z-index: 50;
@@ -276,7 +236,7 @@ body::before {
   width: 100%;
   padding: 8px 12px;
   font-size: 0.75rem;
-  color: var(--text-main);
+  color: var(--text-black);
   background: none;
   border: none;
   text-align: left;
@@ -310,24 +270,24 @@ body::before {
 
 /* === CARD === */
 .film-card {
-  background: var(--bg-card);
-  border: 2px solid var(--border-color);
-  box-shadow: 4px 4px 0px var(--shadow-color);
+  background: var(--surface-card);
+  border: 2px solid var(--border-hard);
+  box-shadow: 3px 3px 0px #000;
   display: flex;
   flex-direction: column;
 }
 
 .film-card:hover {
-  box-shadow: 1px 1px 0px var(--shadow-color);
-  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0px #000;
+  transform: translate(2px, 2px);
 }
 
 .film-poster {
   aspect-ratio: 2/3;
   width: 100%;
   position: relative;
-  background-color: var(--poster-placeholder);
-  border-bottom: 2px solid var(--border-color);
+  background-color: #D5D0C9;
+  border-bottom: 2px solid var(--border-hard);
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
@@ -343,8 +303,8 @@ body::before {
   font-size: 0.8rem;
   padding: 3px 8px;
   z-index: 2;
-  border-right: 2px solid var(--border-color);
-  border-bottom: 2px solid var(--border-color);
+  border-right: 2px solid var(--border-hard);
+  border-bottom: 2px solid var(--border-hard);
 }
 
 .film-genres-overlay {
@@ -359,9 +319,9 @@ body::before {
 }
 
 .genre-chip {
-  background: var(--btn-bg);
-  color: var(--text-main);
-  border: 1px solid var(--border-color);
+  background: #fff;
+  color: var(--text-black);
+  border: 1px solid var(--border-hard);
   font-size: 0.6rem;
   padding: 2px 5px;
   text-transform: uppercase;
@@ -383,7 +343,7 @@ body::before {
   text-transform: uppercase;
   line-height: 1.2;
   word-break: break-word;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-hard);
 }
 
 .film-cinemas {
@@ -416,10 +376,10 @@ body::before {
 .cinema-times.times-collapsed .overflow-time { display: none !important; }
 
 .film-time {
-  background: var(--btn-bg);
-  color: var(--text-main);
-  border: 2px solid var(--border-color);
-  box-shadow: 2px 2px 0px var(--shadow-color);
+  background: #fff;
+  color: var(--text-black);
+  border: 2px solid var(--border-hard);
+  box-shadow: 2px 2px 0px #000;
   padding: 5px 9px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -431,20 +391,20 @@ body::before {
 
 .film-time:hover {
   background: var(--accent-orange);
-  box-shadow: 1px 1px 0px var(--shadow-color);
+  box-shadow: 1px 1px 0px #000;
   transform: translate(1px, 1px);
 }
 
 .pill-vo {
   font-size: 0.6rem;
-  background: var(--border-color);
-  color: var(--btn-bg);
+  background: var(--border-hard);
+  color: #fff;
   padding: 0 3px;
 }
 
 .film-time:hover .pill-vo {
-  background: var(--border-color);
-  color: var(--btn-bg);
+  background: #000;
+  color: #fff;
 }
 
 .expand-times, .expand-cinemas {
@@ -476,7 +436,7 @@ body::before {
 }
 
 .footer {
-  border-top: 2px solid var(--border-color);
+  border-top: 2px solid var(--border-hard);
   padding: 20px 0;
   text-align: center;
   font-size: 0.7rem;
@@ -498,7 +458,7 @@ body::before {
     aspect-ratio: 2/3;
     flex-shrink: 0;
     border-bottom: none;
-    border-right: 2px solid var(--border-color);
+    border-right: 2px solid var(--border-hard);
   }
 
   .card-body {
@@ -530,7 +490,6 @@ body::before {
       <a href="/">OGGI</a>
       <a href="https://t.me/bolocinescraperbot" target="_blank">TELEGRAM</a>
       <a href="/docs">API</a>
-      <button class="theme-toggle" id="themeToggle" type="button">// MODE: LIGHT</button>
     </nav>
   </header>
 
@@ -627,7 +586,7 @@ body::before {
             {% if film.rating and film.rating != "0.0" %}
               <span class="film-rating">★ {{ film.rating }}</span>
             {% else %}
-              <span class="film-rating" style="background: var(--text-gray); color: var(--btn-bg);">N/D</span>
+              <span class="film-rating" style="background: var(--border-dim); color: #000;">N/D</span>
             {% endif %}
 
             {% if film.genre %}
@@ -692,21 +651,6 @@ body::before {
 
 <script>
 (function() {
-  // Theme toggle
-  var themeToggle = document.getElementById('themeToggle');
-  function updateToggleLabel() {
-    var current = document.documentElement.getAttribute('data-theme') || 'light';
-    themeToggle.textContent = '// MODE: ' + current.toUpperCase();
-  }
-  updateToggleLabel();
-  themeToggle.addEventListener('click', function() {
-    var current = document.documentElement.getAttribute('data-theme') || 'light';
-    var next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('bos-theme', next);
-    updateToggleLabel();
-  });
-
   // Dropdown toggle
   function setupDropdown(btnId, menuId) {
     const btn = document.getElementById(btnId);
