@@ -930,6 +930,7 @@ body::before {
   });
 
   closeBtn.addEventListener('click', closePoster);
+  overlayImg.addEventListener('click', closePoster);
   overlay.addEventListener('click', function(e) {
     if (e.target === overlay) closePoster();
   });
