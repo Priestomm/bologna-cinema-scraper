@@ -796,16 +796,24 @@ body::after {
     >> STATUS: {{ day_map[d_obj.strftime("%A")]|upper }} {{ d_obj.day }} {{ month_map[d_obj.strftime("%B")] }} // BOLOGNA
   </div>
 
+  <!-- CINEMA DATA -->
+  <script>
+  var CINEMA_DATA = [
+    {% for film in films %}
+    [{% for c in film.cinemas %}{"n":"{{ c.name }}","t":[{% for t in c.times %}{"o":"{{ t.ora }}","u":"{{ t.url }}","v":{{ "1" if t.vo else "0" }}}{% if not loop.last %},{% endif %}{% endfor %}]}{% if not loop.last %},{% endif %}{% endfor %}]{% if not loop.last %},{% endif %}{% endfor %}
+  ];
+  </script>
+
   <!-- FILM GRID -->
   <main class="film-grid" id="filmGrid">
     {% if films %}
       {% for film in films %}
         <article class="film-card"
+             data-idx="{{ loop.index0 }}"
              data-title="{{ film.titolo|lower }}"
              data-times="{{ film.cinemas[0].times[0].ora if film.cinemas and film.cinemas[0].times else '99:99' }}"
              data-cinemas="{{ film.cinemas|map(attribute='name')|join(',')|lower }}"
-             data-genre="{{ (film.genre or '')|lower }}"
-             data-dialog='[ {% for c in film.cinemas %}{"name":"{{ c.name|replace("\\", "\\\\")|replace('"', '\\"') }}","times":[{% for t in c.times %}{"ora":"{{ t.ora }}","url":"{{ t.url }}","vo":{{ "true" if t.vo else "false" }}}{% if not loop.last %},{% endif %}{% endfor %}]}{% if not loop.last %},{% endif %}{% endfor %}]'>
+             data-genre="{{ (film.genre or '')|lower }}">
 
           <div class="film-poster"{% if film.poster_url %} style="background-image: url('{{ film.poster_url }}')"{% endif %}>
             {% if film.rating and film.rating != "0.0" %}
@@ -1084,20 +1092,19 @@ body::after {
       if (!title) return;
       dialogTitle.textContent = title.textContent.trim();
 
-      var data;
-      try {
-        data = JSON.parse(card.dataset.dialog);
-      } catch(err) { return; }
+      var idx = parseInt(card.dataset.idx, 10);
+      var cinemas = CINEMA_DATA[idx];
+      if (!cinemas) return;
 
       var html = '';
-      data.forEach(function(cinema) {
+      cinemas.forEach(function(c) {
         html += '<div class="cinema-dialog-cinema">';
-        html += '<div class="cinema-dialog-cinema-name">■ ' + cinema.name + '</div>';
+        html += '<div class="cinema-dialog-cinema-name">■ ' + c.n + '</div>';
         html += '<div class="cinema-dialog-times">';
-        cinema.times.forEach(function(t) {
-          html += '<a href="' + t.url + '" target="_blank" rel="noopener" class="film-time">';
-          html += t.ora;
-          if (t.vo) html += ' <span class="pill-vo">VO</span>';
+        c.t.forEach(function(t) {
+          html += '<a href="' + t.u + '" target="_blank" rel="noopener" class="film-time">';
+          html += t.o;
+          if (t.v === "1") html += ' <span class="pill-vo">VO</span>';
           html += '</a>';
         });
         html += '</div></div>';
