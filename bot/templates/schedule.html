@@ -612,29 +612,22 @@ body::after {
 
 /* === CINEMA DIALOG === */
 .cinema-dialog {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  background: rgba(0, 0, 0, 0.85);
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  cursor: pointer;
+  border: 3px solid var(--border-hard);
+  background: var(--surface-card);
+  color: var(--text);
+  padding: 0;
+  max-width: 500px;
+  width: 90vw;
+  box-shadow: 6px 6px 0px #000;
 }
 
-.cinema-dialog.open { display: flex; }
+.cinema-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.85);
+}
 
 .cinema-dialog-box {
-  background: var(--surface-card);
-  border: 3px solid var(--border-hard);
-  box-shadow: 6px 6px 0px #000;
-  max-width: 500px;
-  width: 100%;
-  max-height: 80vh;
-  overflow-y: auto;
-  cursor: default;
-  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .cinema-dialog-header {
@@ -796,20 +789,11 @@ body::after {
     >> STATUS: {{ day_map[d_obj.strftime("%A")]|upper }} {{ d_obj.day }} {{ month_map[d_obj.strftime("%B")] }} // BOLOGNA
   </div>
 
-  <!-- CINEMA DATA -->
-  <script>
-  var CINEMA_DATA = [
-    {% for film in films %}
-    [{% for c in film.cinemas %}{"n":"{{ c.name }}","t":[{% for t in c.times %}{"o":"{{ t.ora }}","u":"{{ t.url }}","v":{{ "1" if t.vo else "0" }}}{% if not loop.last %},{% endif %}{% endfor %}]}{% if not loop.last %},{% endif %}{% endfor %}]{% if not loop.last %},{% endif %}{% endfor %}
-  ];
-  </script>
-
   <!-- FILM GRID -->
   <main class="film-grid" id="filmGrid">
     {% if films %}
       {% for film in films %}
         <article class="film-card"
-             data-idx="{{ loop.index0 }}"
              data-title="{{ film.titolo|lower }}"
              data-times="{{ film.cinemas[0].times[0].ora if film.cinemas and film.cinemas[0].times else '99:99' }}"
              data-cinemas="{{ film.cinemas|map(attribute='name')|join(',')|lower }}"
@@ -835,27 +819,33 @@ body::after {
           <div class="card-body">
             <div class="title-tape">{{ film.titolo }}</div>
             <div class="card-hint">Vedi cinema e orari →</div>
-
-            <div class="film-cinemas">
-              {% for c in film.cinemas %}
-                <div class="film-cinema-row" data-cinema="{{ c.name|lower }}">
-                  {% set short_name = c.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
-                  <span class="cinema-name">■ {{ short_name }}</span>
-
-                  <div class="cinema-times">
-                    {% for t in c.times %}
-                    <a href="{{ t.url }}" target="_blank" rel="noopener" class="film-time">
-                      {{ t.ora }}
-                      {% if t.vo %}<span class="pill-vo">VO</span>{% endif %}
-                    </a>
-                    {% endfor %}
-                  </div>
-                </div>
-              {% endfor %}
-            </div>
           </div>
 
         </article>
+
+        <dialog class="cinema-dialog" id="dialog-{{ loop.index0 }}">
+          <div class="cinema-dialog-box">
+            <div class="cinema-dialog-header">
+              <span>{{ film.titolo }}</span>
+              <button class="cinema-dialog-close" onclick="this.closest('.cinema-dialog').close()">&times;</button>
+            </div>
+            <div class="cinema-dialog-body">
+              {% for c in film.cinemas %}
+              <div class="cinema-dialog-cinema">
+                <div class="cinema-dialog-cinema-name">■ {{ c.name }}</div>
+                <div class="cinema-dialog-times">
+                  {% for t in c.times %}
+                  <a href="{{ t.url }}" target="_blank" rel="noopener" class="film-time">
+                    {{ t.ora }}
+                    {% if t.vo %}<span class="pill-vo">VO</span>{% endif %}
+                  </a>
+                  {% endfor %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </dialog>
       {% endfor %}
     {% else %}
       <div class="empty-state">
@@ -990,15 +980,6 @@ body::after {
       const filmHasCinema = (filter === 'all' || cinemas.includes(filter));
       const filmHasGenre = (genre === 'all' || filmGenre.includes(genre));
 
-      const rows = card.querySelectorAll('.film-cinema-row');
-      rows.forEach(function(row) {
-        if (filter === 'all' || row.dataset.cinema.includes(filter)) {
-          row.style.display = '';
-        } else {
-          row.style.display = 'none';
-        }
-      });
-
       if (filmHasCinema && filmHasGenre) {
         visibleCards.push(card);
         visible++;
@@ -1078,53 +1059,13 @@ body::after {
     if (e.target === overlay) closePoster();
   });
 
-  // Cinema dialog
-  var dialog = document.getElementById('cinemaDialog');
-  var dialogTitle = document.getElementById('dialogTitle');
-  var dialogBody = document.getElementById('dialogBody');
-  var dialogCloseBtn = document.getElementById('dialogClose');
-
-  document.querySelectorAll('.film-card').forEach(function(card) {
+  // Cinema dialog — native <dialog> + showModal()
+  document.querySelectorAll('.film-card').forEach(function(card, i) {
     card.addEventListener('click', function(e) {
       if (e.target.closest('a')) return;
-
-      var title = card.querySelector('.title-tape');
-      if (!title) return;
-      dialogTitle.textContent = title.textContent.trim();
-
-      var idx = parseInt(card.dataset.idx, 10);
-      var cinemas = CINEMA_DATA[idx];
-      if (!cinemas) return;
-
-      var html = '';
-      cinemas.forEach(function(c) {
-        html += '<div class="cinema-dialog-cinema">';
-        html += '<div class="cinema-dialog-cinema-name">■ ' + c.n + '</div>';
-        html += '<div class="cinema-dialog-times">';
-        c.t.forEach(function(t) {
-          html += '<a href="' + t.u + '" target="_blank" rel="noopener" class="film-time">';
-          html += t.o;
-          if (t.v === "1") html += ' <span class="pill-vo">VO</span>';
-          html += '</a>';
-        });
-        html += '</div></div>';
-      });
-      dialogBody.innerHTML = html;
-      dialog.classList.add('open');
-      document.body.style.overflow = 'hidden';
+      var dlg = document.getElementById('dialog-' + i);
+      if (dlg) dlg.showModal();
     });
-  });
-
-  dialogCloseBtn.addEventListener('click', function() {
-    dialog.classList.remove('open');
-    document.body.style.overflow = '';
-  });
-
-  dialog.addEventListener('click', function(e) {
-    if (e.target === dialog) {
-      dialog.classList.remove('open');
-      document.body.style.overflow = '';
-    }
   });
 
 })();
@@ -1134,17 +1075,6 @@ body::after {
 <div class="sticker sticker-neon"><img src="/static/stickers/neon.png" alt=""></div>
 <div class="sticker sticker-ran"><img src="/static/stickers/ran.png" alt=""></div>
 <div class="sticker sticker-rohmer"><img src="/static/stickers/rohmer.png" alt=""></div>
-
-<!-- CINEMA DIALOG -->
-<div class="cinema-dialog" id="cinemaDialog">
-  <div class="cinema-dialog-box">
-    <div class="cinema-dialog-header">
-      <span id="dialogTitle"></span>
-      <button class="cinema-dialog-close" id="dialogClose">&times;</button>
-    </div>
-    <div class="cinema-dialog-body" id="dialogBody"></div>
-  </div>
-</div>
 
 </body>
 </html>
