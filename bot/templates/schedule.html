@@ -584,6 +584,43 @@ body::after {
     padding: 8px 10px;
     min-height: 36px;
   }
+
+  .sticker-neon { width: 120px; top: 50px; right: 10px; }
+  .sticker-ran { width: 140px; bottom: 30px; left: 10px; }
+  .sticker-rohmer { width: 110px; top: 45%; right: 2%; }
+}
+
+/* === STICKERS (fissi allo sfondo) === */
+.sticker {
+  position: fixed;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.sticker img {
+  filter: drop-shadow(3px 3px 0px #000);
+}
+
+.sticker-neon {
+  top: 80px;
+  right: 40px;
+  width: 200px;
+  transform: rotate(8deg);
+}
+
+.sticker-ran {
+  bottom: 60px;
+  left: 30px;
+  width: 240px;
+  transform: rotate(-5deg);
+}
+
+.sticker-rohmer {
+  top: 50%;
+  right: 5%;
+  width: 180px;
+  transform: rotate(12deg);
 }
 </style>
 </head>
@@ -968,6 +1005,11 @@ body::after {
 
 })();
 </script>
+
+<!-- STICKERS (fissi allo sfondo) -->
+<div class="sticker sticker-neon"><img src="/static/stickers/neon.png" alt=""></div>
+<div class="sticker sticker-ran"><img src="/static/stickers/ran.png" alt=""></div>
+<div class="sticker sticker-rohmer"><img src="/static/stickers/rohmer.png" alt=""></div>
 
 </body>
 </html>
