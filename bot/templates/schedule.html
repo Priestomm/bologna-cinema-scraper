@@ -585,60 +585,42 @@ body::after {
     min-height: 36px;
   }
 
-  .sticker-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
+  .sticker-neon { width: 120px; top: 50px; right: 10px; }
+  .sticker-ran { width: 140px; bottom: 30px; left: 10px; }
+  .sticker-rohmer { width: 110px; top: 45%; right: 2%; }
 }
 
-/* === STICKER GRID === */
-.sticker-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
+/* === STICKERS (fissi allo sfondo) === */
+.sticker {
+  position: fixed;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.85;
 }
 
-.sticker-card {
-  background: var(--surface-card);
-  border: 2px solid var(--border-hard);
-  box-shadow: 4px 4px 0px #000;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.sticker-card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px #000;
-}
-
-.sticker-img-wrap {
-  background: var(--bg-paper);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px;
-  min-height: 200px;
-}
-
-.sticker-img-wrap img {
-  max-width: 100%;
-  max-height: 300px;
-  object-fit: contain;
+.sticker img {
   filter: drop-shadow(3px 3px 0px #000);
 }
 
-.sticker-label {
-  background: var(--accent-orange);
-  color: #000;
-  padding: 6px 10px;
-  font-weight: 700;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  text-align: center;
-  border-top: 2px solid var(--border-hard);
+.sticker-neon {
+  top: 80px;
+  right: 40px;
+  width: 200px;
+  transform: rotate(8deg);
+}
+
+.sticker-ran {
+  bottom: 60px;
+  left: 30px;
+  width: 240px;
+  transform: rotate(-5deg);
+}
+
+.sticker-rohmer {
+  top: 50%;
+  right: 5%;
+  width: 180px;
+  transform: rotate(12deg);
 }
 </style>
 </head>
@@ -663,28 +645,6 @@ body::after {
   <section class="hero">
     <h2>// PROGRAMMAZIONE CINEMA</h2>
   </section>
-
-  <!-- STICKER GRID -->
-  <div class="sticker-grid">
-    <div class="sticker-card">
-      <div class="sticker-img-wrap">
-        <img src="/static/stickers/neon.png" alt="Neon">
-      </div>
-      <div class="sticker-label">Neon</div>
-    </div>
-    <div class="sticker-card">
-      <div class="sticker-img-wrap">
-        <img src="/static/stickers/ran.png" alt="Ran">
-      </div>
-      <div class="sticker-label">Ran</div>
-    </div>
-    <div class="sticker-card">
-      <div class="sticker-img-wrap">
-        <img src="/static/stickers/rohmer.png" alt="Rohmer">
-      </div>
-      <div class="sticker-label">Rohmer</div>
-    </div>
-  </div>
 
   <!-- DATE BAR -->
   <div class="date-bar" id="dateBar">
@@ -1045,6 +1005,11 @@ body::after {
 
 })();
 </script>
+
+<!-- STICKERS (fissi allo sfondo) -->
+<div class="sticker sticker-neon"><img src="/static/stickers/neon.png" alt=""></div>
+<div class="sticker sticker-ran"><img src="/static/stickers/ran.png" alt=""></div>
+<div class="sticker sticker-rohmer"><img src="/static/stickers/rohmer.png" alt=""></div>
 
 </body>
 </html>
