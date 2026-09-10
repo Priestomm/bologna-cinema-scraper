@@ -368,10 +368,15 @@ body::after {
   word-break: break-word;
 }
 
+.card-hint {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-gray);
+  text-transform: uppercase;
+}
+
 .film-cinemas {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: none;
 }
 
 .film-cinema-row {
@@ -820,6 +825,7 @@ body::after {
 
           <div class="card-body">
             <div class="title-tape">{{ film.titolo }}</div>
+            <div class="card-hint">Vedi cinema e orari →</div>
 
             <div class="film-cinemas">
               {% for c in film.cinemas %}
