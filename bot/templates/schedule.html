@@ -50,7 +50,7 @@ body {
 
 body::before {
   content: '';
-  position: fixed;
+  position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 9999;
@@ -64,7 +64,7 @@ body::before {
 
 body::after {
   content: '';
-  position: fixed;
+  position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 1;
@@ -576,9 +576,9 @@ body::after {
   .sticker-rohmer { width: 90px; top: 45%; right: 2%; }
 }
 
-/* === STICKERS (fissi allo sfondo) === */
+/* === STICKERS === */
 .sticker {
-  position: fixed;
+  position: absolute;
   z-index: 0;
   pointer-events: none;
   opacity: 0.7;
@@ -591,23 +591,23 @@ body::after {
 
 .sticker-neon {
   top: 80px;
-  right: -10px;
+  right: -50px;
   width: 500px;
   transform: rotate(8deg);
 }
 
 .sticker-ran {
-  bottom: 100px;
-  left: -100px;
+  bottom: 10px;
+  left: -300px;
   width: 1000px;
   transform: rotate(-5deg);
 }
 
 .sticker-rohmer {
   top: 50%;
-  right: 5%;
-  width: 180px;
-  transform: rotate(12deg);
+  right: -170px;
+  width: 700px;
+  transform: rotate(-12deg);
 }
 
 /* === CINEMA DIALOG === */
