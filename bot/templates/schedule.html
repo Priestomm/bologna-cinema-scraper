@@ -299,6 +299,7 @@ body::after {
   flex-direction: column;
   box-shadow: 4px 4px 0px #000;
   transition: none;
+  cursor: pointer;
 }
 
 .film-card:hover {
@@ -371,32 +372,6 @@ body::after {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 160px;
-  overflow: hidden;
-}
-
-.film-cinemas:not(.collapsed) {
-  max-height: none;
-}
-
-.expand-cinemas {
-  position: sticky;
-  bottom: 0;
-  z-index: 1;
-  background: var(--surface-card);
-  border: 1px dashed var(--border-hard);
-  color: var(--text-black);
-  padding: 4px 8px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  cursor: pointer;
-  text-transform: uppercase;
-  text-align: center;
-}
-
-.expand-cinemas:hover {
-  border-color: var(--accent-orange);
-  color: var(--accent-orange);
 }
 
 .film-cinema-row {
@@ -419,8 +394,6 @@ body::after {
   gap: 6px;
   align-items: center;
 }
-
-.cinema-times.times-collapsed .overflow-time { display: none !important; }
 
 .film-time {
   background: #fff;
@@ -455,24 +428,6 @@ body::after {
   background: #000;
   color: #fff;
 }
-
-.expand-times {
-  background: transparent;
-  border: 1px dashed var(--text-gray);
-  color: var(--text-gray);
-  padding: 4px 8px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  cursor: pointer;
-  text-transform: uppercase;
-}
-
-.expand-times:hover {
-  border-color: var(--accent-orange);
-  color: var(--accent-orange);
-}
-
-.film-cinemas.collapsed .overflow-row { display: none !important; }
 
 /* === EMPTY STATE & FOOTER === */
 .empty-state {
@@ -646,8 +601,97 @@ body::after {
 .sticker-rohmer {
   top: 50%;
   right: 5%;
-  width: 400px;
-  transform: rotate(-12deg);
+  width: 180px;
+  transform: rotate(12deg);
+}
+
+/* === CINEMA DIALOG === */
+.cinema-dialog {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.85);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  cursor: pointer;
+}
+
+.cinema-dialog.open { display: flex; }
+
+.cinema-dialog-box {
+  background: var(--surface-card);
+  border: 3px solid var(--border-hard);
+  box-shadow: 6px 6px 0px #000;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  cursor: default;
+  padding: 0;
+}
+
+.cinema-dialog-header {
+  background: var(--accent-orange);
+  color: #000;
+  padding: 12px 16px;
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: uppercase;
+  border-bottom: 3px solid var(--border-hard);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cinema-dialog-close {
+  background: #000;
+  color: #fff;
+  border: 2px solid #000;
+  font-size: 1.2rem;
+  font-weight: 700;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cinema-dialog-close:hover {
+  background: var(--accent-orange);
+  color: #000;
+}
+
+.cinema-dialog-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cinema-dialog-cinema {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cinema-dialog-cinema-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-gray);
+  text-transform: uppercase;
+}
+
+.cinema-dialog-times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cinema-dialog-times .film-time {
+  font-size: 0.85rem;
 }
 </style>
 </head>
@@ -777,33 +821,23 @@ body::after {
           <div class="card-body">
             <div class="title-tape">{{ film.titolo }}</div>
 
-            <div class="film-cinemas{% if film.cinemas|length > 3 %} collapsed{% endif %}">
-              {% set total_cinemas = film.cinemas|length %}
+            <div class="film-cinemas">
               {% for c in film.cinemas %}
-                <div class="film-cinema-row{% if total_cinemas > 3 and loop.index > 3 %} overflow-row{% endif %}" data-cinema="{{ c.name|lower }}">
+                <div class="film-cinema-row" data-cinema="{{ c.name|lower }}">
                   {% set short_name = c.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
                   <span class="cinema-name">■ {{ short_name }}</span>
 
-                  <div class="cinema-times{% if c.times|length > 2 %} times-collapsed{% endif %}">
+                  <div class="cinema-times">
                     {% for t in c.times %}
-                    <a href="{{ t.url }}" target="_blank" rel="noopener" class="film-time{% if c.times|length > 2 and loop.index > 2 %} overflow-time{% endif %}">
+                    <a href="{{ t.url }}" target="_blank" rel="noopener" class="film-time">
                       {{ t.ora }}
                       {% if t.vo %}<span class="pill-vo">VO</span>{% endif %}
                     </a>
                     {% endfor %}
-
-                    {% if c.times|length > 2 %}
-                    <button class="expand-times" onclick="this.parentElement.classList.toggle('times-collapsed');this.textContent=this.parentElement.classList.contains('times-collapsed') ? '+{{ c.times|length - 2 }} altri' : 'Meno'">+{{ c.times|length - 2 }} altri</button>
-                    {% endif %}
                   </div>
                 </div>
               {% endfor %}
-
-              {% if total_cinemas > 3 %}
-              <button class="expand-cinemas" onclick="this.parentElement.classList.toggle('collapsed');this.textContent=this.parentElement.classList.contains('collapsed') ? '+ altri {{ total_cinemas - 3 }} cinema' : 'Meno'">
-                + altri {{ total_cinemas - 3 }} cinema
-              </button>
-              {% endif %}
+            </div>
             </div>
           </div>
 
@@ -1030,6 +1064,52 @@ body::after {
     if (e.target === overlay) closePoster();
   });
 
+  // Cinema dialog
+  var dialog = document.getElementById('cinemaDialog');
+  var dialogTitle = document.getElementById('dialogTitle');
+  var dialogBody = document.getElementById('dialogBody');
+  var dialogCloseBtn = document.getElementById('dialogClose');
+
+  document.querySelectorAll('.film-card').forEach(function(card) {
+    card.addEventListener('click', function(e) {
+      if (e.target.closest('a') || e.target.closest('.film-poster')) return;
+
+      var title = card.querySelector('.title-tape');
+      if (!title) return;
+      dialogTitle.textContent = title.textContent.trim();
+
+      var cinemas = card.querySelectorAll('.film-cinema-row');
+      var html = '';
+      cinemas.forEach(function(row) {
+        var name = row.querySelector('.cinema-name');
+        var times = row.querySelectorAll('.film-time');
+        if (!name) return;
+        html += '<div class="cinema-dialog-cinema">';
+        html += '<div class="cinema-dialog-cinema-name">' + name.textContent.trim() + '</div>';
+        html += '<div class="cinema-dialog-times">';
+        times.forEach(function(t) {
+          html += t.outerHTML;
+        });
+        html += '</div></div>';
+      });
+      dialogBody.innerHTML = html;
+      dialog.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    });
+  });
+
+  dialogCloseBtn.addEventListener('click', function() {
+    dialog.classList.remove('open');
+    document.body.style.overflow = '';
+  });
+
+  dialog.addEventListener('click', function(e) {
+    if (e.target === dialog) {
+      dialog.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  });
+
 })();
 </script>
 
@@ -1037,6 +1117,17 @@ body::after {
 <div class="sticker sticker-neon"><img src="/static/stickers/neon.png" alt=""></div>
 <div class="sticker sticker-ran"><img src="/static/stickers/ran.png" alt=""></div>
 <div class="sticker sticker-rohmer"><img src="/static/stickers/rohmer.png" alt=""></div>
+
+<!-- CINEMA DIALOG -->
+<div class="cinema-dialog" id="cinemaDialog">
+  <div class="cinema-dialog-box">
+    <div class="cinema-dialog-header">
+      <span id="dialogTitle"></span>
+      <button class="cinema-dialog-close" id="dialogClose">&times;</button>
+    </div>
+    <div class="cinema-dialog-body" id="dialogBody"></div>
+  </div>
+</div>
 
 </body>
 </html>
