@@ -804,7 +804,8 @@ body::after {
              data-title="{{ film.titolo|lower }}"
              data-times="{{ film.cinemas[0].times[0].ora if film.cinemas and film.cinemas[0].times else '99:99' }}"
              data-cinemas="{{ film.cinemas|map(attribute='name')|join(',')|lower }}"
-             data-genre="{{ (film.genre or '')|lower }}">
+             data-genre="{{ (film.genre or '')|lower }}"
+             data-dialog='[ {% for c in film.cinemas %}{"name":"{{ c.name|replace("\\", "\\\\")|replace('"', '\\"') }}","times":[{% for t in c.times %}{"ora":"{{ t.ora }}","url":"{{ t.url }}","vo":{{ "true" if t.vo else "false" }}}{% if not loop.last %},{% endif %}{% endfor %}]}{% if not loop.last %},{% endif %}{% endfor %}]'>
 
           <div class="film-poster"{% if film.poster_url %} style="background-image: url('{{ film.poster_url }}')"{% endif %}>
             {% if film.rating and film.rating != "0.0" %}
@@ -1077,23 +1078,27 @@ body::after {
 
   document.querySelectorAll('.film-card').forEach(function(card) {
     card.addEventListener('click', function(e) {
-      if (e.target.closest('a') || e.target.closest('.film-poster')) return;
+      if (e.target.closest('a')) return;
 
       var title = card.querySelector('.title-tape');
       if (!title) return;
       dialogTitle.textContent = title.textContent.trim();
 
-      var cinemas = card.querySelectorAll('.film-cinema-row');
+      var data;
+      try {
+        data = JSON.parse(card.dataset.dialog);
+      } catch(err) { return; }
+
       var html = '';
-      cinemas.forEach(function(row) {
-        var name = row.querySelector('.cinema-name');
-        var times = row.querySelectorAll('.film-time');
-        if (!name) return;
+      data.forEach(function(cinema) {
         html += '<div class="cinema-dialog-cinema">';
-        html += '<div class="cinema-dialog-cinema-name">' + name.textContent.trim() + '</div>';
+        html += '<div class="cinema-dialog-cinema-name">■ ' + cinema.name + '</div>';
         html += '<div class="cinema-dialog-times">';
-        times.forEach(function(t) {
-          html += t.outerHTML;
+        cinema.times.forEach(function(t) {
+          html += '<a href="' + t.url + '" target="_blank" rel="noopener" class="film-time">';
+          html += t.ora;
+          if (t.vo) html += ' <span class="pill-vo">VO</span>';
+          html += '</a>';
         });
         html += '</div></div>';
       });
