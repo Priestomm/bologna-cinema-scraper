@@ -1069,6 +1069,12 @@ body::after {
     });
   });
 
+  document.querySelectorAll('.cinema-dialog').forEach(function(dlg) {
+    dlg.addEventListener('click', function(e) {
+      if (e.target === dlg) dlg.close();
+    });
+  });
+
 })();
 </script>
 
