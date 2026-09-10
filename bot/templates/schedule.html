@@ -371,6 +371,32 @@ body::after {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-height: 160px;
+  overflow: hidden;
+}
+
+.film-cinemas:not(.collapsed) {
+  max-height: none;
+}
+
+.expand-cinemas {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  background: var(--surface-card);
+  border: 1px dashed var(--border-hard);
+  color: var(--text-black);
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.expand-cinemas:hover {
+  border-color: var(--accent-orange);
+  color: var(--accent-orange);
 }
 
 .film-cinema-row {
@@ -430,7 +456,7 @@ body::after {
   color: #fff;
 }
 
-.expand-times, .expand-cinemas {
+.expand-times {
   background: transparent;
   border: 1px dashed var(--text-gray);
   color: var(--text-gray);
@@ -441,7 +467,7 @@ body::after {
   text-transform: uppercase;
 }
 
-.expand-times:hover, .expand-cinemas:hover {
+.expand-times:hover {
   border-color: var(--accent-orange);
   color: var(--accent-orange);
 }
@@ -605,23 +631,23 @@ body::after {
 
 .sticker-neon {
   top: 80px;
-  right: 40px;
-  width: 200px;
+  right: -10px;
+  width: 500px;
   transform: rotate(8deg);
 }
 
 .sticker-ran {
   bottom: 100px;
-  left: -20px;
-  width: 130px;
+  left: -100px;
+  width: 1000px;
   transform: rotate(-5deg);
 }
 
 .sticker-rohmer {
   top: 50%;
   right: 5%;
-  width: 180px;
-  transform: rotate(12deg);
+  width: 400px;
+  transform: rotate(-12deg);
 }
 </style>
 </head>
