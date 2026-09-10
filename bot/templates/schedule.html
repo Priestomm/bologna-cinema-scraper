@@ -585,6 +585,35 @@ body::after {
     min-height: 36px;
   }
 }
+
+/* === STICKERS === */
+.sticker {
+  position: fixed;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.sticker-neon {
+  top: 60px;
+  right: 30px;
+  width: 140px;
+  transform: rotate(8deg);
+}
+
+.sticker-ran {
+  bottom: 80px;
+  left: 20px;
+  width: 160px;
+  transform: rotate(-5deg);
+}
+
+.sticker-rohmer {
+  top: 45%;
+  right: 5%;
+  width: 120px;
+  transform: rotate(12deg);
+}
 </style>
 </head>
 <body>
@@ -759,6 +788,11 @@ body::after {
   </footer>
 
 </div>
+
+<!-- STICKERS -->
+<img src="/static/stickers/neon.png" class="sticker sticker-neon" alt="">
+<img src="/static/stickers/ran.png" class="sticker sticker-ran" alt="">
+<img src="/static/stickers/rohmer.png" class="sticker sticker-rohmer" alt="">
 
 <!-- POSTER OVERLAY (mobile) -->
 <div class="poster-overlay" id="posterOverlay">
