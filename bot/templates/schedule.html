@@ -376,7 +376,9 @@ body::after {
 }
 
 .film-cinemas {
-  display: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .film-cinema-row {
@@ -591,7 +593,7 @@ body::after {
 
 .sticker-neon {
   top: 80px;
-  right: -50px;
+  right: -100px;
   width: 500px;
   transform: rotate(8deg);
 }
@@ -610,88 +612,7 @@ body::after {
   transform: rotate(-12deg);
 }
 
-/* === CINEMA DIALOG === */
-.cinema-dialog {
-  border: 3px solid var(--border-hard);
-  background: var(--surface-card);
-  color: var(--text);
-  padding: 0;
-  max-width: 500px;
-  width: 90vw;
-  box-shadow: 6px 6px 0px #000;
-  margin: auto;
-}
 
-.cinema-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.85);
-}
-
-.cinema-dialog-box {
-  display: flex;
-  flex-direction: column;
-}
-
-.cinema-dialog-header {
-  background: var(--accent-orange);
-  color: #000;
-  padding: 12px 16px;
-  font-weight: 700;
-  font-size: 1rem;
-  text-transform: uppercase;
-  border-bottom: 3px solid var(--border-hard);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.cinema-dialog-close {
-  background: #000;
-  color: #fff;
-  border: 2px solid #000;
-  font-size: 1.2rem;
-  font-weight: 700;
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.cinema-dialog-close:hover {
-  background: var(--accent-orange);
-  color: #000;
-}
-
-.cinema-dialog-body {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.cinema-dialog-cinema {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.cinema-dialog-cinema-name {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-gray);
-  text-transform: uppercase;
-}
-
-.cinema-dialog-times {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.cinema-dialog-times .film-time {
-  font-size: 0.85rem;
-}
 </style>
 </head>
 <body>
@@ -819,33 +740,27 @@ body::after {
 
           <div class="card-body">
             <div class="title-tape">{{ film.titolo }}</div>
-          </div>
 
-        </article>
-
-        <dialog class="cinema-dialog" id="dialog-{{ loop.index0 }}">
-          <div class="cinema-dialog-box">
-            <div class="cinema-dialog-header">
-              <span>{{ film.titolo }}</span>
-              <button class="cinema-dialog-close" onclick="this.closest('.cinema-dialog').close()">&times;</button>
-            </div>
-            <div class="cinema-dialog-body">
+            <div class="film-cinemas">
               {% for c in film.cinemas %}
-              <div class="cinema-dialog-cinema">
-                <div class="cinema-dialog-cinema-name">■ {{ c.name }}</div>
-                <div class="cinema-dialog-times">
-                  {% for t in c.times %}
-                  <a href="{{ t.url }}" target="_blank" rel="noopener" class="film-time">
-                    {{ t.ora }}
-                    {% if t.vo %}<span class="pill-vo">VO</span>{% endif %}
-                  </a>
-                  {% endfor %}
+                <div class="film-cinema-row" data-cinema="{{ c.name|lower }}">
+                  {% set short_name = c.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
+                  <span class="cinema-name">■ {{ short_name }}</span>
+
+                  <div class="cinema-times">
+                    {% for t in c.times %}
+                    <a href="{{ t.url }}" target="_blank" rel="noopener" class="film-time">
+                      {{ t.ora }}
+                      {% if t.vo %}<span class="pill-vo">VO</span>{% endif %}
+                    </a>
+                    {% endfor %}
+                  </div>
                 </div>
-              </div>
               {% endfor %}
             </div>
           </div>
-        </dialog>
+
+        </article>
       {% endfor %}
     {% else %}
       <div class="empty-state">
@@ -980,6 +895,15 @@ body::after {
       const filmHasCinema = (filter === 'all' || cinemas.includes(filter));
       const filmHasGenre = (genre === 'all' || filmGenre.includes(genre));
 
+      const rows = card.querySelectorAll('.film-cinema-row');
+      rows.forEach(function(row) {
+        if (filter === 'all' || row.dataset.cinema.includes(filter)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
       if (filmHasCinema && filmHasGenre) {
         visibleCards.push(card);
         visible++;
@@ -1057,21 +981,6 @@ body::after {
   overlayImg.addEventListener('click', closePoster);
   overlay.addEventListener('click', function(e) {
     if (e.target === overlay) closePoster();
-  });
-
-  // Cinema dialog — native <dialog> + showModal()
-  document.querySelectorAll('.film-card').forEach(function(card, i) {
-    card.addEventListener('click', function(e) {
-      if (e.target.closest('a')) return;
-      var dlg = document.getElementById('dialog-' + i);
-      if (dlg) dlg.showModal();
-    });
-  });
-
-  document.querySelectorAll('.cinema-dialog').forEach(function(dlg) {
-    dlg.addEventListener('click', function(e) {
-      if (e.target === dlg) dlg.close();
-    });
   });
 
 })();
