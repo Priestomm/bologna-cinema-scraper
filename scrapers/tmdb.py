@@ -309,8 +309,8 @@ class TmdbClient:
                 resp.raise_for_status()
                 details = resp.json()
                 runtime = details.get("runtime", 0) or 0
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("TMDb details fallito per id %s: %s", tmdb_id, exc)
 
         self._cache_put(cache_key, title, rating, tmdb_title, genres, poster_path, overview, runtime)
 
