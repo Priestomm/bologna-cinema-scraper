@@ -466,43 +466,53 @@ body::after {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  cursor: pointer;
+  overflow-y: auto;
 }
 
 .poster-overlay.open { display: flex; }
 
+.poster-overlay-content {
+  display: flex;
+  gap: 24px;
+  max-width: 800px;
+  width: 100%;
+  cursor: default;
+}
+
 .poster-overlay-img {
-  max-height: 70vh;
-  max-width: 90vw;
-  object-fit: contain;
+  width: 260px;
+  min-width: 200px;
+  flex-shrink: 0;
+  object-fit: cover;
   border: 3px solid #fff;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  align-self: flex-start;
 }
 
 .poster-overlay-meta {
   color: #fff;
-  text-align: center;
-  margin-top: 16px;
-  max-width: 90vw;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
 }
 
 .poster-overlay-title {
-  font-size: 1rem;
+  font-size: 1.3rem;
   font-weight: 700;
   text-transform: uppercase;
-  margin-bottom: 8px;
+  line-height: 1.2;
 }
 
 .poster-overlay-rating {
-  font-size: 0.85rem;
-  margin-bottom: 8px;
+  font-size: 0.9rem;
   color: var(--accent-orange);
 }
 
 .poster-overlay-genres {
   display: flex;
   gap: 6px;
-  justify-content: center;
   flex-wrap: wrap;
 }
 
@@ -512,6 +522,19 @@ body::after {
   border: 1px solid #fff;
   font-size: 0.7rem;
   padding: 3px 8px;
+}
+
+.poster-overlay-info {
+  font-size: 0.85rem;
+  color: #ccc;
+}
+
+.poster-overlay-overview {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #ddd;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .poster-overlay-close {
@@ -578,6 +601,31 @@ body::after {
   .sticker-rohmer { width: 90px; top: 45%; right: 2%; }
   .sticker-lighthouse { width: 80px; top: 25%; left: 2%; }
   .sticker-portrait { width: 85px; bottom: 35%; right: 3%; }
+
+  .poster-overlay-content {
+    flex-direction: column;
+    align-items: center;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .poster-overlay-img {
+    width: 180px;
+    min-width: unset;
+  }
+
+  .poster-overlay-meta {
+    text-align: center;
+    align-items: center;
+  }
+
+  .poster-overlay-genres {
+    justify-content: center;
+  }
+
+  .poster-overlay-overview {
+    max-height: 150px;
+  }
 }
 
 /* === STICKERS === */
@@ -735,7 +783,10 @@ body::after {
              data-title="{{ film.titolo|lower }}"
              data-times="{{ film.cinemas[0].times[0].ora if film.cinemas and film.cinemas[0].times else '99:99' }}"
              data-cinemas="{{ film.cinemas|map(attribute='name')|join(',')|lower }}"
-             data-genre="{{ (film.genre or '')|lower }}">
+             data-genre="{{ (film.genre or '')|lower }}"
+             data-overview="{{ (film.overview or '')|e }}"
+             data-runtime="{{ film.runtime or 0 }}"
+             data-regista="{{ (film.regista or '')|e }}">
 
           <div class="film-poster"{% if film.poster_url %} style="background-image: url('{{ film.poster_url }}')"{% endif %}>
             {% if film.rating and film.rating != "0.0" %}
@@ -793,14 +844,18 @@ body::after {
 
 </div>
 
-<!-- POSTER OVERLAY (mobile) -->
+<!-- POSTER OVERLAY -->
 <div class="poster-overlay" id="posterOverlay">
   <button class="poster-overlay-close" id="posterClose">&times;</button>
-  <img class="poster-overlay-img" id="posterImg" src="" alt="">
-  <div class="poster-overlay-meta">
-    <div class="poster-overlay-title" id="posterTitle"></div>
-    <div class="poster-overlay-rating" id="posterRating"></div>
-    <div class="poster-overlay-genres" id="posterGenres"></div>
+  <div class="poster-overlay-content">
+    <img class="poster-overlay-img" id="posterImg" src="" alt="">
+    <div class="poster-overlay-meta">
+      <div class="poster-overlay-title" id="posterTitle"></div>
+      <div class="poster-overlay-rating" id="posterRating"></div>
+      <div class="poster-overlay-genres" id="posterGenres"></div>
+      <div class="poster-overlay-info" id="posterInfo"></div>
+      <div class="poster-overlay-overview" id="posterOverview"></div>
+    </div>
   </div>
 </div>
 
@@ -940,12 +995,14 @@ body::after {
     }
   }
 
-  // Poster overlay (mobile)
+  // Poster overlay
   var overlay = document.getElementById('posterOverlay');
   var overlayImg = document.getElementById('posterImg');
   var overlayTitle = document.getElementById('posterTitle');
   var overlayRating = document.getElementById('posterRating');
   var overlayGenres = document.getElementById('posterGenres');
+  var overlayInfo = document.getElementById('posterInfo');
+  var overlayOverview = document.getElementById('posterOverview');
   var closeBtn = document.getElementById('posterClose');
 
   function openPoster(poster) {
@@ -978,6 +1035,26 @@ body::after {
       overlayGenres.style.display = 'none';
     }
 
+    var infoParts = [];
+    var regista = card.dataset.regista || '';
+    if (regista) infoParts.push('Regia: ' + regista);
+    var runtime = parseInt(card.dataset.runtime) || 0;
+    if (runtime > 0) infoParts.push(runtime + ' min');
+    if (infoParts.length > 0) {
+      overlayInfo.textContent = infoParts.join(' · ');
+      overlayInfo.style.display = '';
+    } else {
+      overlayInfo.style.display = 'none';
+    }
+
+    var overview = card.dataset.overview || '';
+    if (overview) {
+      overlayOverview.textContent = overview;
+      overlayOverview.style.display = '';
+    } else {
+      overlayOverview.style.display = 'none';
+    }
+
     overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -989,21 +1066,20 @@ body::after {
 
   document.querySelectorAll('.film-poster').forEach(function(poster) {
     poster.addEventListener('click', function() {
-      if (window.innerWidth <= 768) openPoster(poster);
+      openPoster(poster);
     });
   });
 
   closeBtn.addEventListener('click', closePoster);
-  overlayImg.addEventListener('click', closePoster);
   overlay.addEventListener('click', function(e) {
-    if (e.target === overlay) closePoster();
+    if (!e.target.closest('.poster-overlay-content')) closePoster();
   });
 
 })();
 </script>
 
 <!-- STICKERS (fissi allo sfondo) -->
-<div class="sticker sticker-neon"><img src="/static/stickers/neon.png" alt=""></div>
+<div class="sticker sticker-neon"><img src="/static/stickers/neon.png?v=2" alt=""></div>
 <div class="sticker sticker-ran"><img src="/static/stickers/ran.png" alt=""></div>
 <div class="sticker sticker-rohmer"><img src="/static/stickers/rohmer.png" alt=""></div>
 <div class="sticker sticker-lighthouse"><img src="/static/stickers/lighthouse.png" alt=""></div>

@@ -73,6 +73,7 @@ def _clean_title_for_search(title: str) -> str:
 
 
 _TMDB_IMG_BASE = "https://image.tmdb.org/t/p/w500"
+_TMDB_MOVIE_URL = "https://api.themoviedb.org/3/movie"
 
 
 class TmdbClient:
@@ -101,6 +102,8 @@ class TmdbClient:
                     tmdb_title TEXT,
                     genres TEXT NOT NULL DEFAULT '',
                     poster_path TEXT NOT NULL DEFAULT '',
+                    overview TEXT NOT NULL DEFAULT '',
+                    runtime INTEGER NOT NULL DEFAULT 0,
                     fetched_at REAL NOT NULL
                 )
                 """
@@ -115,6 +118,14 @@ class TmdbClient:
                 conn.execute(
                     "ALTER TABLE ratings ADD COLUMN poster_path TEXT NOT NULL DEFAULT ''"
                 )
+            if "overview" not in cols:
+                conn.execute(
+                    "ALTER TABLE ratings ADD COLUMN overview TEXT NOT NULL DEFAULT ''"
+                )
+            if "runtime" not in cols:
+                conn.execute(
+                    "ALTER TABLE ratings ADD COLUMN runtime INTEGER NOT NULL DEFAULT 0"
+                )
 
     @contextmanager
     def _conn(self) -> Iterator[sqlite3.Connection]:
@@ -125,22 +136,22 @@ class TmdbClient:
         finally:
             conn.close()
 
-    def _cache_get(self, cache_key: str) -> tuple[float | None, str, str, str] | None:
+    def _cache_get(self, cache_key: str) -> tuple[float | None, str, str, str, str, int] | None:
         with self._conn() as conn:
             row = conn.execute(
-                "SELECT rating, tmdb_title, genres, poster_path, fetched_at FROM ratings WHERE cache_key = ?",
+                "SELECT rating, tmdb_title, genres, poster_path, overview, runtime, fetched_at FROM ratings WHERE cache_key = ?",
                 (cache_key,),
             ).fetchone()
         if not row:
             return None
-        rating, tmdb_title, genres, poster_path, fetched_at = row
+        rating, tmdb_title, genres, poster_path, overview, runtime, fetched_at = row
         age_days = (time.time() - fetched_at) / 86400
         if age_days > _CACHE_TTL_DAYS:
             return None
         # Entry vecchie senza poster_path: trattare come cache miss
         if not poster_path:
             return None
-        return rating, tmdb_title or "", genres or "", poster_path or ""
+        return rating, tmdb_title or "", genres or "", poster_path or "", overview or "", runtime or 0
 
     def _cache_put(
         self,
@@ -150,20 +161,24 @@ class TmdbClient:
         tmdb_title: str,
         genres: str = "",
         poster_path: str = "",
+        overview: str = "",
+        runtime: int = 0,
     ) -> None:
         with self._conn() as conn:
             conn.execute(
                 """
-                INSERT INTO ratings (cache_key, title, rating, tmdb_title, genres, poster_path, fetched_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO ratings (cache_key, title, rating, tmdb_title, genres, poster_path, overview, runtime, fetched_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(cache_key) DO UPDATE SET
                     rating = excluded.rating,
                     tmdb_title = excluded.tmdb_title,
                     genres = excluded.genres,
                     poster_path = excluded.poster_path,
+                    overview = excluded.overview,
+                    runtime = excluded.runtime,
                     fetched_at = excluded.fetched_at
                 """,
-                (cache_key, title, rating, tmdb_title, genres, poster_path, time.time()),
+                (cache_key, title, rating, tmdb_title, genres, poster_path, overview, runtime, time.time()),
             )
 
     # ---- TMDb API ---------------------------------------------------
@@ -234,24 +249,24 @@ class TmdbClient:
 
     def _get_movie_info(
         self, title: str, regista: str
-    ) -> tuple[str, str, str, str]:
-        """Cerca rating + genere + poster + titolo pulito per un film."""
+    ) -> tuple[str, str, str, str, str, int]:
+        """Cerca rating + genere + poster + titolo pulito + overview + runtime per un film."""
         if not self.enabled:
-            return "", "", "", ""
+            return "", "", "", "", "", 0
 
         cache_key = (
             f"{_normalize(_clean_title_for_search(title))}|{_normalize(regista)}"
         )
         if not cache_key.strip("|"):
-            return "", "", "", ""
+            return "", "", "", "", "", 0
 
         # Check cache
         cached = self._cache_get(cache_key)
         if cached is not None:
-            rating, tmdb_title, genres, poster_path = cached
+            rating, tmdb_title, genres, poster_path, overview, runtime = cached
             rating_str = f"{rating:.1f}" if rating is not None else ""
             poster_url = f"{_TMDB_IMG_BASE}{poster_path}" if poster_path else ""
-            return rating_str, genres, poster_url, tmdb_title
+            return rating_str, genres, poster_url, tmdb_title, overview, runtime
 
         # Search TMDb
         search_query = _clean_title_for_search(title)
@@ -265,7 +280,7 @@ class TmdbClient:
 
         if not results:
             self._cache_put(cache_key, title, None, "")
-            return "", "", "", ""
+            return "", "", "", "", "", 0
 
         # Find best match
         match = self._find_best_match(title, regista, results)
@@ -279,14 +294,31 @@ class TmdbClient:
         genres = " / ".join(
             _TMDB_GENRES[gid] for gid in genre_ids if gid in _TMDB_GENRES
         )
+        overview = match.get("overview", "") or ""
 
-        self._cache_put(cache_key, title, rating, tmdb_title, genres, poster_path)
+        # Fetch runtime from movie details endpoint
+        runtime = 0
+        tmdb_id = match.get("id")
+        if tmdb_id:
+            try:
+                resp = self._session.get(
+                    f"{_TMDB_MOVIE_URL}/{tmdb_id}",
+                    params={"api_key": self._api_key, "language": "it-IT"},
+                    timeout=10,
+                )
+                resp.raise_for_status()
+                details = resp.json()
+                runtime = details.get("runtime", 0) or 0
+            except Exception:  # noqa: BLE001
+                pass
+
+        self._cache_put(cache_key, title, rating, tmdb_title, genres, poster_path, overview, runtime)
 
         rating_str = ""
         if rating is not None and rating > 0:
             rating_str = f"{rating:.1f}"
         poster_url = f"{_TMDB_IMG_BASE}{poster_path}" if poster_path else ""
-        return rating_str, genres, poster_url, tmdb_title
+        return rating_str, genres, poster_url, tmdb_title, overview, runtime
 
     def enrich_screenings(self, screenings: list[Screening]) -> list[Screening]:
         """Aggiunge rating, genere, poster e titolo pulito da TMDb a ogni Screening."""
@@ -295,19 +327,19 @@ class TmdbClient:
             return screenings
 
         # Deduplica per (titolo, regista) per evitare ricerche multiple
-        unique: dict[tuple[str, str], tuple[str, str, str, str]] = {}
+        unique: dict[tuple[str, str], tuple[str, str, str, str, str, int]] = {}
         for s in screenings:
             key = (s.titolo, s.regista)
             if key not in unique:
-                unique[key] = ("", "", "", "")
+                unique[key] = ("", "", "", "", "", 0)
 
         logger.info("Cerco rating + genere per %d film unici su TMDb", len(unique))
 
         for i, (titolo, regista) in enumerate(unique):
-            rating, genre, poster_url, clean_title = self._get_movie_info(
+            rating, genre, poster_url, clean_title, overview, runtime = self._get_movie_info(
                 titolo, regista
             )
-            unique[(titolo, regista)] = (rating, genre, poster_url, clean_title)
+            unique[(titolo, regista)] = (rating, genre, poster_url, clean_title, overview, runtime)
             if rating or genre:
                 logger.debug(
                     "  %s (%s) -> %s | %s", titolo, regista, rating, genre
@@ -316,8 +348,8 @@ class TmdbClient:
                 logger.info("  %d/%d film cercati", i + 1, len(unique))
 
         for s in screenings:
-            rating, genre, poster_url, clean_title = unique.get(
-                (s.titolo, s.regista), ("", "", "", "")
+            rating, genre, poster_url, clean_title, overview, runtime = unique.get(
+                (s.titolo, s.regista), ("", "", "", "", "", 0)
             )
             s.rating = rating
             s.genre = genre
@@ -325,5 +357,9 @@ class TmdbClient:
                 s.poster_url_tmdb = poster_url
             if clean_title:
                 s.clean_title_tmdb = clean_title
+            if overview:
+                s.overview = overview
+            if runtime:
+                s.runtime = runtime
 
         return screenings

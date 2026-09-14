@@ -414,6 +414,9 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
                 "poster_url": s.poster_url_tmdb or s.poster_url,
                 "rating": s.rating,
                 "genre": s.genre,
+                "overview": s.overview,
+                "runtime": s.runtime,
+                "regista": s.regista,
                 "cinemas": {},
             }
             if norm_poster:
@@ -436,6 +439,12 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
             fg["rating"] = s.rating
         if s.genre and not fg["genre"]:
             fg["genre"] = s.genre
+        if s.overview and not fg["overview"]:
+            fg["overview"] = s.overview
+        if s.runtime and not fg["runtime"]:
+            fg["runtime"] = s.runtime
+        if s.regista and not fg["regista"]:
+            fg["regista"] = s.regista
 
         # Merge per cinema: ogni orario porta il suo flag vo e il suo URL
         cinema_key = s.cinema
@@ -450,7 +459,7 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
                 {
                     "ora": ora,
                     "vo": vo_flag,
-                    "url": s.url,
+                    "url": s.times_urls.get(ora, s.url),
                 }
             )
 

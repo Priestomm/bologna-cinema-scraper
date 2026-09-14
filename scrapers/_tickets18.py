@@ -104,6 +104,7 @@ def _extract_movie(
     # Raccoglie tutti i blocchi orario filtrati per data target via data-time
     orari: list[str] = []
     sale: list[str] = []
+    times_urls: dict[str, str] = {}
 
     for show in movie_div.find_all("div", class_="schedule-section-show"):
         show_text = show.get_text(" ", strip=True)
@@ -132,6 +133,10 @@ def _extract_movie(
                 orari.append(formatted)
             if sala and sala not in sale:
                 sale.append(sala)
+            href = link.get("href", "")
+            if href and formatted not in times_urls:
+                clean_url = href.strip().split("#")[0]
+                times_urls[formatted] = f"{clean_url}#{target.isoformat()}"
 
     if not orari:
         # Fallback: testo "Lunedi 08/06/2026" + orari nel testo, niente data-time
@@ -157,14 +162,18 @@ def _extract_movie(
         note_bits.append(lang_note)
     note = " - ".join(note_bits)
 
+    sorted_orari = sorted(orari)
+    sorted_times_urls = {t: times_urls[t] for t in sorted_orari if t in times_urls}
+
     return Screening(
         cinema=cinema_name,
         titolo=titolo,
-        orari=sorted(orari),
+        orari=sorted_orari,
         note=note,
         poster_url=poster_url,
         regista=regista,
         url=film_url,
+        times_urls=sorted_times_urls,
     )
 
 
@@ -215,6 +224,7 @@ def _extract_movie_all_dates(
     # Raggruppa orari e sale per data
     orari_by_date: dict[date, list[str]] = defaultdict(list)
     sale_by_date: dict[date, list[str]] = defaultdict(list)
+    times_urls_by_date: dict[date, dict[str, str]] = defaultdict(dict)
 
     cutoff = after_date + timedelta(days=max_days)
 
@@ -245,6 +255,10 @@ def _extract_movie_all_dates(
                 orari_by_date[d].append(formatted)
             if sala and sala not in sale_by_date[d]:
                 sale_by_date[d].append(sala)
+            href = link.get("href", "")
+            if href and formatted not in times_urls_by_date[d]:
+                clean_url = href.strip().split("#")[0]
+                times_urls_by_date[d][formatted] = f"{clean_url}#{d.isoformat()}"
 
     if not orari_by_date:
         return {}
@@ -257,14 +271,18 @@ def _extract_movie_all_dates(
         if lang_note:
             note_bits.append(lang_note)
         note = " - ".join(note_bits)
+        sorted_orari = sorted(orari)
+        urls = times_urls_by_date.get(d, {})
+        sorted_times_urls = {t: urls[t] for t in sorted_orari if t in urls}
         result[d] = Screening(
             cinema=cinema_name,
             titolo=titolo,
-            orari=sorted(orari),
+            orari=sorted_orari,
             note=note,
             poster_url=poster_url,
             regista=regista,
             url=film_url,
+            times_urls=sorted_times_urls,
         )
     return result
 

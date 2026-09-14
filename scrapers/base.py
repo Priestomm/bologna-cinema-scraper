@@ -43,6 +43,9 @@ class Screening:
     genre: str = ""
     poster_url_tmdb: str = ""
     clean_title_tmdb: str = ""
+    overview: str = ""
+    runtime: int = 0
+    times_urls: dict[str, str] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
