@@ -136,7 +136,9 @@ class TmdbClient:
         finally:
             conn.close()
 
-    def _cache_get(self, cache_key: str) -> tuple[float | None, str, str, str, str, int] | None:
+    def _cache_get(
+        self, cache_key: str
+    ) -> tuple[float | None, str, str, str, str, int] | None:
         with self._conn() as conn:
             row = conn.execute(
                 "SELECT rating, tmdb_title, genres, poster_path, overview, runtime, fetched_at FROM ratings WHERE cache_key = ?",
@@ -151,7 +153,14 @@ class TmdbClient:
         # Entry vecchie senza poster_path: trattare come cache miss
         if not poster_path:
             return None
-        return rating, tmdb_title or "", genres or "", poster_path or "", overview or "", runtime or 0
+        return (
+            rating,
+            tmdb_title or "",
+            genres or "",
+            poster_path or "",
+            overview or "",
+            runtime or 0,
+        )
 
     def _cache_put(
         self,
@@ -178,7 +187,17 @@ class TmdbClient:
                     runtime = excluded.runtime,
                     fetched_at = excluded.fetched_at
                 """,
-                (cache_key, title, rating, tmdb_title, genres, poster_path, overview, runtime, time.time()),
+                (
+                    cache_key,
+                    title,
+                    rating,
+                    tmdb_title,
+                    genres,
+                    poster_path,
+                    overview,
+                    runtime,
+                    time.time(),
+                ),
             )
 
     # ---- TMDb API ---------------------------------------------------
@@ -312,7 +331,9 @@ class TmdbClient:
             except Exception as exc:  # noqa: BLE001
                 logger.debug("TMDb details fallito per id %s: %s", tmdb_id, exc)
 
-        self._cache_put(cache_key, title, rating, tmdb_title, genres, poster_path, overview, runtime)
+        self._cache_put(
+            cache_key, title, rating, tmdb_title, genres, poster_path, overview, runtime
+        )
 
         rating_str = ""
         if rating is not None and rating > 0:
@@ -336,14 +357,19 @@ class TmdbClient:
         logger.info("Cerco rating + genere per %d film unici su TMDb", len(unique))
 
         for i, (titolo, regista) in enumerate(unique):
-            rating, genre, poster_url, clean_title, overview, runtime = self._get_movie_info(
-                titolo, regista
+            rating, genre, poster_url, clean_title, overview, runtime = (
+                self._get_movie_info(titolo, regista)
             )
-            unique[(titolo, regista)] = (rating, genre, poster_url, clean_title, overview, runtime)
+            unique[(titolo, regista)] = (
+                rating,
+                genre,
+                poster_url,
+                clean_title,
+                overview,
+                runtime,
+            )
             if rating or genre:
-                logger.debug(
-                    "  %s (%s) -> %s | %s", titolo, regista, rating, genre
-                )
+                logger.debug("  %s (%s) -> %s | %s", titolo, regista, rating, genre)
             if (i + 1) % 5 == 0:
                 logger.info("  %d/%d film cercati", i + 1, len(unique))
 

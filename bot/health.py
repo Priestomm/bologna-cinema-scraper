@@ -89,7 +89,12 @@ def _strip_vo_markers(title: str) -> str:
     """
     t = title
     # Rimuovi suffissi VO dopo " - "
-    t = re.sub(r"\s*[-–]\s*(?:v\.?\s*o\.?|original version|versione originale)\s*$", "", t, flags=re.IGNORECASE)
+    t = re.sub(
+        r"\s*[-–]\s*(?:v\.?\s*o\.?|original version|versione originale)\s*$",
+        "",
+        t,
+        flags=re.IGNORECASE,
+    )
     # Rimuovi prefissi VO all'inizio
     for prefix in ("original version - ", "original version: ", "original: ", "v.o.: "):
         t = t.removeprefix(prefix)
