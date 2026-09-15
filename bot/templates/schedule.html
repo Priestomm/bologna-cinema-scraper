@@ -596,8 +596,8 @@ body::after {
     min-height: 36px;
   }
 
-  .sticker-neon { width: 100px; top: 50px; right: 10px; }
-  .sticker-ran { width: 110px; bottom: 30px; left: 10px; }
+  .sticker-neon { width: 100px; top: 30px; left: 10px; }
+  .sticker-ran { width: 110px; top: 30px; right: 10px; }
   .sticker-rohmer { width: 90px; top: 45%; right: 2%; }
   .sticker-lighthouse { width: 80px; top: 25%; left: 2%; }
   .sticker-portrait { width: 85px; bottom: 35%; right: 3%; }
@@ -642,15 +642,15 @@ body::after {
 }
 
 .sticker-neon {
-  top: 80px;
-  right: -100px;
+  top: 50px;
+  left: -300px;
   width: 500px;
   transform: rotate(8deg);
 }
 
 .sticker-ran {
-  bottom: 10px;
-  left: -300px;
+  top: 80px;
+  right: -100px;
   width: 1000px;
   transform: rotate(-5deg);
 }
@@ -709,7 +709,8 @@ body::after {
       {% set active_class = "active" if d.isoformat() == date else "" %}
       <a href="/{{ d.isoformat() }}"
          class="date-card {{ active_class }}"
-         data-date="{{ d.isoformat() }}">
+         data-date="{{ d.isoformat() }}"
+         onclick="switchDay(event, '{{ d.isoformat() }}')">
         <span class="date-day">{{ "OGGI" if is_today else day_map[d.strftime("%A")][:3].upper() }}</span>
         <span class="date-num">{{ d.day }}</span>
         <span class="date-month">{{ month_map[d.strftime("%B")][:3] }}</span>
@@ -861,14 +862,108 @@ body::after {
 
 <script>
 (function() {
+  var scheduleCache = {};
+  var currentDate = '{{ date }}';
+  var dayMap = {{ day_map | tojson }};
+  var monthMap = {{ month_map | tojson }};
+
+  function loadSchedule() {
+    return fetch('/api/schedule')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        scheduleCache = data.days || {};
+        return data;
+      });
+  }
+
+  window.switchDay = function(e, dateStr) {
+    e.preventDefault();
+    if (dateStr === currentDate) return;
+    if (!scheduleCache[dateStr]) {
+      window.location.href = '/' + dateStr;
+      return;
+    }
+    history.pushState({date: dateStr}, '', '/' + dateStr);
+    renderDay(dateStr);
+    document.querySelectorAll('.date-card').forEach(function(card) {
+      card.classList.toggle('active', card.dataset.date === dateStr);
+    });
+    currentDate = dateStr;
+  };
+
+  window.addEventListener('popstate', function(e) {
+    if (e.state && e.state.date && scheduleCache[e.state.date]) {
+      renderDay(e.state.date);
+      document.querySelectorAll('.date-card').forEach(function(card) {
+        card.classList.toggle('active', card.dataset.date === e.state.date);
+      });
+      currentDate = e.state.date;
+    }
+  });
+
+  function renderDay(dateStr) {
+    var dayData = scheduleCache[dateStr];
+    if (!dayData) return;
+    var films = dayData.films || [];
+    var grid = document.getElementById('filmGrid');
+    var html = '';
+    if (films.length === 0) {
+      html = '<div class="empty-state"><h3>// NESSUNA PROGRAMMAZIONE</h3><p>Non ci sono film disponibili per questa data.</p></div>';
+    } else {
+      films.forEach(function(film) { html += renderFilmCard(film); });
+    }
+    grid.innerHTML = html;
+    document.querySelectorAll('.film-poster').forEach(function(poster) {
+      poster.addEventListener('click', function() { openPoster(poster); });
+    });
+    applyFiltersAndSort();
+  }
+
+  function renderFilmCard(film) {
+    var cinemaNames = film.cinemas.map(function(c) { return c.name; }).join(',');
+    var firstTime = (film.cinemas.length > 0 && film.cinemas[0].times.length > 0) ? film.cinemas[0].times[0].ora : '99:99';
+    var posterStyle = film.poster_url ? ' style="background-image: url(\'' + film.poster_url + '\')"' : '';
+    var ratingHtml = (film.rating && film.rating !== '0.0')
+      ? '<span class="film-rating">\u2605 ' + film.rating + '</span>'
+      : '<span class="film-rating" style="background: var(--border-dim); color: #000;">N/D</span>';
+    var genresHtml = '';
+    if (film.genre) {
+      genresHtml = '<div class="film-genres-overlay">';
+      film.genre.split('/').slice(0, 3).forEach(function(g) {
+        g = g.trim();
+        if (g) genresHtml += '<span class="genre-chip">' + esc(g) + '</span>';
+      });
+      genresHtml += '</div>';
+    }
+    var cinemasHtml = '';
+    film.cinemas.forEach(function(c) {
+      var shortName = c.name.replace('Cineteca - ', '').replace('Pop Up - ', '').replace('Cinema ', '').replace('Arena ', '');
+      var timesHtml = '';
+      c.times.forEach(function(t) {
+        timesHtml += '<a href="' + esc(t.url) + '" target="_blank" rel="noopener" class="film-time">' + esc(t.ora);
+        if (t.vo) timesHtml += ' <span class="pill-vo">VO</span>';
+        timesHtml += '</a>';
+      });
+      cinemasHtml += '<div class="film-cinema-row" data-cinema="' + esc(c.name.toLowerCase()) + '">';
+      cinemasHtml += '<span class="cinema-name">\u25A0 ' + esc(shortName) + '</span>';
+      cinemasHtml += '<div class="cinema-times">' + timesHtml + '</div></div>';
+    });
+    return '<article class="film-card" data-title="' + esc((film.titolo || '').toLowerCase()) + '" data-times="' + firstTime + '" data-cinemas="' + esc(cinemaNames.toLowerCase()) + '" data-genre="' + esc((film.genre || '').toLowerCase()) + '" data-overview="' + esc(film.overview || '') + '" data-runtime="' + (film.runtime || 0) + '" data-regista="' + esc(film.regista || '') + '">' +
+      '<div class="film-poster"' + posterStyle + '>' + ratingHtml + genresHtml + '</div>' +
+      '<div class="card-body"><div class="title-tape">' + esc(film.titolo || '') + '</div>' +
+      '<div class="film-cinemas">' + cinemasHtml + '</div></div></article>';
+  }
+
+  function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
   // Dropdown toggle
   function setupDropdown(btnId, menuId) {
-    const btn = document.getElementById(btnId);
-    const menu = document.getElementById(menuId);
+    var btn = document.getElementById(btnId);
+    var menu = document.getElementById(menuId);
     if (!btn || !menu) return;
     btn.addEventListener('click', function(e) {
       e.stopPropagation();
-      document.querySelectorAll('.dropdown-menu.open').forEach(m => { if(m !== menu) m.classList.remove('open'); });
+      document.querySelectorAll('.dropdown-menu.open').forEach(function(m) { if (m !== menu) m.classList.remove('open'); });
       menu.classList.toggle('open');
     });
     document.addEventListener('click', function() { menu.classList.remove('open'); });
@@ -878,121 +973,71 @@ body::after {
   setupDropdown('sortToggle', 'sortMenu');
   setupDropdown('genreToggle', 'genreMenu');
 
-  // Auto-refresh
-  function autoRefresh() {
-    fetch('/api/refresh', {method: 'POST'})
-      .then(function(r) { return r.json(); })
-      .then(function(d) {
-        if (d.status === 'started' || d.status === 'already_running') {
-          pollAutoRefresh();
-        }
-      })
-      .catch(function() {});
-  }
-
-  function pollAutoRefresh() {
-    setTimeout(function() {
-      fetch('/api/refresh/status')
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          if (d.in_progress) {
-            pollAutoRefresh();
-          } else {
-            window.location.reload();
-          }
-        })
-        .catch(function() { window.location.reload(); });
-    }, 2000);
-  }
-
-  setInterval(autoRefresh, 15 * 60 * 1000);
-
   // Filter & Sort
-  const filterItems = document.querySelectorAll('#filterMenu .dropdown-item');
-  const filterLabel = document.getElementById('filterLabel');
-  const cards = document.querySelectorAll('.film-card');
-  const emptyState = document.querySelector('.empty-state');
+  var filterItems = document.querySelectorAll('#filterMenu .dropdown-item');
+  var filterLabel = document.getElementById('filterLabel');
+  var sortItems = document.querySelectorAll('#sortMenu .dropdown-item');
+  var sortLabel = document.getElementById('sortLabel');
+  var genreItems = document.querySelectorAll('#genreMenu .dropdown-item');
+  var genreLabel = document.getElementById('genreLabel');
 
   filterItems.forEach(function(item) {
     item.addEventListener('click', function() {
-      filterItems.forEach(i => i.classList.remove('active'));
+      filterItems.forEach(function(i) { i.classList.remove('active'); });
       this.classList.add('active');
-      filterLabel.textContent = "\u25A0 " + this.textContent.trim().toUpperCase();
+      filterLabel.textContent = '\u25A0 ' + this.textContent.trim().toUpperCase();
       applyFiltersAndSort();
     });
   });
-
-  const sortItems = document.querySelectorAll('#sortMenu .dropdown-item');
-  const sortLabel = document.getElementById('sortLabel');
 
   sortItems.forEach(function(item) {
     item.addEventListener('click', function() {
-      sortItems.forEach(i => i.classList.remove('active'));
+      sortItems.forEach(function(i) { i.classList.remove('active'); });
       this.classList.add('active');
-      sortLabel.textContent = "// " + this.textContent.trim().toUpperCase();
+      sortLabel.textContent = '// ' + this.textContent.trim().toUpperCase();
       applyFiltersAndSort();
     });
   });
-
-  const genreItems = document.querySelectorAll('#genreMenu .dropdown-item');
-  const genreLabel = document.getElementById('genreLabel');
 
   if (genreItems) {
     genreItems.forEach(function(item) {
       item.addEventListener('click', function() {
-        genreItems.forEach(i => i.classList.remove('active'));
+        genreItems.forEach(function(i) { i.classList.remove('active'); });
         this.classList.add('active');
-        genreLabel.textContent = "// " + this.textContent.trim().toUpperCase();
+        genreLabel.textContent = '// ' + this.textContent.trim().toUpperCase();
         applyFiltersAndSort();
       });
     });
   }
 
   function applyFiltersAndSort() {
-    const activeFilter = document.querySelector('#filterMenu .dropdown-item.active');
-    const filter = activeFilter ? activeFilter.dataset.filter : 'all';
-    const activeSort = document.querySelector('#sortMenu .dropdown-item.active');
-    const sort = activeSort ? activeSort.dataset.sort : 'default';
-    const activeGenre = document.querySelector('#genreMenu .dropdown-item.active');
-    const genre = activeGenre ? activeGenre.dataset.genre : 'all';
-
-    let visible = 0;
-    const parent = document.getElementById('filmGrid');
-    const visibleCards = [];
-
+    var activeFilter = document.querySelector('#filterMenu .dropdown-item.active');
+    var filter = activeFilter ? activeFilter.dataset.filter : 'all';
+    var activeSort = document.querySelector('#sortMenu .dropdown-item.active');
+    var sort = activeSort ? activeSort.dataset.sort : 'default';
+    var activeGenre = document.querySelector('#genreMenu .dropdown-item.active');
+    var genre = activeGenre ? activeGenre.dataset.genre : 'all';
+    var cards = document.querySelectorAll('.film-card');
+    var emptyState = document.querySelector('.empty-state');
+    var visible = 0;
+    var parent = document.getElementById('filmGrid');
+    var visibleCards = [];
     cards.forEach(function(card) {
-      const cinemas = card.dataset.cinemas || '';
-      const filmGenre = card.dataset.genre || '';
-      const filmHasCinema = (filter === 'all' || cinemas.includes(filter));
-      const filmHasGenre = (genre === 'all' || filmGenre.includes(genre));
-
-      const rows = card.querySelectorAll('.film-cinema-row');
+      var cinemas = card.dataset.cinemas || '';
+      var filmGenre = card.dataset.genre || '';
+      var filmHasCinema = (filter === 'all' || cinemas.includes(filter));
+      var filmHasGenre = (genre === 'all' || filmGenre.includes(genre));
+      var rows = card.querySelectorAll('.film-cinema-row');
       rows.forEach(function(row) {
-        if (filter === 'all' || row.dataset.cinema.includes(filter)) {
-          row.style.display = '';
-        } else {
-          row.style.display = 'none';
-        }
+        row.style.display = (filter === 'all' || row.dataset.cinema.includes(filter)) ? '' : 'none';
       });
-
-      if (filmHasCinema && filmHasGenre) {
-        visibleCards.push(card);
-        visible++;
-      }
+      if (filmHasCinema && filmHasGenre) { visibleCards.push(card); visible++; }
     });
-
-    if (sort === 'title') {
-      visibleCards.sort(function(a, b) { return (a.dataset.title || '').localeCompare(b.dataset.title || ''); });
-    } else if (sort === 'time') {
-      visibleCards.sort(function(a, b) { return (a.dataset.times || '99:99').localeCompare(b.dataset.times || '99:99'); });
-    }
-
+    if (sort === 'title') { visibleCards.sort(function(a, b) { return (a.dataset.title || '').localeCompare(b.dataset.title || ''); }); }
+    else if (sort === 'time') { visibleCards.sort(function(a, b) { return (a.dataset.times || '99:99').localeCompare(b.dataset.times || '99:99'); }); }
     cards.forEach(function(c) { c.style.display = 'none'; });
     visibleCards.forEach(function(c) { parent.appendChild(c); c.style.display = ''; });
-
-    if (emptyState) {
-      emptyState.style.display = (visible === 0 && cards.length > 0) ? 'block' : 'none';
-    }
+    if (emptyState) emptyState.style.display = (visible === 0 && cards.length > 0) ? 'block' : 'none';
   }
 
   // Poster overlay
@@ -1011,69 +1056,62 @@ body::after {
     var style = poster.getAttribute('style') || '';
     var match = style.match(/url\(['"]?(.+?)['"]?\)/);
     if (!match) return;
-
     overlayImg.src = match[1];
     overlayTitle.textContent = card.querySelector('.title-tape').textContent.trim();
-
     var ratingEl = card.querySelector('.film-rating');
-    if (ratingEl) {
-      overlayRating.textContent = ratingEl.textContent.trim();
-      overlayRating.style.display = '';
-    } else {
-      overlayRating.style.display = 'none';
-    }
-
+    if (ratingEl) { overlayRating.textContent = ratingEl.textContent.trim(); overlayRating.style.display = ''; }
+    else { overlayRating.style.display = 'none'; }
     var genre = card.dataset.genre || '';
     if (genre) {
-      overlayGenres.innerHTML = genre.split('/')
-        .slice(0, 3)
-        .map(function(g) { return '<span class="genre-chip">' + g.trim() + '</span>'; })
-        .join('');
+      overlayGenres.innerHTML = genre.split('/').slice(0, 3).map(function(g) { return '<span class="genre-chip">' + esc(g.trim()) + '</span>'; }).join('');
       overlayGenres.style.display = '';
-    } else {
-      overlayGenres.innerHTML = '';
-      overlayGenres.style.display = 'none';
-    }
-
+    } else { overlayGenres.innerHTML = ''; overlayGenres.style.display = 'none'; }
     var infoParts = [];
     var regista = card.dataset.regista || '';
     if (regista) infoParts.push('Regia: ' + regista);
     var runtime = parseInt(card.dataset.runtime) || 0;
     if (runtime > 0) infoParts.push(runtime + ' min');
-    if (infoParts.length > 0) {
-      overlayInfo.textContent = infoParts.join(' · ');
-      overlayInfo.style.display = '';
-    } else {
-      overlayInfo.style.display = 'none';
-    }
-
+    if (infoParts.length > 0) { overlayInfo.textContent = infoParts.join(' \u00B7 '); overlayInfo.style.display = ''; }
+    else { overlayInfo.style.display = 'none'; }
     var overview = card.dataset.overview || '';
-    if (overview) {
-      overlayOverview.textContent = overview;
-      overlayOverview.style.display = '';
-    } else {
-      overlayOverview.style.display = 'none';
-    }
-
+    if (overview) { overlayOverview.textContent = overview; overlayOverview.style.display = ''; }
+    else { overlayOverview.style.display = 'none'; }
     overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
 
-  function closePoster() {
-    overlay.classList.remove('open');
-    document.body.style.overflow = '';
-  }
+  function closePoster() { overlay.classList.remove('open'); document.body.style.overflow = ''; }
 
   document.querySelectorAll('.film-poster').forEach(function(poster) {
-    poster.addEventListener('click', function() {
-      openPoster(poster);
-    });
+    poster.addEventListener('click', function() { openPoster(poster); });
   });
-
   closeBtn.addEventListener('click', closePoster);
-  overlay.addEventListener('click', function(e) {
-    if (!e.target.closest('.poster-overlay-content')) closePoster();
-  });
+  overlay.addEventListener('click', function(e) { if (!e.target.closest('.poster-overlay-content')) closePoster(); });
+
+  // Auto-refresh: ricarica dati e ri-renderizza senza full page reload
+  function autoRefresh() {
+    fetch('/api/refresh', {method: 'POST'})
+      .then(function(r) { return r.json(); })
+      .then(function(d) { if (d.status === 'started' || d.status === 'already_running') pollAutoRefresh(); })
+      .catch(function() {});
+  }
+
+  function pollAutoRefresh() {
+    setTimeout(function() {
+      fetch('/api/refresh/status')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.in_progress) { pollAutoRefresh(); }
+          else { loadSchedule().then(function() { renderDay(currentDate); }); }
+        })
+        .catch(function() { loadSchedule().then(function() { renderDay(currentDate); }); });
+    }, 2000);
+  }
+
+  setInterval(autoRefresh, 15 * 60 * 1000);
+
+  // Init: carica dati7 giorni all'avvio
+  loadSchedule();
 
 })();
 </script>

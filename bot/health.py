@@ -286,6 +286,35 @@ def get_stats() -> dict[str, Any]:
     }
 
 
+@app.get("/api/schedule")
+def get_schedule() -> dict[str, Any]:
+    """Programmazione dei prossimi 7 giorni in una singola risposta."""
+    today = _today()
+    days: dict[str, Any] = {}
+
+    for i in range(7):
+        d = today + timedelta(days=i)
+        snapshot = _get_cache().load(d)
+        if snapshot is None:
+            days[d.isoformat()] = {
+                "updated_at": None,
+                "films": [],
+                "genres": [],
+                "warnings": ["Nessun dato disponibile."],
+            }
+            continue
+
+        film_list, genres_sorted = _build_film_list(snapshot)
+        days[d.isoformat()] = {
+            "updated_at": snapshot.updated_at.isoformat(),
+            "films": film_list,
+            "genres": genres_sorted,
+            "warnings": snapshot.warnings,
+        }
+
+    return {"today": today.isoformat(), "days": days}
+
+
 # ---- refresh -----------------------------------------------------------
 
 
@@ -349,43 +378,23 @@ def schedule_date(request: Request, date_param: str) -> HTMLResponse:
     return _schedule_page(request, target)
 
 
-def _schedule_page(request: Request, target: date) -> HTMLResponse:
-    snapshot = _get_cache().load(target)
-    today = _today()
-    if snapshot is None:
-        return templates.TemplateResponse(
-            request=request,
-            name="schedule.html",
-            context={
-                "date": target.isoformat(),
-                "date_obj": target,
-                "today": today,
-                "label": "Oggi" if target == today else target.isoformat(),
-                "next": (target + timedelta(days=1)).isoformat(),
-                "prev": (target - timedelta(days=1)).isoformat(),
-                "updated_at": "",
-                "films": [],
-                "warnings": ["Nessun dato disponibile per questa data."],
-            },
-        )
-
-    # Raggruppa: poster TMDB > poster scraper > titolo normalizzato
+def _build_film_list(snapshot: CacheSnapshot) -> tuple[list[dict], list[str]]:
+    """Raggruppa gli screening in film unici con info complete.
+    Restituisce (film_list, genres_sorted).
+    """
     film_groups: dict[str, dict] = {}
-    poster_to_key: dict[str, str] = {}  # poster normalizzato -> chiave del gruppo
+    poster_to_key: dict[str, str] = {}
 
     for s in snapshot.screenings:
         if not s.titolo:
             continue
 
-        # Priorita: poster TMDB, poi poster scraper
         norm_poster = _normalize_poster_url(s.poster_url_tmdb or s.poster_url)
         matched_key = None
 
-        # 1) Match per poster URL (criterio principale)
         if norm_poster and norm_poster in poster_to_key:
             matched_key = poster_to_key[norm_poster]
 
-        # 2) Fallback: match per titolo normalizzato (VO strippato come chiave)
         if matched_key is None:
             norm_title = _normalize_title(s.titolo)
             if not norm_title:
@@ -407,11 +416,9 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
                         matched_key = existing_key
                         break
 
-        # 3) Nessun match → crea nuovo gruppo
         if matched_key is None:
             norm_title = _normalize_title(s.titolo)
             matched_key = norm_poster or _strip_vo_markers(norm_title)
-            # Titolo display: preferisci TMDB, poi scraper
             display_title = s.clean_title_tmdb or s.titolo
             film_groups[matched_key] = {
                 "titolo": display_title,
@@ -429,15 +436,10 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
 
         fg = film_groups[matched_key]
 
-        # Aggiorna titolo display: preferisci TMDB se disponibile
         if s.clean_title_tmdb and not fg["titolo"]:
             fg["titolo"] = s.clean_title_tmdb
-
-        # Aggiorna poster: preferisci TMDB
         if s.poster_url_tmdb and not fg["poster_url"]:
             fg["poster_url"] = s.poster_url_tmdb
-
-        # Aggiorna dati film con quelli del cinema che ha piu' info
         if s.poster_url and not fg["poster_url"]:
             fg["poster_url"] = s.poster_url
         if s.rating and not fg["rating"]:
@@ -451,7 +453,6 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
         if s.regista and not fg["regista"]:
             fg["regista"] = s.regista
 
-        # Merge per cinema: ogni orario porta il suo flag vo e il suo URL
         cinema_key = s.cinema
         vo_flag = _is_vo(s.note)
         if cinema_key not in fg["cinemas"]:
@@ -468,7 +469,6 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
                 }
             )
 
-    # Converti a lista, ordina orari per ora e cinema per numero di orari
     for fg in film_groups.values():
         for cinema in fg["cinemas"].values():
             cinema["times"].sort(key=lambda t: t["ora"])
@@ -478,7 +478,6 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
 
     film_list = sorted(film_groups.values(), key=lambda f: f["titolo"].lower())
 
-    # Estrai generi unici per il filtro
     all_genres: set[str] = set()
     for fg in film_list:
         if fg["genre"]:
@@ -487,6 +486,31 @@ def _schedule_page(request: Request, target: date) -> HTMLResponse:
                 if g:
                     all_genres.add(g)
     genres_sorted = sorted(all_genres, key=str.lower)
+
+    return film_list, genres_sorted
+
+
+def _schedule_page(request: Request, target: date) -> HTMLResponse:
+    snapshot = _get_cache().load(target)
+    today = _today()
+    if snapshot is None:
+        return templates.TemplateResponse(
+            request=request,
+            name="schedule.html",
+            context={
+                "date": target.isoformat(),
+                "date_obj": target,
+                "today": today,
+                "label": "Oggi" if target == today else target.isoformat(),
+                "next": (target + timedelta(days=1)).isoformat(),
+                "prev": (target - timedelta(days=1)).isoformat(),
+                "updated_at": "",
+                "films": [],
+                "warnings": ["Nessun dato disponibile per questa data."],
+            },
+        )
+
+    film_list, genres_sorted = _build_film_list(snapshot)
 
     return templates.TemplateResponse(
         request=request,

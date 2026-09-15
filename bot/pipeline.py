@@ -37,6 +37,19 @@ def _scrape_one_day(target: date, cache: Cache) -> CacheSnapshot:
         for fut in as_completed(futures):
             results.append(fut.result())
 
+    # Enrichment TMDb: rating, genere, poster, sinossi, durata
+    all_screenings = []
+    for r in results:
+        all_screenings.extend(r.screenings)
+
+    if all_screenings:
+        tmdb = TmdbClient()
+        if tmdb.enabled:
+            logger.info("Enrichment TMDb: cerco info per %d film", len(all_screenings))
+            tmdb.enrich_screenings(all_screenings)
+        else:
+            logger.info("TMDb disabilitato (nessuna TMDB_API_KEY)")
+
     snapshot = cache.store(target, results)
     logger.info(
         "  %s: %d film, %d avvisi",
