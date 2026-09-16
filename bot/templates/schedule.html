@@ -2,11 +2,35 @@
 {% set day_map = {"Monday": "Lunedì", "Tuesday": "Martedì", "Wednesday": "Mercoledì", "Thursday": "Giovedì", "Friday": "Venerdì", "Saturday": "Sabato", "Sunday": "Domenica"} %}
 {% set month_map = {"January": "GENNAIO", "February": "FEBBRAIO", "March": "MARZO", "April": "APRILE", "May": "MAGGIO", "June": "GIUGNO", "July": "LUGLIO", "August": "AGOSTO", "September": "SETTEMBRE", "October": "OTTOBRE", "November": "NOVEMBRE", "December": "DICEMBRE"} %}
 
+{% set d_obj = date_obj if date_obj is defined else today %}
+{% set is_today = (d_obj == today) %}
+{% set page_day_label = "Oggi" if is_today else (day_map[d_obj.strftime("%A")] ~ " " ~ d_obj.day ~ " " ~ month_map[d_obj.strftime("%B")]|capitalize) %}
+{% set page_title = "BOS // Bologna on Screen — " ~ page_day_label %}
+{% set page_description = "Programmazione cinematografica di Bologna per " ~ page_day_label ~ ": Cineteca, Pop Up Cinema, Circuito Cinema, Nosadella, UCI Meridiana." %}
+{% set page_image = request.url_for('static', path='og-image.jpg') %}
 <html lang="it">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BOS // BOLOGNA ON SCREEN - {{ date }}</title>
+<title>{{ page_title }}</title>
+<meta name="description" content="{{ page_description }}">
+<meta name="theme-color" content="#FF3500">
+<link rel="canonical" href="{{ request.url }}">
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="BOS // Bologna on Screen">
+<meta property="og:title" content="{{ page_title }}">
+<meta property="og:description" content="{{ page_description }}">
+<meta property="og:url" content="{{ request.url }}">
+<meta property="og:image" content="{{ page_image }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ page_title }}">
+<meta name="twitter:description" content="{{ page_description }}">
+<meta name="twitter:image" content="{{ page_image }}">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -29,6 +53,10 @@
   --text-gray: #6B6660;
   --border-dim: #C4BFB8;
   --border-hard: #000000;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 body {
@@ -556,10 +584,6 @@ body::after {
 
 /* === MOBILE === */
 @media (max-width: 768px) {
-  html, body {
-    overflow-x: hidden;
-  }
-
   body {
     padding: 12px 8px;
   }
@@ -1176,13 +1200,13 @@ body::after {
 </script>
 
 <!-- STICKERS (fissi allo sfondo) -->
-<div class="sticker sticker-neon"><img src="/static/stickers/neon.png?v=2" alt=""><div class="sticker-tint"></div></div>
-<div class="sticker sticker-ran"><img src="/static/stickers/ran.png" alt=""><div class="sticker-tint"></div></div>
-<div class="sticker sticker-rohmer"><img src="/static/stickers/rohmer.png" alt=""><div class="sticker-tint"></div></div>
-<div class="sticker sticker-lighthouse"><img src="/static/stickers/lighthouse.png" alt=""><div class="sticker-tint"></div></div>
-<div class="sticker sticker-portrait"><img src="/static/stickers/portrait.png" alt=""><div class="sticker-tint"></div></div>
-<div class="sticker sticker-princess"><img src="/static/stickers/princess.png" alt=""><div class="sticker-tint"></div></div>
-<div class="sticker sticker-space"><img src="/static/stickers/space.png" alt=""><div class="sticker-tint"></div></div>
+<div class="sticker sticker-neon"><img src="/static/stickers/neon.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-ran"><img src="/static/stickers/ran.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-rohmer"><img src="/static/stickers/rohmer.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-lighthouse"><img src="/static/stickers/lighthouse.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-portrait"><img src="/static/stickers/portrait.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-princess"><img src="/static/stickers/princess.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-space"><img src="/static/stickers/space.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
 
 </body>
 </html>

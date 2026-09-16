@@ -4,6 +4,8 @@ Avvia un server FastAPI su una porta dedicata (default 8080).
 Include:
 - GET /                   mini-sito HTML (programmazione oggi)
 - GET /{YYYY-MM-DD}       mini-sito HTML (programmazione per data)
+- GET /robots.txt         direttive per i crawler
+- GET /sitemap.xml        sitemap (oggi + prossimi 7 giorni)
 - GET /health             stato del bot
 - GET /api/screenings     programmazione
 - GET /api/cinemas        elenco cinema
@@ -23,7 +25,7 @@ from typing import Any
 import pytz
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
@@ -370,7 +372,35 @@ def schedule_today(request: Request) -> HTMLResponse:
     return _schedule_page(request, _today())
 
 
-@app.get("/{date_param}", response_class=HTMLResponse)
+# Route statiche registrate PRIMA della catch-all "/{date_param}" qui sotto:
+# essendo un singolo segmento di path, "/{date_param}" matcherebbe anche
+# "/robots.txt" o "/sitemap.xml" (Starlette valuta le route nell'ordine in
+# cui sono registrate), trattandoli come una data non valida.
+
+
+@app.get("/robots.txt", response_class=PlainTextResponse, include_in_schema=False)
+def robots_txt(request: Request) -> PlainTextResponse:
+    body = f"User-agent: *\nAllow: /\nSitemap: {request.url_for('sitemap_xml')}\n"
+    return PlainTextResponse(body)
+
+
+@app.get("/sitemap.xml", response_class=Response, include_in_schema=False)
+def sitemap_xml(request: Request) -> Response:
+    today = _today()
+    urls = [str(request.url_for("schedule_today"))] + [
+        str(
+            request.url_for(
+                "schedule_date", date_param=(today + timedelta(days=i)).isoformat()
+            )
+        )
+        for i in range(7)
+    ]
+    entries = "".join(f"<url><loc>{u}</loc></url>" for u in urls)
+    xml = f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{entries}</urlset>'
+    return Response(content=xml, media_type="application/xml")
+
+
+@app.get("/{date_param}", response_class=HTMLResponse, name="schedule_date")
 def schedule_date(request: Request, date_param: str) -> HTMLResponse:
     try:
         target = _parse_date(date_param)

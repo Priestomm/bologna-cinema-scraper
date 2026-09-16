@@ -1,9 +1,14 @@
-# Cinema Bologna Bot
+# BOS — Bologna on Screen
 
 ![CI](https://github.com/Priestomm/bologna-cinema-scraper/actions/workflows/ci.yml/badge.svg)
+![License](https://img.shields.io/github/license/Priestomm/bologna-cinema-scraper)
 ![Status](https://img.shields.io/badge/status-%20active-success?logo=oracle)
 
-Bot Telegram + mini-sito web con la programmazione cinematografica giornaliera di Bologna per cinque circuiti, attivo 24/7 su Oracle Cloud:
+![Screenshot del mini-sito BOS](docs/screenshot.jpg)
+
+Mini-sito con la programmazione cinematografica giornaliera di Bologna per cinque
+circuiti, aggiornata automaticamente ogni giorno — più un bot Telegram compagno per
+consultarla senza aprire il sito. Attivo 24/7 su Oracle Cloud:
 
 - **Cineteca di Bologna** (Lumiere, Modernissimo)
 - **Pop Up Cinema** (Jolly, Arlecchino, Medica)
@@ -51,7 +56,7 @@ Le chiavi si ottengono da:
 
 ```bash
 make help              # tutti i comandi
-make run               # bot in foreground
+make run               # bot + sito in foreground
 make scrape            # scraping singolo giorno
 python main.py --scrape --days 7  # scraping 7 giorni
 make broadcast         # test invio reale
@@ -68,7 +73,7 @@ pm2 start ecosystem.config.js
 pm2 save && pm2 startup
 ```
 
-Il bot e' attualmente ospitato su Oracle Cloud (always-free tier) con PM2.
+Il sito e' attualmente ospitato su Oracle Cloud (always-free tier) con PM2.
 
 ### Health check
 
@@ -84,6 +89,8 @@ open http://localhost:8080/2026-09-15    # data specifica
 |---|---|
 | `GET /` | Mini-sito HTML — programmazione di oggi |
 | `GET /{YYYY-MM-DD}` | Mini-sito HTML — data specifica |
+| `GET /robots.txt` | Direttive per i crawler |
+| `GET /sitemap.xml` | Sitemap (oggi + prossimi 7 giorni) |
 | `GET /health` | Stato del bot (uptime, conteggio film, avvisi) |
 | `GET /api/screenings?date=YYYY-MM-DD` | Programmazione per data |
 | `GET /api/cinemas` | Elenco cinema con conteggio film |
