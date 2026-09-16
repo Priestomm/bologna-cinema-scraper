@@ -30,6 +30,7 @@ from starlette.requests import Request
 
 from config import settings
 from database import Cache
+from database.cache import CacheSnapshot
 from scrapers.base import Screening
 from utils import get_logger
 
