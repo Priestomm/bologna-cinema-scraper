@@ -18,16 +18,6 @@ def target_date() -> date:
 
 
 @pytest.fixture
-def sample_screening() -> Screening:
-    return Screening(
-        cinema="Cineteca - Lumiere",
-        titolo="La grande bellezza",
-        orari=["15:00", "20:30"],
-        note="VO - Cineteca",
-    )
-
-
-@pytest.fixture
 def sample_screenings() -> list[Screening]:
     return [
         Screening(
@@ -116,31 +106,6 @@ MOCK_HTML_FALLBACK_DATE = """
   <div class="schedule-section-show">
     Sala A - Proiezioni Lunedi 08/06/2026
     Orari: 16:00, 19:00
-  </div>
-</div>
-</body></html>
-"""
-
-MOCK_HTML_VARIANTS = """
-<html><body>
-<div class="movie movie--preview">
-  <a class="movie__title">Spirited Away</a>
-  <p class="movie__option"><strong>Lingua:</strong> Giapponese sub ita</p>
-  <div class="schedule-section-show">
-    Arena试
-    <ul>
-      <li><a data-time="1780923600000">15:00</a></li>
-    </ul>
-  </div>
-</div>
-<div class="movie movie--preview">
-  <a class="movie__title">Il ladro di calamari</a>
-  <p class="movie__option"><strong>Lingua:</strong> Italiano sub eng</p>
-  <div class="schedule-section-show">
-    Sala Berti
-    <ul>
-      <li><a data-time="1780943400000">20:30</a></li>
-    </ul>
   </div>
 </div>
 </body></html>
