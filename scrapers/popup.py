@@ -14,45 +14,26 @@ fa per gli altri circuiti.
 from __future__ import annotations
 
 import re
-from datetime import date
 
-from ._tickets18 import parse_all_dates, parse_day
-from .base import BaseScraper, Screening
+from ._tickets18_base import SingleTheaterScraper
+from .base import Screening
 
 # "Cinema XXX" o "Arena XXX" all'inizio del campo note (eventualmente
 # seguito da " - ..." con annotazioni linguistiche).
 _SALA_RE = re.compile(r"^((?:Cinema|Arena)\s+[A-Za-z][A-Za-z' ]*?)(?:\s+-\s+|$)")
 
 
-class PopUpCinemaScraper(BaseScraper):
+class PopUpCinemaScraper(SingleTheaterScraper):
     name = "Pop Up Cinema"
     slug = "popup"
     base_url = "https://popupcinema.18tickets.it/"
+    label = "Pop Up"
 
-    def _fetch(self, target_date: date) -> list[Screening]:
-        html = self._get(self.base_url).text
-        day = parse_day(html, self.name, target_date)
-        for s in day:
+    def _post_process(self, screenings: list[Screening]) -> None:
+        for s in screenings:
             match = _SALA_RE.match(s.note)
             if match:
                 sala = match.group(1).strip()
                 # Promuovi la sala a cinema; rimuovi il duplicato dalla nota.
                 s.cinema = f"Pop Up - {sala}"
                 s.note = s.note[match.end() :].strip()
-            s.note = (s.note + " - " if s.note else "") + "Pop Up"
-        return day
-
-    def fetch_all_dates(
-        self, after_date: date, max_days: int = 7
-    ) -> dict[date, list[Screening]]:
-        html = self._get(self.base_url).text
-        by_date = parse_all_dates(html, self.name, after_date, max_days)
-        for screenings in by_date.values():
-            for s in screenings:
-                match = _SALA_RE.match(s.note)
-                if match:
-                    sala = match.group(1).strip()
-                    s.cinema = f"Pop Up - {sala}"
-                    s.note = s.note[match.end() :].strip()
-                s.note = (s.note + " - " if s.note else "") + "Pop Up"
-        return by_date
