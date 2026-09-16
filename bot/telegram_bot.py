@@ -7,7 +7,6 @@ giorno non esiste (raro, es. primo avvio), forza una pipeline al volo.
 from __future__ import annotations
 
 import asyncio
-import threading
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ParseMode
@@ -61,7 +60,6 @@ class CinemaBot:
             on_scrape=self._job_scrape,
             on_broadcast=self._job_broadcast,
         )
-        self._health_server: threading.Thread | None = None
         self._register_handlers()
 
     # ---- handlers -----------------------------------------------------
@@ -179,7 +177,7 @@ class CinemaBot:
 
     async def _post_init(self, _app: Application) -> None:
         self._scheduler.start()
-        self._health_server = start_api_server()
+        start_api_server()
 
         # All'avvio, recupera eventuali job persi (es. crash/restart)
         target = today()
