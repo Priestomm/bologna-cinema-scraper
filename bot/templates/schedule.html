@@ -5,6 +5,7 @@
 {% set d_obj = date_obj if date_obj is defined else today %}
 {% set is_today = (d_obj == today) %}
 {% set page_day_label = "Oggi" if is_today else (day_map[d_obj.strftime("%A")] ~ " " ~ d_obj.day ~ " " ~ month_map[d_obj.strftime("%B")]|capitalize) %}
+{% set tab_title = "BOS - BOLOGNA ON SCREEN" %}
 {% set page_title = "BOS // Bologna on Screen — " ~ page_day_label %}
 {% set page_description = "Programmazione cinematografica di Bologna per " ~ page_day_label ~ ": Cineteca, Pop Up Cinema, Circuito Cinema, Nosadella, UCI Meridiana." %}
 {% set page_image = request.url_for('static', path='og-image.jpg') %}
@@ -12,7 +13,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ page_title }}</title>
+<title>{{ tab_title }}</title>
 <meta name="description" content="{{ page_description }}">
 <meta name="theme-color" content="#FF3500">
 <link rel="canonical" href="{{ request.url }}">
