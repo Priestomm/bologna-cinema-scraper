@@ -62,7 +62,7 @@
 
               <div class="cinema-times">
                 {% for t in c.times %}
-                <a href="{{ t.url }}" target="_blank" rel="noopener" class="film-time">
+                <a href="{{ t.url }}" target="_blank" rel="noopener" class="film-time" data-time="{{ t.ora }}">
                   {{ t.ora }}
                   {% if t.vo %}<span class="pill-vo">VO</span>{% endif %}
                 </a>

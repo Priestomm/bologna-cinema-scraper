@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 {% import "_day_fragments.html" as day %}
-{# day_map e month_map arrivano dal context (bot/health.py), unica fonte
+{# day_map e month_map arrivano dal context (web/site.py), unica fonte
    di verita' condivisa anche con /partials/{date}. #}
 
 {% set d_obj = date_obj if date_obj is defined else today %}
@@ -869,6 +869,21 @@ body::after {
       </div>
     </div>
     {% endif %}
+
+    <div class="filter-wrapper" id="hourWrapper">
+      <button class="filter-btn" id="hourToggle">
+        <span id="hourLabel">// ORARIO</span>
+        <span>▾</span>
+      </button>
+      <div class="dropdown-menu" id="hourMenu">
+        <button class="dropdown-item active" data-hour="00:00">Tutti gli orari</button>
+        <button class="dropdown-item" data-hour="18:00">Dopo le 18</button>
+        <button class="dropdown-item" data-hour="19:00">Dopo le 19</button>
+        <button class="dropdown-item" data-hour="20:00">Dopo le 20</button>
+        <button class="dropdown-item" data-hour="21:00">Dopo le 21</button>
+        <button class="dropdown-item" data-hour="22:00">Dopo le 22</button>
+      </div>
+    </div>
   </div>
 
   <!-- DAY HEADER -->
@@ -935,9 +950,17 @@ body::after {
         // I filtri cinema/genere si resettano su "Tutti" ad ogni cambio
         // giorno (le voci sono rigenerate e potrebbero non includere piu'
         // la selezione precedente); l'ordinamento invece non fa parte del
-        // frammento sostituito e resta quello scelto dall'utente.
+        // frammento sostituito e resta quello scelto dall'utente. Il filtro
+        // orario non dipende dal frammento ma si resetta comunque, cosi'
+        // non nasconde film del nuovo giorno senza che l'utente se ne accorga.
         if (filterLabel) filterLabel.textContent = '\u25A0 TUTTI I CINEMA';
         if (genreLabel) genreLabel.textContent = '// TUTTI I GENERI';
+        if (hourLabel) hourLabel.textContent = '// ORARIO';
+        if (hourMenu) {
+          hourMenu.querySelectorAll('.dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+          var hourDefault = hourMenu.querySelector('[data-hour="00:00"]');
+          if (hourDefault) hourDefault.classList.add('active');
+        }
 
         applyFiltersAndSort();
 
@@ -978,16 +1001,20 @@ body::after {
   setupDropdown('filterToggle', 'filterMenu');
   setupDropdown('sortToggle', 'sortMenu');
   setupDropdown('genreToggle', 'genreMenu');
+  setupDropdown('hourToggle', 'hourMenu');
 
   // Filter & Sort. filterMenu e genreMenu vengono riscritti ad ogni cambio
   // giorno (loadDay()): i listener sono in delegation sul contenitore, che
   // non viene mai sostituito, cosi' non serve ri-agganciarli dopo ogni swap.
+  // hourMenu invece non fa parte del frammento sostituito, resta statico.
   var filterMenu = document.getElementById('filterMenu');
   var filterLabel = document.getElementById('filterLabel');
   var sortItems = document.querySelectorAll('#sortMenu .dropdown-item');
   var sortLabel = document.getElementById('sortLabel');
   var genreMenu = document.getElementById('genreMenu');
   var genreLabel = document.getElementById('genreLabel');
+  var hourMenu = document.getElementById('hourMenu');
+  var hourLabel = document.getElementById('hourLabel');
 
   if (filterMenu) {
     filterMenu.addEventListener('click', function(e) {
@@ -1020,6 +1047,17 @@ body::after {
     });
   }
 
+  if (hourMenu) {
+    hourMenu.addEventListener('click', function(e) {
+      var item = e.target.closest('.dropdown-item');
+      if (!item) return;
+      hourMenu.querySelectorAll('.dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+      item.classList.add('active');
+      hourLabel.textContent = '// ' + item.textContent.trim().toUpperCase();
+      applyFiltersAndSort();
+    });
+  }
+
   function applyFiltersAndSort() {
     var activeFilter = document.querySelector('#filterMenu .dropdown-item.active');
     var filter = activeFilter ? activeFilter.dataset.filter : 'all';
@@ -1027,6 +1065,8 @@ body::after {
     var sort = activeSort ? activeSort.dataset.sort : 'default';
     var activeGenre = document.querySelector('#genreMenu .dropdown-item.active');
     var genre = activeGenre ? activeGenre.dataset.genre : 'all';
+    var activeHour = document.querySelector('#hourMenu .dropdown-item.active');
+    var hour = activeHour ? activeHour.dataset.hour : '00:00';
     var cards = document.querySelectorAll('.film-card');
     var parent = document.getElementById('filmGrid');
     var emptyState = parent.querySelector('.empty-state');
@@ -1038,10 +1078,19 @@ body::after {
       var filmHasCinema = (filter === 'all' || cinemas.includes(filter));
       var filmHasGenre = (genre === 'all' || filmGenre.includes(genre));
       var rows = card.querySelectorAll('.film-cinema-row');
+      var cardHasVisibleTime = false;
       rows.forEach(function(row) {
-        row.style.display = (filter === 'all' || row.dataset.cinema.includes(filter)) ? '' : 'none';
+        var rowMatchesCinema = (filter === 'all' || row.dataset.cinema.includes(filter));
+        var rowHasVisibleTime = false;
+        row.querySelectorAll('.film-time').forEach(function(t) {
+          var timeVisible = rowMatchesCinema && (t.dataset.time || '00:00') >= hour;
+          t.style.display = timeVisible ? '' : 'none';
+          if (timeVisible) rowHasVisibleTime = true;
+        });
+        row.style.display = rowHasVisibleTime ? '' : 'none';
+        if (rowHasVisibleTime) cardHasVisibleTime = true;
       });
-      if (filmHasCinema && filmHasGenre) { visibleCards.push(card); visible++; }
+      if (filmHasCinema && filmHasGenre && cardHasVisibleTime) { visibleCards.push(card); visible++; }
     });
     if (sort === 'title') { visibleCards.sort(function(a, b) { return (a.dataset.title || '').localeCompare(b.dataset.title || ''); }); }
     else if (sort === 'time') { visibleCards.sort(function(a, b) { return (a.dataset.times || '99:99').localeCompare(b.dataset.times || '99:99'); }); }

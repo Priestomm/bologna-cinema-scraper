@@ -210,6 +210,17 @@ class TestSchedulePartial:
         assert 'data-title="oppenheimer"' in resp.text
         assert 'data-times="18:00"' in resp.text
 
+    def test_time_pills_carry_data_time(
+        self, client: TestClient, seed_cache: None
+    ) -> None:
+        """Ogni orario nella card ha data-time="HH:MM": e' l'attributo che
+        il filtro "ORARIO" lato JS usa per nascondere gli orari precedenti
+        alla soglia scelta (vedi applyFiltersAndSort() in schedule.html)."""
+        resp = client.get("/")
+        assert resp.status_code == 200
+        assert 'data-time="18:00"' in resp.text
+        assert 'data-time="21:00"' in resp.text
+
 
 class TestStats:
     def test_empty(self, client: TestClient) -> None:
