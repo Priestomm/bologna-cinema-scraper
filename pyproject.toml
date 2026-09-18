@@ -1,0 +1,35 @@
+[project]
+name = "scraper-cinema-bologna"
+version = "1.0.0"
+description = "Bot Telegram + mini-sito con la programmazione cinematografica giornaliera di Bologna"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "python-telegram-bot==21.6",
+    "apscheduler==3.10.4",
+    "requests==2.32.3",
+    "beautifulsoup4==4.12.3",
+    "lxml==5.3.0",
+    "python-dotenv==1.0.1",
+    "pytz==2024.2",
+    "fastapi==0.115.6",
+    "jinja2==3.1.5",
+    "uvicorn==0.34.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==8.3.4",
+    "pytest-asyncio==0.25.0",
+    "ruff==0.16.5",
+    "mypy==1.13.0",
+    "types-requests==2.32.0.20241016",
+    "types-pytz==2024.2.0.20240913",
+]
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true

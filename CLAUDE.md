@@ -9,21 +9,28 @@ A Telegram bot + mini-website that scrapes and publishes the daily cinema listin
 ## Commands
 
 ```bash
-make install      # pip install -r requirements.txt
-make test         # python -m pytest tests/ -v
-make lint         # ruff check .
-make format       # ruff format . && ruff check . --fix
-make typecheck    # mypy --ignore-missing-imports .
-make run          # python main.py (bot + scheduler, foreground)
-make scrape       # python main.py --scrape (single-day scrape, no send)
-make broadcast    # python main.py --broadcast (scrape + real Telegram send)
+make install      # uv sync (creates .venv, installs runtime + dev deps)
+make lock         # uv lock + regenerates requirements.txt (used only by the Oracle Cloud/PM2 deploy, see below)
+make test         # uv run pytest tests/ -v
+make lint         # uv run ruff check .
+make format       # uv run ruff format . && uv run ruff check . --fix
+make typecheck    # uv run mypy .
+make run          # uv run python main.py (bot + scheduler, foreground)
+make scrape       # uv run python main.py --scrape (single-day scrape, no send)
+make broadcast    # uv run python main.py --broadcast (scrape + real Telegram send)
 ```
 
-Single test: `python -m pytest tests/test_formatter.py::test_name -v`
+Single test: `uv run pytest tests/test_formatter.py::test_name -v`
 
-Multi-day scrape (used to backfill/warm cache for a week): `python main.py --scrape --days 7`.
+Multi-day scrape (used to backfill/warm cache for a week): `uv run python main.py --scrape --days 7`.
 
-CI (`.github/workflows/ci.yml`) runs three independent jobs on every push/PR to `main`/`master`: `ruff check` + `ruff format --check`, `mypy --ignore-missing-imports .`, and `pytest tests/ -v`. There is no repo-level ruff/mypy config file — both run with default settings plus CLI flags.
+CI (`.github/workflows/ci.yml`) runs three independent jobs on every push/PR to `main`/`master` via
+`astral-sh/setup-uv`: `ruff check` + `ruff format --check`, `mypy .`, and `pytest tests/ -v`. Dependencies and
+their exact versions are declared in `pyproject.toml`/`uv.lock` (the source of truth); `ruff`/`mypy` config
+lives in `pyproject.toml` (`[tool.ruff]`, `[tool.mypy]`) instead of CLI flags. `requirements.txt` is a
+generated export (`make lock`), kept only because the Oracle Cloud deploy (PM2, see Project note above)
+installs into `./.venv` with plain `pip install -r requirements.txt` and doesn't have `uv` — don't edit it by
+hand, regenerate it with `make lock` whenever a dependency changes.
 
 `.env` (from `.env.example`) is required — `config/settings.py` raises `RuntimeError` at import time if `TELEGRAM_BOT_TOKEN` or `TELEGRAM_CHAT_ID` is missing. Tests avoid this via `tests/conftest.py`, which sets fake env vars with `os.environ.setdefault` before any app import.
 

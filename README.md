@@ -25,11 +25,13 @@ consultarla senza aprire il sito. Attivo 24/7 su Oracle Cloud:
 
 ## Quick start
 
+Richiede [uv](https://docs.astral.sh/uv/getting-started/installation/) (gestisce venv, dipendenze e
+interprete Python automaticamente — non serve creare una virtualenv a mano).
+
 ```bash
 git clone https://github.com/Priestomm/bologna-cinema-scraper.git
 cd scraper-cinema-bologna
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+uv sync  # crea .venv e installa tutte le dipendenze, incluse quelle di sviluppo
 cp .env.example .env  # poi inserisci le 3 chiavi
 make run
 ```

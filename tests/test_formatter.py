@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from bot.formatter import (
     _clean_title,
@@ -108,7 +108,7 @@ class TestRenderSnapshot:
     ) -> CacheSnapshot:
         return CacheSnapshot(
             target_date=date(2026, 6, 8),
-            updated_at=datetime(2026, 6, 8, 8, 0, tzinfo=timezone.utc),
+            updated_at=datetime(2026, 6, 8, 8, 0, tzinfo=UTC),
             screenings=screenings or [],
             warnings=warnings or [],
         )
@@ -229,7 +229,7 @@ class TestRenderTimeslot:
     ) -> CacheSnapshot:
         return CacheSnapshot(
             target_date=date(2026, 6, 8),
-            updated_at=datetime(2026, 6, 8, 8, 0, tzinfo=timezone.utc),
+            updated_at=datetime(2026, 6, 8, 8, 0, tzinfo=UTC),
             screenings=screenings or [],
             warnings=warnings or [],
         )
