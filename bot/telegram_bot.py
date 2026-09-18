@@ -19,14 +19,13 @@ from telegram.ext import (
 )
 
 from config import settings
+from core import CinemaScheduler, run_multi_day_pipeline, run_scrape_pipeline, today
 from database import Cache
 from database.cache import CacheSnapshot
 from utils import get_logger
+from web.server import start_api_server
 
 from .formatter import render_snapshot
-from .health import start_api_server
-from .pipeline import run_multi_day_pipeline, run_scrape_pipeline, today
-from .scheduler import CinemaScheduler
 
 logger = get_logger("bot.telegram")
 

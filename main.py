@@ -12,8 +12,9 @@ import argparse
 import asyncio
 import sys
 
-from bot import CinemaBot, run_multi_day_pipeline, run_scrape_pipeline
+from bot import CinemaBot
 from bot.formatter import render_snapshot
+from core import run_multi_day_pipeline, run_scrape_pipeline
 from database import CacheSnapshot
 from utils import get_logger
 

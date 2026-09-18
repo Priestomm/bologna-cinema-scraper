@@ -1,0 +1,10 @@
+{# Frammento HTML servito da GET /partials/{date_param}, consumato dal JS
+   di schedule.html per il cambio giorno (barra date, popstate, auto-refresh).
+   Ogni <div data-slot="..."> viene estratto e inserito nel container
+   corrispondente della pagina gia' caricata (vedi loadDay() in schedule.html). #}
+{% import "_day_fragments.html" as day %}
+<div data-slot="day-header">{{ day.day_header(date_obj, day_map, month_map) }}</div>
+<div data-slot="filter-items">{{ day.filter_items(cinema_names) }}</div>
+<div data-slot="genre-items">{{ day.genre_items(genres) }}</div>
+<div data-slot="grid">{{ day.film_grid(films) }}</div>
+<div data-slot="updated-at">{{ updated_at if updated_at else "—" }}</div>

@@ -17,7 +17,7 @@ from scrapers.base import Screening
 from scrapers.tmdb import TmdbClient
 from utils import get_logger
 
-logger = get_logger("bot.pipeline")
+logger = get_logger("core.pipeline")
 _TZ = pytz.timezone(settings.timezone)
 
 

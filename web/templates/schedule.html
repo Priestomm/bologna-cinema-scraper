@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-{% set day_map = {"Monday": "Lunedì", "Tuesday": "Martedì", "Wednesday": "Mercoledì", "Thursday": "Giovedì", "Friday": "Venerdì", "Saturday": "Sabato", "Sunday": "Domenica"} %}
-{% set month_map = {"January": "GENNAIO", "February": "FEBBRAIO", "March": "MARZO", "April": "APRILE", "May": "MAGGIO", "June": "GIUGNO", "July": "LUGLIO", "August": "AGOSTO", "September": "SETTEMBRE", "October": "OTTOBRE", "November": "NOVEMBRE", "December": "DICEMBRE"} %}
+{% import "_day_fragments.html" as day %}
+{# day_map e month_map arrivano dal context (bot/health.py), unica fonte
+   di verita' condivisa anche con /partials/{date}. #}
 
 {% set d_obj = date_obj if date_obj is defined else today %}
 {% set is_today = (d_obj == today) %}
@@ -339,12 +340,21 @@ body::after {
 .film-poster {
   aspect-ratio: 2/3;
   width: 100%;
+  display: block;
   position: relative;
   background-color: #fff;
+  border: none;
   border-bottom: 2px solid var(--border-hard);
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
+  cursor: pointer;
+  padding: 0;
+}
+
+.film-poster:focus-visible {
+  outline: 3px solid var(--accent-orange);
+  outline-offset: -3px;
 }
 
 .film-rating {
@@ -485,20 +495,22 @@ body::after {
 }
 
 /* === POSTER OVERLAY (mobile) === */
+/* <dialog> nativo: centratura, display e chiusura con Esc arrivano gratis
+   dal browser via showModal() (vedi JS), qui serve solo azzerare lo stile
+   di default del <dialog> e disegnare lo sfondo scuro tramite ::backdrop. */
 .poster-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.92);
-  z-index: 10000;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  border: none;
   padding: 20px;
+  background: transparent;
+  max-width: 840px;
+  width: calc(100% - 40px);
+  max-height: 90vh;
   overflow-y: auto;
 }
 
-.poster-overlay.open { display: flex; }
+.poster-overlay::backdrop {
+  background: rgba(0, 0, 0, 0.92);
+}
 
 .poster-overlay-content {
   display: flex;
@@ -830,18 +842,7 @@ body::after {
         <span>▾</span>
       </button>
       <div class="dropdown-menu" id="filterMenu">
-        <button class="dropdown-item active" data-filter="all">Tutti i cinema</button>
-        {% set ns = namespace(cinema_names=[]) %}
-        {% for film in films %}
-          {% for c in film.cinemas %}
-            {% if c.name not in ns.cinema_names %}
-              {% set ns.cinema_names = ns.cinema_names + [c.name] %}
-            {% endif %}
-          {% endfor %}
-        {% endfor %}
-        {% for cinema_name in ns.cinema_names|sort %}
-        <button class="dropdown-item" data-filter="{{ cinema_name|lower }}">{{ cinema_name }}</button>
-        {% endfor %}
+        {{ day.filter_items(cinema_names) }}
       </div>
     </div>
 
@@ -864,94 +865,32 @@ body::after {
         <span>▾</span>
       </button>
       <div class="dropdown-menu" id="genreMenu">
-        <button class="dropdown-item active" data-genre="all">Tutti i generi</button>
-        {% for genre_name in genres %}
-        <button class="dropdown-item" data-genre="{{ genre_name|lower }}">{{ genre_name }}</button>
-        {% endfor %}
+        {{ day.genre_items(genres) }}
       </div>
     </div>
     {% endif %}
   </div>
 
   <!-- DAY HEADER -->
-  {% set dt_parts = date.split('-') %}
-  {% set d_obj = date_obj if date_obj is defined else today %}
-  <div class="day-header">
-    >> STATUS: {{ day_map[d_obj.strftime("%A")]|upper }} {{ d_obj.day }} {{ month_map[d_obj.strftime("%B")] }} // BOLOGNA
+  <div class="day-header" id="dayHeader">
+    {{ day.day_header(d_obj, day_map, month_map) }}
   </div>
 
   <!-- FILM GRID -->
   <main class="film-grid" id="filmGrid">
-    {% if films %}
-      {% for film in films %}
-        <article class="film-card"
-             data-title="{{ film.titolo|lower }}"
-             data-times="{{ film.cinemas[0].times[0].ora if film.cinemas and film.cinemas[0].times else '99:99' }}"
-             data-cinemas="{{ film.cinemas|map(attribute='name')|join(',')|lower }}"
-             data-genre="{{ (film.genre or '')|lower }}"
-             data-overview="{{ (film.overview or '')|e }}"
-             data-runtime="{{ film.runtime or 0 }}"
-             data-regista="{{ (film.regista or '')|e }}">
-
-          <div class="film-poster"{% if film.poster_url %} style="background-image: url('{{ film.poster_url }}')"{% endif %}>
-            {% if film.rating and film.rating != "0.0" %}
-              <span class="film-rating">★ {{ film.rating }}</span>
-            {% else %}
-              <span class="film-rating" style="background: var(--border-dim); color: #000;">N/D</span>
-            {% endif %}
-
-            {% if film.genre %}
-            <div class="film-genres-overlay">
-              {% for g in film.genre.split("/")[:3] %}
-                {% set g = g.strip() %}
-                <span class="genre-chip">{{ g }}</span>
-              {% endfor %}
-            </div>
-            {% endif %}
-          </div>
-
-          <div class="card-body">
-            <div class="title-tape">{{ film.titolo }}</div>
-
-            <div class="film-cinemas">
-              {% for c in film.cinemas %}
-                <div class="film-cinema-row" data-cinema="{{ c.name|lower }}">
-                  {% set short_name = c.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
-                  <span class="cinema-name">■ {{ short_name }}</span>
-
-                  <div class="cinema-times">
-                    {% for t in c.times %}
-                    <a href="{{ t.url }}" target="_blank" rel="noopener" class="film-time">
-                      {{ t.ora }}
-                      {% if t.vo %}<span class="pill-vo">VO</span>{% endif %}
-                    </a>
-                    {% endfor %}
-                  </div>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-
-        </article>
-      {% endfor %}
-    {% else %}
-      <div class="empty-state">
-        <h3>// NESSUNA PROGRAMMAZIONE</h3>
-        <p>Non ci sono film disponibili per questa data.</p>
-      </div>
-    {% endif %}
+    {{ day.film_grid(films) }}
   </main>
 
   <!-- FOOTER -->
   <footer class="footer">
-    <p>DATI FORNITI DAI CIRCUITI CINEMATOGRAFICI DI BOLOGNA &middot; AGGIORNATO: {{ updated_at if updated_at else "—" }}</p>
+    <p>DATI FORNITI DAI CIRCUITI CINEMATOGRAFICI DI BOLOGNA &middot; AGGIORNATO: <span id="updatedAt">{{ updated_at if updated_at else "—" }}</span></p>
   </footer>
 
 </div>
 
 <!-- POSTER OVERLAY -->
-<div class="poster-overlay" id="posterOverlay">
-  <button class="poster-overlay-close" id="posterClose">&times;</button>
+<dialog class="poster-overlay" id="posterOverlay" aria-labelledby="posterTitle">
+  <button class="poster-overlay-close" id="posterClose" aria-label="Chiudi">&times;</button>
   <div class="poster-overlay-content">
     <img class="poster-overlay-img" id="posterImg" src="" alt="">
     <div class="poster-overlay-meta">
@@ -962,101 +901,64 @@ body::after {
       <div class="poster-overlay-overview" id="posterOverview"></div>
     </div>
   </div>
-</div>
+</dialog>
 
 <script>
 (function() {
-  var scheduleCache = {};
   var currentDate = '{{ date }}';
-  var dayMap = {{ day_map | tojson }};
-  var monthMap = {{ month_map | tojson }};
 
-  function loadSchedule() {
-    return fetch('/api/schedule')
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        scheduleCache = data.days || {};
-        return data;
+  // ---- Cambio giorno: fetch di un frammento HTML gia' pronto lato server
+  // (/partials/{date}), estratto in 5 pezzi via data-slot e iniettato nei
+  // container esistenti. Nessuna ricostruzione delle card in JS: l'unica
+  // fonte di verita' per il markup e' Jinja (bot/templates/_day_fragments.html).
+
+  function slotHtml(root, name) {
+    var el = root.querySelector('[data-slot="' + name + '"]');
+    return el ? el.innerHTML : '';
+  }
+
+  function loadDay(dateStr, pushHistory) {
+    return fetch('/partials/' + dateStr)
+      .then(function(r) {
+        if (!r.ok) throw new Error('partial fetch failed');
+        return r.text();
+      })
+      .then(function(html) {
+        var tmp = document.createElement('template');
+        tmp.innerHTML = html;
+        document.getElementById('dayHeader').innerHTML = slotHtml(tmp.content, 'day-header');
+        document.getElementById('filterMenu').innerHTML = slotHtml(tmp.content, 'filter-items');
+        document.getElementById('genreMenu').innerHTML = slotHtml(tmp.content, 'genre-items');
+        document.getElementById('filmGrid').innerHTML = slotHtml(tmp.content, 'grid');
+        document.getElementById('updatedAt').innerHTML = slotHtml(tmp.content, 'updated-at');
+
+        // I filtri cinema/genere si resettano su "Tutti" ad ogni cambio
+        // giorno (le voci sono rigenerate e potrebbero non includere piu'
+        // la selezione precedente); l'ordinamento invece non fa parte del
+        // frammento sostituito e resta quello scelto dall'utente.
+        if (filterLabel) filterLabel.textContent = '\u25A0 TUTTI I CINEMA';
+        if (genreLabel) genreLabel.textContent = '// TUTTI I GENERI';
+
+        applyFiltersAndSort();
+
+        if (pushHistory) history.pushState({date: dateStr}, '', '/' + dateStr);
+        document.querySelectorAll('.date-card').forEach(function(card) {
+          card.classList.toggle('active', card.dataset.date === dateStr);
+        });
+        currentDate = dateStr;
       });
   }
 
   window.switchDay = function(e, dateStr) {
     e.preventDefault();
     if (dateStr === currentDate) return;
-    if (!scheduleCache[dateStr]) {
-      window.location.href = '/' + dateStr;
-      return;
-    }
-    history.pushState({date: dateStr}, '', '/' + dateStr);
-    renderDay(dateStr);
-    document.querySelectorAll('.date-card').forEach(function(card) {
-      card.classList.toggle('active', card.dataset.date === dateStr);
-    });
-    currentDate = dateStr;
+    loadDay(dateStr, true).catch(function() { window.location.href = '/' + dateStr; });
   };
 
   window.addEventListener('popstate', function(e) {
-    if (e.state && e.state.date && scheduleCache[e.state.date]) {
-      renderDay(e.state.date);
-      document.querySelectorAll('.date-card').forEach(function(card) {
-        card.classList.toggle('active', card.dataset.date === e.state.date);
-      });
-      currentDate = e.state.date;
-    }
+    var dateStr = (e.state && e.state.date) || currentDate;
+    loadDay(dateStr, false).catch(function() {});
   });
-
-  function renderDay(dateStr) {
-    var dayData = scheduleCache[dateStr];
-    if (!dayData) return;
-    var films = dayData.films || [];
-    var grid = document.getElementById('filmGrid');
-    var html = '';
-    if (films.length === 0) {
-      html = '<div class="empty-state"><h3>// NESSUNA PROGRAMMAZIONE</h3><p>Non ci sono film disponibili per questa data.</p></div>';
-    } else {
-      films.forEach(function(film) { html += renderFilmCard(film); });
-    }
-    grid.innerHTML = html;
-    document.querySelectorAll('.film-poster').forEach(function(poster) {
-      poster.addEventListener('click', function() { openPoster(poster); });
-    });
-    applyFiltersAndSort();
-  }
-
-  function renderFilmCard(film) {
-    var cinemaNames = film.cinemas.map(function(c) { return c.name; }).join(',');
-    var firstTime = (film.cinemas.length > 0 && film.cinemas[0].times.length > 0) ? film.cinemas[0].times[0].ora : '99:99';
-    var posterStyle = film.poster_url ? ' style="background-image: url(\'' + film.poster_url + '\')"' : '';
-    var ratingHtml = (film.rating && film.rating !== '0.0')
-      ? '<span class="film-rating">\u2605 ' + film.rating + '</span>'
-      : '<span class="film-rating" style="background: var(--border-dim); color: #000;">N/D</span>';
-    var genresHtml = '';
-    if (film.genre) {
-      genresHtml = '<div class="film-genres-overlay">';
-      film.genre.split('/').slice(0, 3).forEach(function(g) {
-        g = g.trim();
-        if (g) genresHtml += '<span class="genre-chip">' + esc(g) + '</span>';
-      });
-      genresHtml += '</div>';
-    }
-    var cinemasHtml = '';
-    film.cinemas.forEach(function(c) {
-      var shortName = c.name.replace('Cineteca - ', '').replace('Pop Up - ', '').replace('Cinema ', '').replace('Arena ', '');
-      var timesHtml = '';
-      c.times.forEach(function(t) {
-        timesHtml += '<a href="' + esc(t.url) + '" target="_blank" rel="noopener" class="film-time">' + esc(t.ora);
-        if (t.vo) timesHtml += ' <span class="pill-vo">VO</span>';
-        timesHtml += '</a>';
-      });
-      cinemasHtml += '<div class="film-cinema-row" data-cinema="' + esc(c.name.toLowerCase()) + '">';
-      cinemasHtml += '<span class="cinema-name">\u25A0 ' + esc(shortName) + '</span>';
-      cinemasHtml += '<div class="cinema-times">' + timesHtml + '</div></div>';
-    });
-    return '<article class="film-card" data-title="' + esc((film.titolo || '').toLowerCase()) + '" data-times="' + firstTime + '" data-cinemas="' + esc(cinemaNames.toLowerCase()) + '" data-genre="' + esc((film.genre || '').toLowerCase()) + '" data-overview="' + esc(film.overview || '') + '" data-runtime="' + (film.runtime || 0) + '" data-regista="' + esc(film.regista || '') + '">' +
-      '<div class="film-poster"' + posterStyle + '>' + ratingHtml + genresHtml + '</div>' +
-      '<div class="card-body"><div class="title-tape">' + esc(film.titolo || '') + '</div>' +
-      '<div class="film-cinemas">' + cinemasHtml + '</div></div></article>';
-  }
 
   function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
@@ -1077,22 +979,26 @@ body::after {
   setupDropdown('sortToggle', 'sortMenu');
   setupDropdown('genreToggle', 'genreMenu');
 
-  // Filter & Sort
-  var filterItems = document.querySelectorAll('#filterMenu .dropdown-item');
+  // Filter & Sort. filterMenu e genreMenu vengono riscritti ad ogni cambio
+  // giorno (loadDay()): i listener sono in delegation sul contenitore, che
+  // non viene mai sostituito, cosi' non serve ri-agganciarli dopo ogni swap.
+  var filterMenu = document.getElementById('filterMenu');
   var filterLabel = document.getElementById('filterLabel');
   var sortItems = document.querySelectorAll('#sortMenu .dropdown-item');
   var sortLabel = document.getElementById('sortLabel');
-  var genreItems = document.querySelectorAll('#genreMenu .dropdown-item');
+  var genreMenu = document.getElementById('genreMenu');
   var genreLabel = document.getElementById('genreLabel');
 
-  filterItems.forEach(function(item) {
-    item.addEventListener('click', function() {
-      filterItems.forEach(function(i) { i.classList.remove('active'); });
-      this.classList.add('active');
-      filterLabel.textContent = '\u25A0 ' + this.textContent.trim().toUpperCase();
+  if (filterMenu) {
+    filterMenu.addEventListener('click', function(e) {
+      var item = e.target.closest('.dropdown-item');
+      if (!item) return;
+      filterMenu.querySelectorAll('.dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+      item.classList.add('active');
+      filterLabel.textContent = '\u25A0 ' + item.textContent.trim().toUpperCase();
       applyFiltersAndSort();
     });
-  });
+  }
 
   sortItems.forEach(function(item) {
     item.addEventListener('click', function() {
@@ -1103,14 +1009,14 @@ body::after {
     });
   });
 
-  if (genreItems) {
-    genreItems.forEach(function(item) {
-      item.addEventListener('click', function() {
-        genreItems.forEach(function(i) { i.classList.remove('active'); });
-        this.classList.add('active');
-        genreLabel.textContent = '// ' + this.textContent.trim().toUpperCase();
-        applyFiltersAndSort();
-      });
+  if (genreMenu) {
+    genreMenu.addEventListener('click', function(e) {
+      var item = e.target.closest('.dropdown-item');
+      if (!item) return;
+      genreMenu.querySelectorAll('.dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+      item.classList.add('active');
+      genreLabel.textContent = '// ' + item.textContent.trim().toUpperCase();
+      applyFiltersAndSort();
     });
   }
 
@@ -1122,9 +1028,9 @@ body::after {
     var activeGenre = document.querySelector('#genreMenu .dropdown-item.active');
     var genre = activeGenre ? activeGenre.dataset.genre : 'all';
     var cards = document.querySelectorAll('.film-card');
-    var emptyState = document.querySelector('.empty-state');
-    var visible = 0;
     var parent = document.getElementById('filmGrid');
+    var emptyState = parent.querySelector('.empty-state');
+    var visible = 0;
     var visibleCards = [];
     cards.forEach(function(card) {
       var cinemas = card.dataset.cinemas || '';
@@ -1179,41 +1085,37 @@ body::after {
     var overview = card.dataset.overview || '';
     if (overview) { overlayOverview.textContent = overview; overlayOverview.style.display = ''; }
     else { overlayOverview.style.display = 'none'; }
-    overlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    overlay.showModal();
   }
 
-  function closePoster() { overlay.classList.remove('open'); document.body.style.overflow = ''; }
+  // showModal() gestisce gratis focus trap, chiusura con Esc e ripristino
+  // del focus sul bottone che ha aperto il dialog: non serve reimplementarli.
+  function closePoster() { overlay.close(); }
 
-  document.querySelectorAll('.film-poster').forEach(function(poster) {
-    poster.addEventListener('click', function() { openPoster(poster); });
+  // Delegation su #filmGrid: il contenuto viene sostituito ad ogni cambio
+  // giorno (loadDay()), ma il contenitore resta lo stesso, quindi non serve
+  // ri-agganciare il listener dopo ogni swap.
+  var filmGrid = document.getElementById('filmGrid');
+  if (filmGrid) {
+    filmGrid.addEventListener('click', function(e) {
+      var poster = e.target.closest('.film-poster');
+      if (poster) openPoster(poster);
+    });
+  }
+  document.getElementById('posterClose').addEventListener('click', closePoster);
+  // Light-dismiss: chiude solo se il click e' sullo sfondo/padding del
+  // dialog stesso, non sui suoi contenuti (prima qualunque click dentro
+  // l'overlay, trama inclusa, lo chiudeva).
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closePoster();
   });
-  overlay.addEventListener('click', closePoster);
 
-  // Auto-refresh: ricarica dati e ri-renderizza senza full page reload
-  function autoRefresh() {
-    fetch('/api/refresh', {method: 'POST'})
-      .then(function(r) { return r.json(); })
-      .then(function(d) { if (d.status === 'started' || d.status === 'already_running') pollAutoRefresh(); })
-      .catch(function() {});
-  }
-
-  function pollAutoRefresh() {
-    setTimeout(function() {
-      fetch('/api/refresh/status')
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          if (d.in_progress) { pollAutoRefresh(); }
-          else { loadSchedule().then(function() { renderDay(currentDate); }); }
-        })
-        .catch(function() { loadSchedule().then(function() { renderDay(currentDate); }); });
-    }, 2000);
-  }
-
-  setInterval(autoRefresh, 15 * 60 * 1000);
-
-  // Init: carica dati7 giorni all'avvio
-  loadSchedule();
+  // Auto-refresh: rilegge la cache (già aggiornata dallo scheduler lato server)
+  // e ri-renderizza senza full page reload. Non deve mai far ripartire uno
+  // scraping: quello è responsabilità esclusiva dello scheduler server-side.
+  setInterval(function() {
+    loadDay(currentDate, false).catch(function() {});
+  }, {{ refresh_interval_minutes }} * 60 * 1000);
 
 })();
 </script>
