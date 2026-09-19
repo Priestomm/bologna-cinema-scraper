@@ -666,9 +666,38 @@ body::after {
 /* === STICKERS === */
 /* Trattamento "fanzine": duotono nero/arancio (blend su .sticker-tint),
    bordo strappato (clip-path condiviso) e striscia di nastro (::after). */
-.sticker {
+.sticker-layer {
   position: absolute;
+  inset: 0;
+  overflow-x: visible;
+  overflow-y: clip;
   z-index: 0;
+  pointer-events: none;
+}
+
+/* Due colonne (sinistra/destra) larghe 0 alle estremita' del body: gli sticker
+   sono in flusso verticale, quindi non possono sovrapporsi; il margine
+   negativo di ciascuno li fa sporgere oltre il bordo del body (il taglio
+   orizzontale e' lasciato a html, non al layer, cosi' su schermi piu' larghi
+   di 1400px gli sticker non vengono troncati a meta' sfondo). Se la pagina e'
+   piu' corta della colonna, i piu' in basso vengono tagliati in verticale. */
+.sticker-rail {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 60px;
+  padding: 50px 0;
+}
+.sticker-rail-left { left: 0; align-items: flex-start; }
+.sticker-rail-right { right: 0; align-items: flex-end; padding-top: 80px; }
+
+.sticker {
+  position: relative;
+  flex: none;
   pointer-events: none;
   opacity: 0.7;
   isolation: isolate;
@@ -681,6 +710,7 @@ body::after {
 
 .sticker img {
   width: 100%;
+  height: auto;
   display: block;
   filter: grayscale(1) contrast(1.2) brightness(1.05) drop-shadow(3px 3px 0px #000);
 }
@@ -703,97 +733,81 @@ body::after {
   box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.35);
 }
 
-.sticker-neon {
-  top: 50px;
-  left: -300px;
-  width: 500px;
-  transform: rotate(8deg);
-}
+.sticker-neon { width: 500px; margin-left: -175.9px; margin-top: -6.6px; transform: rotate(8deg); }
 .sticker-neon::after { left: 15%; background: #000; transform: rotate(-8deg); }
 
-.sticker-ran {
-  top: 80px;
-  right: -100px;
-  width: 1000px;
-  transform: rotate(-5deg);
-}
-.sticker-ran::after { left: 55%; background: #FF3500; transform: rotate(6deg); }
-
-.sticker-rohmer {
-  top: 50%;
-  right: -170px;
-  width: 700px;
-  transform: rotate(-12deg);
-}
-.sticker-rohmer::after { left: 30%; background: #000; transform: rotate(-5deg); }
-
-.sticker-lighthouse {
-  top: 35%;
-  left: -200px;
-  width: 600px;
-  transform: rotate(15deg);
-}
-.sticker-lighthouse::after { left: 20%; background: #FF3500; transform: rotate(9deg); }
-
-.sticker-portrait {
-  bottom: 15%;
-  right: -150px;
-  width: 550px;
-  transform: rotate(-8deg);
-}
-.sticker-portrait::after { left: 45%; background: #000; transform: rotate(-10deg); }
-
-.sticker-princess {
-  bottom: 10%;
-  left: -180px;
-  width: 500px;
-  transform: rotate(6deg);
-}
-.sticker-princess::after { left: 25%; background: #FF3500; transform: rotate(4deg); }
-
-.sticker-space {
-  top: 40%;
-  right: -120px;
-  width: 450px;
-  transform: rotate(-3deg);
-}
-.sticker-space::after { left: 50%; background: #000; transform: rotate(-6deg); }
-
-.sticker-aguirre {
-  top: 12%;
-  left: -260px;
-  width: 520px;
-  transform: rotate(-7deg);
-}
+.sticker-aguirre { width: 538.1px; margin-left: -249.9px; margin-top: -749.5px; transform: rotate(-7deg); }
 .sticker-aguirre::after { left: 40%; background: #FF3500; transform: rotate(-4deg); }
 
-.sticker-travolti {
-  bottom: 35%;
-  right: -140px;
-  width: 480px;
-  transform: rotate(9deg);
-}
-.sticker-travolti::after { left: 35%; background: #000; transform: rotate(7deg); }
+.sticker-lighthouse { width: 600px; margin-left: 1131.1px; margin-top: -347.7px; transform: rotate(15deg); }
+.sticker-lighthouse::after { left: 20%; background: #FF3500; transform: rotate(9deg); }
 
-.sticker-cabinet {
-  top: 58%;
-  left: -150px;
-  width: 460px;
-  transform: rotate(-5deg);
-}
+.sticker-cabinet { width: 627.4px; margin-left: -200.8px; margin-top: -266.4px; transform: rotate(-5deg); }
 .sticker-cabinet::after { left: 30%; background: #000; transform: rotate(5deg); }
 
+.sticker-princess { width: 500px; margin-left: -165.1px; margin-top: -124.3px; transform: rotate(6deg); }
+.sticker-princess::after { left: 25%; background: #FF3500; transform: rotate(4deg); }
+
+.sticker-ran { width: 887px; margin-right: -98.8px; margin-top: -7.1px; transform: rotate(-5deg); }
+.sticker-ran::after { left: 55%; background: #FF3500; transform: rotate(6deg); }
+
+.sticker-space { width: 560px; margin-right: -105.6px; margin-top: -516.2px; transform: rotate(-3deg); }
+.sticker-space::after { left: 50%; background: #000; transform: rotate(-6deg); }
+
+.sticker-rohmer { width: 716.9px; margin-right: 994.1px; margin-top: -652.6px; transform: rotate(-12deg); }
+.sticker-rohmer::after { left: 30%; background: #000; transform: rotate(-5deg); }
+
+.sticker-travolti { width: 480px; margin-right: -130.2px; margin-top: -121.7px; transform: rotate(9deg); }
+.sticker-travolti::after { left: 35%; background: #000; transform: rotate(7deg); }
+
+.sticker-portrait { width: 578.7px; margin-right: -145.2px; margin-top: -694.4px; transform: rotate(-8deg); }
+.sticker-portrait::after { left: 45%; background: #000; transform: rotate(-10deg); }
+
+/* Modalita' di modifica (?stickers=edit): sticker trascinabili, vedi script in fondo */
+.sticker-edit .sticker-layer { z-index: 5; }
+.sticker-edit .sticker {
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  outline: 2px dashed #FF3500;
+}
+.sticker-edit .sticker.dragging { cursor: grabbing; outline-color: #000; z-index: 2; }
+.sticker-editor {
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
+  z-index: 10001;
+  width: min(360px, calc(100vw - 20px));
+  background: #fff;
+  border: 2px solid #000;
+  box-shadow: 3px 3px 0 #000;
+  padding: 10px;
+  font-size: 0.7rem;
+}
+.sticker-editor p { margin-bottom: 6px; line-height: 1.4; }
+.sticker-editor textarea { width: 100%; height: 160px; font-size: 0.65rem; resize: vertical; }
+.sticker-editor button {
+  margin-top: 6px;
+  padding: 4px 10px;
+  font-weight: 700;
+  background: #FF3500;
+  border: 2px solid #000;
+  cursor: pointer;
+}
+
 @media (max-width: 768px) {
-  .sticker-neon { width: 100px; top: 30px; left: 10px; }
-  .sticker-ran { width: 110px; top: 30px; right: 10px; }
-  .sticker-rohmer { width: 90px; top: 45%; right: 2%; }
-  .sticker-lighthouse { width: 80px; top: 25%; left: 2%; }
-  .sticker-portrait { width: 85px; bottom: 35%; right: 3%; }
-  .sticker-princess { width: 75px; bottom: 10%; left: 5px; }
-  .sticker-space { width: 70px; top: 40%; right: 5px; }
-  .sticker-aguirre { width: 80px; top: 12%; left: 4px; }
-  .sticker-travolti { width: 75px; bottom: 55%; right: 6px; }
-  .sticker-cabinet { width: 80px; top: 58%; left: 4px; }
+  .sticker-rail { gap: 30px; padding: 30px 0; }
+  .sticker-rail-right { padding-top: 30px; }
+  .sticker-neon { width: 100px; margin-left: 10px; }
+  .sticker-aguirre { width: 80px; margin-left: 4px; }
+  .sticker-lighthouse { width: 80px; margin-left: 2%; }
+  .sticker-cabinet { width: 80px; margin-left: 4px; }
+  .sticker-princess { width: 75px; margin-left: 5px; }
+  .sticker-ran { width: 110px; margin-right: 10px; }
+  .sticker-space { width: 70px; margin-right: 5px; margin-top: 100px; }
+  .sticker-rohmer { width: 90px; margin-right: 2%; }
+  .sticker-travolti { width: 75px; margin-right: 6px; }
+  .sticker-portrait { width: 85px; margin-right: 3%; }
 
   .sticker::after {
     height: 9px;
@@ -1178,17 +1192,115 @@ body::after {
 })();
 </script>
 
-<!-- STICKERS (fissi allo sfondo) -->
-<div class="sticker sticker-neon"><img src="/static/stickers/neon.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-ran"><img src="/static/stickers/ran.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-rohmer"><img src="/static/stickers/rohmer.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-lighthouse"><img src="/static/stickers/lighthouse.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-portrait"><img src="/static/stickers/portrait.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-princess"><img src="/static/stickers/princess.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-space"><img src="/static/stickers/space.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-aguirre"><img src="/static/stickers/aguirre.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-travolti"><img src="/static/stickers/travolti.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-cabinet"><img src="/static/stickers/cabinet.webp" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<!-- STICKERS (fissi allo sfondo, in due colonne senza sovrapposizioni) -->
+<div class="sticker-layer">
+<div class="sticker-rail sticker-rail-left">
+<div class="sticker sticker-neon"><img src="/static/stickers/neon.webp" width="625" height="399" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-aguirre"><img src="/static/stickers/aguirre.webp" width="1434" height="1097" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-lighthouse"><img src="/static/stickers/lighthouse.webp" width="1435" height="1096" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-cabinet"><img src="/static/stickers/cabinet.webp" width="576" height="433" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-princess"><img src="/static/stickers/princess.webp" width="680" height="367" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+</div>
+<div class="sticker-rail sticker-rail-right">
+<div class="sticker sticker-ran"><img src="/static/stickers/ran.webp" width="1554" height="1012" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-space"><img src="/static/stickers/space.webp" width="641" height="389" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-rohmer"><img src="/static/stickers/rohmer.webp" width="584" height="427" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-travolti"><img src="/static/stickers/travolti.webp" width="1405" height="1119" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-portrait"><img src="/static/stickers/portrait.webp" width="1474" height="1067" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+</div>
+</div>
+
+<script>
+(function() {
+  if (new URLSearchParams(location.search).get('stickers') !== 'edit') return;
+  document.body.classList.add('sticker-edit');
+
+  var stickers = Array.prototype.slice.call(document.querySelectorAll('.sticker'));
+  var state = new Map();
+
+  function name(el) {
+    return Array.prototype.find.call(el.classList, function(c) { return c.indexOf('sticker-') === 0 && c !== 'sticker-tint'; });
+  }
+  function isLeft(el) { return el.parentElement.classList.contains('sticker-rail-left'); }
+
+  stickers.forEach(function(el) {
+    var cs = getComputedStyle(el);
+    var m = new DOMMatrixReadOnly(cs.transform);
+    state.set(el, {
+      w: parseFloat(cs.width),
+      h: isLeft(el) ? parseFloat(cs.marginLeft) : parseFloat(cs.marginRight),
+      t: parseFloat(cs.marginTop) || 0,
+      r: Math.round(Math.atan2(m.b, m.a) * 180 / Math.PI * 10) / 10
+    });
+  });
+
+  var box = document.createElement('div');
+  box.className = 'sticker-editor';
+  box.innerHTML = '<p><b>EDIT STICKER</b> — trascina: sposta (x = sporgenza, y = spazio sopra). Rotella: dimensione. Shift+rotella: rotazione.</p>' +
+    '<textarea readonly></textarea><button type="button">Copia CSS</button>';
+  document.body.appendChild(box);
+  var out = box.querySelector('textarea');
+
+  function r(n) { return Math.round(n * 10) / 10; }
+
+  function render() {
+    var mobile = window.matchMedia('(max-width: 768px)').matches;
+    var lines = stickers.map(function(el) {
+      var st = state.get(el);
+      var side = isLeft(el) ? 'margin-left' : 'margin-right';
+      var top = Math.abs(st.t) > 0.5 ? ' margin-top: ' + r(st.t) + 'px;' : '';
+      return '.' + name(el) + ' { width: ' + r(st.w) + 'px; ' + side + ': ' + r(st.h) + 'px;' + top + ' transform: rotate(' + st.r + 'deg); }';
+    });
+    out.value = (mobile ? '/* valori MOBILE (<=768px): vanno dentro @media (max-width: 768px), senza transform */\n' : '/* valori DESKTOP */\n') + lines.join('\n');
+  }
+
+  function apply(el) {
+    var st = state.get(el);
+    el.style.width = st.w + 'px';
+    el.style[isLeft(el) ? 'marginLeft' : 'marginRight'] = st.h + 'px';
+    el.style.marginTop = st.t + 'px';
+    el.style.transform = 'rotate(' + st.r + 'deg)';
+    render();
+  }
+
+  stickers.forEach(function(el) {
+    var drag = null;
+    el.addEventListener('pointerdown', function(e) {
+      var st = state.get(el);
+      drag = { x: e.clientX, y: e.clientY, h: st.h, t: st.t };
+      el.setPointerCapture(e.pointerId);
+      el.classList.add('dragging');
+      e.preventDefault();
+    });
+    el.addEventListener('pointermove', function(e) {
+      if (!drag) return;
+      var st = state.get(el);
+      var dx = e.clientX - drag.x;
+      st.h = drag.h + (isLeft(el) ? dx : -dx);
+      st.t = drag.t + (e.clientY - drag.y);
+      apply(el);
+    });
+    function end() { drag = null; el.classList.remove('dragging'); }
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
+    el.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      var st = state.get(el);
+      var d = e.deltaY || e.deltaX;
+      if (e.shiftKey) st.r = r(st.r - d * 0.05);
+      else st.w = Math.max(40, st.w * (1 - d * 0.001));
+      apply(el);
+    }, { passive: false });
+  });
+
+  box.querySelector('button').addEventListener('click', function() {
+    out.select();
+    if (navigator.clipboard) navigator.clipboard.writeText(out.value).catch(function() {});
+  });
+
+  render();
+})();
+</script>
 
 </body>
 </html>
