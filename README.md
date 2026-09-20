@@ -6,7 +6,7 @@
 
 ![Screenshot del mini-sito BOS](docs/screenshot.jpg)
 
-Mini-sito con la programmazione cinematografica giornaliera di Bologna per cinque
+Mini-sito con la programmazione cinematografica giornaliera di Bologna per otto
 circuiti, aggiornata automaticamente ogni giorno — più un bot Telegram compagno per
 consultarla senza aprire il sito. Attivo 24/7 su Oracle Cloud:
 
@@ -15,12 +15,15 @@ consultarla senza aprire il sito. Attivo 24/7 su Oracle Cloud:
 - **Circuito Cinema Bologna** (Rialto, Odeon, Europa, Roma D'Azeglio)
 - **Nuovo Cinema Nosadella** (Sala Berti, Sala Scalo)
 - **UCI Cinemas Meridiana** (Bologna)
+- **Cinema Chaplin** (Bologna, Porta Saragozza)
+- **Cinema Teatro Galliera** (Bologna)
+- **The Space Cinema** (Bologna)
 
 ## Funzionalita'
 
 - **Mini-sito web**: card film con locandina, rating, generi e orari; filtri per cinema/genere; ordinamento per ora/titolo; navigazione tra 7 giorni; rilegge la cache ogni 15 min senza rilanciare lo scraping (che resta esclusivo dello scheduler server-side)
 - **Enrichment TMDb**: rating, genere, poster ad alta risoluzione, sinossi, durata (cache locale TTL 7 giorni)
-- **Link di acquisto**: 18tickets (Cineteca, Pop Up, Circuito, Nosadella) + UCI Cinemas (API diretta)
+- **Link di acquisto**: 18tickets (Cineteca, Pop Up, Circuito, Nosadella) + UCI Cinemas e The Space (API dirette) + Chaplin (Webtic)
 - **Bot Telegram**: broadcast giornaliero + comando `/cinema` per consultazione istantanea
 
 ## Quick start
@@ -113,7 +116,9 @@ config/settings.py   # carica .env, costanti
 scrapers/            # scraper per circuito + client TMDb
   base.py            # BaseScraper + modello Screening
   _tickets18.py      # parser condiviso 18tickets
-  cineteca.py, circuito.py, nosadella.py, popup.py, uci.py
+  _dates_it.py, _text.py  # helper per date/orari e titoli scritti a mano
+  cineteca.py, circuito.py, nosadella.py, popup.py, uci.py,
+  chaplin.py, galliera.py, thespace.py
   tmdb.py            # client TMDb con cache SQLite
 database/cache.py    # cache SQLite snapshot giornalieri
 core/                # infrastruttura condivisa da bot Telegram e sito
