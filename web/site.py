@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from datetime import date, timedelta
 from typing import Any
 
@@ -58,6 +59,11 @@ def _normalize_title(title: str) -> str:
     """Normalizza il titolo per il raggruppamento film duplicati.
     Rimuove prefissi/suffissi OV, sottotitoli e varianti per unificare."""
     t = title.lower()
+    # Toglie gli accenti ("è" -> "e"): alcuni siti scrivono "e'" al posto di "è"
+    # e altrimenti "Dov'e' la fiesta" e "Dov'è la fiesta" non si unirebbero.
+    t = "".join(
+        c for c in unicodedata.normalize("NFKD", t) if not unicodedata.combining(c)
+    )
     t = re.sub(r"\s*\(.*?\)\s*", " ", t)
 
     # Prima rimuovi prefissi VO
@@ -146,21 +152,24 @@ def _build_film_list(
             if not norm_title:
                 continue
             group_key = _strip_vo_markers(norm_title)
-            if group_key in film_groups:
-                matched_key = group_key
-            else:
-                for existing_key in film_groups:
-                    short, long = (
-                        (group_key, existing_key)
-                        if len(group_key) <= len(existing_key)
-                        else (existing_key, group_key)
-                    )
-                    if long.startswith(short + " "):
-                        matched_key = existing_key
-                        break
-                    if len(short) >= 15 and short in long:
-                        matched_key = existing_key
-                        break
+            # Si confronta con il titolo normalizzato di ogni gruppo, non con la
+            # sua chiave: i gruppi con poster sono indicizzati per URL del poster.
+            for existing_key, existing in film_groups.items():
+                existing_title = _strip_vo_markers(existing["normalized"])
+                if group_key == existing_title:
+                    matched_key = existing_key
+                    break
+                short, long = (
+                    (group_key, existing_title)
+                    if len(group_key) <= len(existing_title)
+                    else (existing_title, group_key)
+                )
+                if long.startswith(short + " "):
+                    matched_key = existing_key
+                    break
+                if len(short) >= 15 and short in long:
+                    matched_key = existing_key
+                    break
 
         if matched_key is None:
             norm_title = _normalize_title(s.titolo)
