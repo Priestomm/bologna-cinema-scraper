@@ -763,6 +763,8 @@ body::after {
 .sticker-portrait { width: 578.7px; margin-right: -145.2px; margin-top: -694.4px; transform: rotate(-8deg); }
 .sticker-portrait::after { left: 45%; background: #000; transform: rotate(-10deg); }
 
+.sticker-off { display: none; }
+
 /* Modalita' di modifica (?stickers=edit): sticker trascinabili, vedi script in fondo */
 .sticker-edit .sticker-layer { z-index: 5; }
 .sticker-edit .sticker {
@@ -1166,20 +1168,91 @@ body::after {
 <!-- STICKERS (fissi allo sfondo, in due colonne senza sovrapposizioni) -->
 <div class="sticker-layer">
 <div class="sticker-rail sticker-rail-left">
-<div class="sticker sticker-neon"><img src="/static/stickers/neon.webp" width="625" height="399" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-aguirre"><img src="/static/stickers/aguirre.webp" width="1434" height="1097" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-lighthouse"><img src="/static/stickers/lighthouse.webp" width="1435" height="1096" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-cabinet"><img src="/static/stickers/cabinet.webp" width="576" height="433" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-princess"><img src="/static/stickers/princess.webp" width="680" height="367" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-neon" data-priority="1"><img src="/static/stickers/neon.webp" width="625" height="399" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-aguirre" data-priority="2"><img src="/static/stickers/aguirre.webp" width="1434" height="1097" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-lighthouse" data-priority="4"><img src="/static/stickers/lighthouse.webp" width="1435" height="1096" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-cabinet" data-priority="3"><img src="/static/stickers/cabinet.webp" width="576" height="433" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-princess" data-priority="5"><img src="/static/stickers/princess.webp" width="680" height="367" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
 </div>
 <div class="sticker-rail sticker-rail-right">
-<div class="sticker sticker-ran"><img src="/static/stickers/ran.webp" width="1554" height="1012" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-space"><img src="/static/stickers/space.webp" width="641" height="389" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-rohmer"><img src="/static/stickers/rohmer.webp" width="584" height="427" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-travolti"><img src="/static/stickers/travolti.webp" width="1405" height="1119" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
-<div class="sticker sticker-portrait"><img src="/static/stickers/portrait.webp" width="1474" height="1067" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-ran" data-priority="1"><img src="/static/stickers/ran.webp" width="1554" height="1012" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-space" data-priority="5"><img src="/static/stickers/space.webp" width="641" height="389" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-rohmer" data-priority="3"><img src="/static/stickers/rohmer.webp" width="584" height="427" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-travolti" data-priority="2"><img src="/static/stickers/travolti.webp" width="1405" height="1119" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-portrait" data-priority="4"><img src="/static/stickers/portrait.webp" width="1474" height="1067" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
 </div>
 </div>
+
+<script>
+// Sticker: su schermi stretti o pagine corte ne mostra solo alcuni per colonna
+// (data-priority: 1 = l'ultimo a sparire) invece di riempire lo sfondo.
+(function() {
+  if (new URLSearchParams(location.search).get('stickers') === 'edit') return;
+  var layer = document.querySelector('.sticker-layer');
+  var all = Array.prototype.slice.call(document.querySelectorAll('.sticker'));
+  var rails = document.querySelectorAll('.sticker-rail');
+  var TOLLERANZA = 24;
+
+  function maxPerRail(w) {
+    return w >= 1300 ? 5 : w >= 1100 ? 4 : w >= 900 ? 3 : 2;
+  }
+
+  function priority(el) { return Number(el.dataset.priority); }
+
+  // Meno importante = priorita' piu' alta; a parita', quello piu' in basso.
+  function worse(a, b) {
+    if (priority(a) !== priority(b)) return priority(a) > priority(b) ? a : b;
+    return a.getBoundingClientRect().top > b.getBoundingClientRect().top ? a : b;
+  }
+
+  // Uno sticker da nascondere: quello che sporge sotto la pagina (verrebbe
+  // tagliato) o uno di due sticker che si sovrappongono. null se e' tutto a posto.
+  function problem() {
+    var shown = all.filter(function(el) { return !el.classList.contains('sticker-off'); });
+    var box = layer.getBoundingClientRect();
+    var rects = shown.map(function(el) { return el.getBoundingClientRect(); });
+    var bad = null;
+    function flag(el) { bad = bad ? worse(bad, el) : el; }
+    shown.forEach(function(el, i) {
+      if (rects[i].bottom - box.top > box.height + 40) flag(el);
+      for (var j = i + 1; j < shown.length; j++) {
+        var ix = Math.min(rects[i].right, rects[j].right) - Math.max(rects[i].left, rects[j].left);
+        var iy = Math.min(rects[i].bottom, rects[j].bottom) - Math.max(rects[i].top, rects[j].top);
+        if (ix > TOLLERANZA && iy > TOLLERANZA) flag(worse(el, shown[j]));
+      }
+    });
+    return bad;
+  }
+
+  function fit() {
+    all.forEach(function(el) { el.classList.remove('sticker-off'); });
+    var max = maxPerRail(window.innerWidth);
+    rails.forEach(function(rail) {
+      var keep = Array.prototype.slice.call(rail.querySelectorAll('.sticker'))
+        .sort(function(a, b) { return priority(a) - priority(b); });
+      while (keep.length > max) keep.pop().classList.add('sticker-off');
+    });
+    // Nascondere uno sticker ridistribuisce gli altri nella colonna: si
+    // ricontrolla ad ogni passo.
+    for (var guard = 0; guard < all.length; guard++) {
+      var bad = problem();
+      if (!bad) break;
+      bad.classList.add('sticker-off');
+    }
+  }
+
+  var queued = false;
+  function schedule() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function() { queued = false; fit(); }, 80);
+  }
+
+  new ResizeObserver(schedule).observe(document.body);
+  window.addEventListener('resize', schedule);
+  fit();
+})();
+</script>
 
 <script>
 (function() {
