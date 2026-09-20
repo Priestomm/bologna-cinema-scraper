@@ -21,7 +21,7 @@ consultarla senza aprire il sito. Attivo 24/7 su Oracle Cloud:
 
 ## Funzionalita'
 
-- **Mini-sito web**: card film con locandina, rating, generi e orari; filtri per cinema/genere; ordinamento per ora/titolo; navigazione tra 7 giorni; rilegge la cache ogni 15 min senza rilanciare lo scraping (che resta esclusivo dello scheduler server-side)
+- **Mini-sito web**: card film con locandina, rating, generi e orari; filtri per cinema/genere; navigazione tra 7 giorni; rilegge la cache ogni 15 min senza rilanciare lo scraping (che resta esclusivo dello scheduler server-side)
 - **Enrichment TMDb**: rating, genere, poster ad alta risoluzione, sinossi, durata (cache locale TTL 7 giorni)
 - **Link di acquisto**: 18tickets (Cineteca, Pop Up, Circuito, Nosadella) + UCI Cinemas e The Space (API dirette) + Chaplin (Webtic)
 - **Bot Telegram**: broadcast giornaliero + comando `/cinema` per consultazione istantanea
