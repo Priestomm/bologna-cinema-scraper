@@ -8,17 +8,7 @@ A Telegram bot + mini-website that scrapes and publishes the daily cinema listin
 
 ## Commands
 
-```bash
-make install      # uv sync (creates .venv, installs runtime + dev deps)
-make lock         # uv lock + regenerates requirements.txt (used only by the Oracle Cloud/PM2 deploy, see below)
-make test         # uv run pytest tests/ -v
-make lint         # uv run ruff check .
-make format       # uv run ruff format . && uv run ruff check . --fix
-make typecheck    # uv run mypy .
-make run          # uv run python main.py (bot + scheduler, foreground)
-make scrape       # uv run python main.py --scrape (single-day scrape, no send)
-make broadcast    # uv run python main.py --broadcast (scrape + real Telegram send)
-```
+Standard targets live in the `Makefile`. `make lock` also regenerates `requirements.txt` (see below), and `make broadcast` does a real Telegram send.
 
 Single test: `uv run pytest tests/test_formatter.py::test_name -v`
 
