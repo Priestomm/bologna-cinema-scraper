@@ -16,7 +16,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from config import settings
 from utils import get_logger
 
-logger = get_logger("bot.scheduler")
+logger = get_logger("core.scheduler")
 
 
 class CinemaScheduler:

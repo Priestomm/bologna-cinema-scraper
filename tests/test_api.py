@@ -15,13 +15,13 @@ from scrapers.base import ScraperResult, Screening
 def _patch_cache(tmp_path: Path) -> Iterator[None]:
     db = tmp_path / "test.sqlite3"
     cache = Cache(db)
-    with patch("bot.health._get_cache", return_value=cache):
+    with patch("web.web_utils.get_cache", return_value=cache):
         yield
 
 
 @pytest.fixture
 def client() -> TestClient:
-    from bot.health import app
+    from web.server import app
 
     return TestClient(app)
 
@@ -32,10 +32,10 @@ def seed_cache() -> None:
 
     import pytz
 
-    from bot.health import _get_cache
     from config import settings
+    from web.web_utils import get_cache
 
-    cache = _get_cache()
+    cache = get_cache()
     d = datetime.now(pytz.timezone(settings.timezone)).date()
     screenings = [
         Screening(
@@ -144,6 +144,82 @@ class TestHistory:
     def test_days_bounds(self, client: TestClient) -> None:
         resp = client.get("/api/history?days=100")
         assert resp.status_code == 422  # validation error: max 90
+
+
+class TestSchedulePartial:
+    """GET /partials/{date}: frammento HTML usato dal JS del mini-sito per
+    il cambio giorno senza reload (vedi web/templates/schedule.html)."""
+
+    def test_with_data(self, client: TestClient, seed_cache: None) -> None:
+        from datetime import datetime
+
+        import pytz
+
+        from config import settings
+
+        d = datetime.now(pytz.timezone(settings.timezone)).date().isoformat()
+        resp = client.get(f"/partials/{d}")
+        assert resp.status_code == 200
+        body = resp.text
+        for slot in (
+            "day-header",
+            "filter-items",
+            "genre-items",
+            "grid",
+            "updated-at",
+        ):
+            assert f'data-slot="{slot}"' in body
+        assert "Parasite" in body
+        assert 'data-filter="rialto"' in body
+
+    def test_empty_day(self, client: TestClient) -> None:
+        resp = client.get("/partials/2099-01-01")
+        assert resp.status_code == 200
+        assert "NESSUNA PROGRAMMAZIONE" in resp.text
+
+    def test_invalid_date(self, client: TestClient) -> None:
+        resp = client.get("/partials/not-a-date")
+        assert resp.status_code == 400
+
+    def test_earliest_time_across_cinemas(self, client: TestClient) -> None:
+        """data-times deve essere il piu' presto tra TUTTI i cinema del film,
+        non solo del primo cinema della lista ordinata per numero di orari
+        (bug storico dell'ordinamento per orario)."""
+        from datetime import datetime
+
+        import pytz
+
+        from config import settings
+        from web.web_utils import get_cache
+
+        # Lumiere ha un solo orario (18:00) quindi finisce dopo Rialto (due
+        # orari) nella lista cinema ordinata per numero di orari: il piu'
+        # presto in assoluto (18:00) deve comunque vincere.
+        screenings = [
+            Screening(cinema="Rialto", titolo="Oppenheimer", orari=["19:00", "21:30"]),
+            Screening(cinema="Lumiere", titolo="Oppenheimer", orari=["18:00"]),
+        ]
+        result = ScraperResult(
+            name="Test", slug="test", screenings=screenings, success=True
+        )
+        d = datetime.now(pytz.timezone(settings.timezone)).date()
+        get_cache().store(d, [result])
+
+        resp = client.get("/")
+        assert resp.status_code == 200
+        assert 'data-title="oppenheimer"' in resp.text
+        assert 'data-times="18:00"' in resp.text
+
+    def test_time_pills_carry_data_time(
+        self, client: TestClient, seed_cache: None
+    ) -> None:
+        """Ogni orario nella card ha data-time="HH:MM": e' l'attributo che
+        il filtro "ORARIO" lato JS usa per nascondere gli orari precedenti
+        alla soglia scelta (vedi applyFiltersAndSort() in schedule.html)."""
+        resp = client.get("/")
+        assert resp.status_code == 200
+        assert 'data-time="18:00"' in resp.text
+        assert 'data-time="21:00"' in resp.text
 
 
 class TestStats:

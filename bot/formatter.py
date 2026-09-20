@@ -6,6 +6,7 @@ import html
 import re
 from datetime import date
 
+from core.timeslots import TIMESLOTS, parse_time
 from database import CacheSnapshot
 from scrapers import Screening
 
@@ -87,22 +88,8 @@ def _clean_title(titolo: str) -> str:
     return cleaned
 
 
-_TIMESLOTS = [
-    ("🌅 Mattina", "06:00", "12:00"),
-    ("☀️ Pomeriggio", "12:00", "17:00"),
-    ("🌆 Sera", "17:00", "21:00"),
-    ("🌙 Notte", "21:00", "27:00"),
-]
-
-
-def _parse_time(t: str) -> int:
-    """Restituisce i minuti dall'inizio del giorno (es. '14:30' -> 870)."""
-    h, m = t.split(":")
-    return int(h) * 60 + int(m)
-
-
 def _timeslot_label() -> str:
-    return " · ".join(f"{name}" for name, _, _ in _TIMESLOTS)
+    return " · ".join(f"{name}" for name, _, _ in TIMESLOTS)
 
 
 def _group_by_timeslot(
@@ -111,17 +98,17 @@ def _group_by_timeslot(
     """Raggruppa per fascia oraria, poi per cinema. Ogni film appare in ogni
     fascia che contiene almeno uno dei suoi orari."""
     result: dict[str, dict[str, list[Screening]]] = {
-        name: {} for name, _, _ in _TIMESLOTS
+        name: {} for name, _, _ in TIMESLOTS
     }
     for s in screenings:
         assigned: set[int] = set()
         for o in s.orari:
-            minutes = _parse_time(o)
-            for i, (_, start, end) in enumerate(_TIMESLOTS):
+            minutes = parse_time(o)
+            for i, (_, start, end) in enumerate(TIMESLOTS):
                 if i in assigned:
                     continue
-                if _parse_time(start) <= minutes < _parse_time(end):
-                    result[_TIMESLOTS[i][0]].setdefault(s.cinema, []).append(s)
+                if parse_time(start) <= minutes < parse_time(end):
+                    result[TIMESLOTS[i][0]].setdefault(s.cinema, []).append(s)
                     assigned.add(i)
     # Ordina film per titolo dentro ogni cinema, e cinema per nome
     for slot_data in result.values():
@@ -332,11 +319,11 @@ def _render_timeslot(snapshot: CacheSnapshot, header: str) -> list[str]:
 
 def _filter_orari_for_slot(orari: list[str], slot_name: str) -> list[str]:
     """Filtra gli orari che appartengono alla fascia indicata."""
-    for name, start, end in _TIMESLOTS:
+    for name, start, end in TIMESLOTS:
         if name == slot_name:
-            s_min = _parse_time(start)
-            e_min = _parse_time(end)
-            return [o for o in orari if s_min <= _parse_time(o) < e_min]
+            s_min = parse_time(start)
+            e_min = parse_time(end)
+            return [o for o in orari if s_min <= parse_time(o) < e_min]
     return orari
 
 

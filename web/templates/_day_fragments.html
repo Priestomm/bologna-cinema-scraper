@@ -1,0 +1,84 @@
+{# Macro condivise per il markup che dipende dal giorno mostrato.
+   Usate sia dal rendering iniziale (schedule.html) sia dal frammento
+   servito da /partials/{date} per il cambio giorno via JS, cosi' le
+   card e le liste dei filtri hanno un'unica fonte di verita' invece di
+   essere duplicate in Jinja e ricostruite a mano in JavaScript. #}
+
+{% macro day_header(date_obj, day_map, month_map) -%}
+>> STATUS: {{ day_map[date_obj.strftime("%A")]|upper }} {{ date_obj.day }} {{ month_map[date_obj.strftime("%B")] }} // BOLOGNA
+{%- endmacro %}
+
+{% macro filter_items(cinema_names) -%}
+<button class="dropdown-item active" data-filter="all">Tutti i cinema</button>
+{% for cinema_name in cinema_names %}
+<button class="dropdown-item" data-filter="{{ cinema_name|lower }}">{{ cinema_name }}</button>
+{% endfor %}
+{%- endmacro %}
+
+{% macro genre_items(genres) -%}
+<button class="dropdown-item active" data-genre="all">Tutti i generi</button>
+{% for genre_name in genres %}
+<button class="dropdown-item" data-genre="{{ genre_name|lower }}">{{ genre_name }}</button>
+{% endfor %}
+{%- endmacro %}
+
+{% macro film_grid(films) -%}
+{% if films %}
+  {% for film in films %}
+    <article class="film-card"
+         data-title="{{ film.titolo|lower }}"
+         data-times="{{ film.earliest_time or '99:99' }}"
+         data-cinemas="{{ film.cinemas|map(attribute='name')|join(',')|lower }}"
+         data-genre="{{ (film.genre or '')|lower }}"
+         data-overview="{{ (film.overview or '')|e }}"
+         data-runtime="{{ film.runtime or 0 }}"
+         data-regista="{{ (film.regista or '')|e }}">
+
+      <button type="button" class="film-poster"{% if film.poster_url %} style="background-image: url('{{ film.poster_url }}')"{% endif %} aria-haspopup="dialog" aria-label="Apri dettagli: {{ film.titolo }}">
+        {% if film.rating and film.rating != "0.0" %}
+          <span class="film-rating">★ {{ film.rating }}</span>
+        {% else %}
+          <span class="film-rating" style="background: var(--border-dim); color: #000;">N/D</span>
+        {% endif %}
+
+        {% if film.genre %}
+        <div class="film-genres-overlay">
+          {% for g in film.genre.split("/")[:3] %}
+            {% set g = g.strip() %}
+            <span class="genre-chip">{{ g }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </button>
+
+      <div class="card-body">
+        <div class="title-tape">{{ film.titolo }}</div>
+
+        <div class="film-cinemas">
+          {% for c in film.cinemas %}
+            <div class="film-cinema-row" data-cinema="{{ c.name|lower }}">
+              {% set short_name = c.name|replace("Cineteca - ", "")|replace("Pop Up - ", "")|replace("Cinema ", "")|replace("Arena ", "") %}
+              <span class="cinema-name">■ {{ short_name }}</span>
+
+              <div class="cinema-times">
+                {% for t in c.times %}
+                <a href="{{ t.url }}" target="_blank" rel="noopener" class="film-time" data-time="{{ t.ora }}">
+                  {{ t.ora }}
+                  {% if t.vo %}<span class="pill-vo">VO</span>{% endif %}
+                </a>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </article>
+  {% endfor %}
+{% else %}
+  <div class="empty-state">
+    <h3>// NESSUNA PROGRAMMAZIONE</h3>
+    <p>Non ci sono film disponibili per questa data.</p>
+  </div>
+{% endif %}
+{%- endmacro %}

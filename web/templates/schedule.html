@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+{% import "_day_fragments.html" as day %}
+{# day_map e month_map arrivano dal context (web/site.py), unica fonte
+   di verita' condivisa anche con /partials/{date}. #}
+
+{% set d_obj = date_obj if date_obj is defined else today %}
+{% set is_today = (d_obj == today) %}
+{% set page_day_label = "Oggi" if is_today else (day_map[d_obj.strftime("%A")] ~ " " ~ d_obj.day ~ " " ~ month_map[d_obj.strftime("%B")]|capitalize) %}
+{% set tab_title = "BOS - BOLOGNA ON SCREEN" %}
+{% set page_title = "BOS // Bologna on Screen — " ~ page_day_label %}
+{% set page_description = "Programmazione cinematografica di Bologna per " ~ page_day_label ~ ": Cineteca, Pop Up Cinema, Circuito Cinema, Nosadella, UCI Meridiana." %}
+{% set page_image = request.url_for('static', path='og-image.jpg') %}
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ tab_title }}</title>
+<meta name="description" content="{{ page_description }}">
+<meta name="theme-color" content="#FF3500">
+<link rel="canonical" href="{{ request.url }}">
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="BOS // Bologna on Screen">
+<meta property="og:title" content="{{ page_title }}">
+<meta property="og:description" content="{{ page_description }}">
+<meta property="og:url" content="{{ request.url }}">
+<meta property="og:image" content="{{ page_image }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ page_title }}">
+<meta name="twitter:description" content="{{ page_description }}">
+<meta name="twitter:image" content="{{ page_image }}">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+
+<style>
+/* === FANZINE BRUTALISTA === */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border-radius: 0px !important;
+  font-family: 'Space Mono', monospace;
+}
+
+:root {
+  --bg-paper: #E2DFD8;
+  --surface-card: #EAE7E1;
+  --accent-orange: #FF3500;
+  --text-black: #000000;
+  --text-gray: #6B6660;
+  --border-dim: #C4BFB8;
+  --border-hard: #000000;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  background-color: #e6e2dd;
+  background-attachment: fixed;
+  background-image:
+    radial-gradient(circle at 10% 10%, rgba(255, 53, 0, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 90% 15%, rgba(0, 0, 0, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 20% 85%, rgba(0, 0, 0, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(255, 53, 0, 0.08) 0%, transparent 55%);
+  color: var(--text-black);
+  padding: 20px 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  filter: contrast(150%) brightness(95%);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.container {
+  width: 100%;
+  position: relative;
+  z-index: 2;
+  padding: 20px;
+  background: transparent;
+}
+
+/* === HEADER === */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--border-hard);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.logo {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tape-label {
+  display: inline-block;
+  padding: 4px 10px;
+  font-weight: 700;
+  font-size: 1.4rem;
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
+}
+
+.tape-black {
+  background: #000;
+  color: #fff;
+  border: 2px solid var(--border-hard);
+}
+
+.tape-orange {
+  background: var(--accent-orange);
+  color: #000;
+  font-weight: 700;
+}
+
+.nav { display: flex; gap: 8px; }
+
+.nav a {
+  color: var(--text-black);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  background: #fff;
+  border: 2px solid var(--border-hard);
+  box-shadow: 2px 2px 0px #000;
+}
+
+.nav a:hover {
+  background: var(--accent-orange);
+  border-color: var(--accent-orange);
+  box-shadow: 1px 1px 0px #000;
+  transform: translate(1px, 1px);
+}
+
+/* === HERO === */
+.hero { margin-bottom: 16px; }
+
+.hero h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-gray);
+  letter-spacing: -0.5px;
+}
+
+/* === DATE BAR === */
+.date-bar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  scrollbar-width: none;
+}
+
+.date-bar::-webkit-scrollbar { display: none; }
+
+.date-card {
+  flex-shrink: 0;
+  background: #fff;
+  color: var(--text-black);
+  border: 2px solid var(--border-hard);
+  box-shadow: 3px 3px 0px #000;
+  padding: 8px 14px;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.date-card:hover {
+  background: var(--accent-orange);
+  color: #000;
+  border-color: var(--accent-orange);
+  box-shadow: 1px 1px 0px #000;
+  transform: translate(2px, 2px);
+}
+
+.date-card.active {
+  background: var(--accent-orange);
+  color: #000;
+  border-color: var(--accent-orange);
+  font-weight: 700;
+  box-shadow: 3px 3px 0px #000;
+}
+
+.date-card.active .date-day,
+.date-card.active .date-num,
+.date-card.active .date-month { color: #000; }
+
+.date-day { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; }
+.date-num { font-size: 1.2rem; font-weight: 700; line-height: 1; margin: 2px 0; }
+.date-month { font-size: 0.65rem; text-transform: uppercase; }
+
+/* === FILTER BAR === */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-wrapper { position: relative; }
+
+.filter-btn {
+  background: #fff;
+  color: var(--text-black);
+  border: 2px solid var(--border-hard);
+  box-shadow: 2px 2px 0px #000;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-btn:hover, .filter-btn.active {
+  border-color: var(--accent-orange);
+}
+
+.filter-btn.active {
+  background: var(--accent-orange);
+  color: #000;
+  box-shadow: 1px 1px 0px #000;
+  transform: translate(1px, 1px);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 2px solid var(--border-hard);
+  box-shadow: 3px 3px 0px #000;
+  padding: 4px 0;
+  min-width: 200px;
+  z-index: 10001;
+  display: none;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.dropdown-menu.open { display: block; }
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  color: var(--text-black);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.dropdown-item:hover, .dropdown-item.active {
+  background: var(--accent-orange);
+  color: #000;
+}
+
+/* === DAY HEADER === */
+.day-header {
+  font-size: 0.8rem;
+  color: var(--text-gray);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+/* === FILM GRID === */
+.film-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 16px;
+  padding-bottom: 60px;
+  align-items: start;
+}
+
+/* === CARD === */
+.film-card {
+  background: var(--surface-card);
+  border: 2px solid var(--border-hard);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 4px 0px #000;
+  transition: none;
+  cursor: pointer;
+}
+
+.film-card:hover {
+  box-shadow: 6px 6px 0px #000;
+  transform: translate(-2px, -2px);
+}
+
+.film-poster {
+  aspect-ratio: 2/3;
+  width: 100%;
+  display: block;
+  position: relative;
+  background-color: #fff;
+  border: none;
+  border-bottom: 2px solid var(--border-hard);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  padding: 0;
+}
+
+.film-poster:focus-visible {
+  outline: 3px solid var(--accent-orange);
+  outline-offset: -3px;
+}
+
+.film-rating {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--accent-orange);
+  color: #000;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 3px 8px;
+  z-index: 2;
+}
+
+.film-genres-overlay {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.genre-chip {
+  background: var(--surface-card);
+  color: var(--text-black);
+  border: 1px solid var(--border-hard);
+  font-size: 0.6rem;
+  padding: 2px 5px;
+  text-transform: uppercase;
+}
+
+.card-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title-tape {
+  background: var(--accent-orange);
+  color: #000;
+  padding: 4px 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.card-hint {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-gray);
+  text-transform: uppercase;
+}
+
+.film-cinemas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.film-cinema-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cinema-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cinema-times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.film-time {
+  background: #fff;
+  color: var(--text-black);
+  border: 2px solid var(--border-hard);
+  box-shadow: 2px 2px 0px #000;
+  padding: 5px 9px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.film-time:hover {
+  background: var(--accent-orange);
+  color: #000;
+  border-color: var(--accent-orange);
+  box-shadow: 3px 3px 0px #000;
+  transform: translate(-1px, -1px);
+}
+
+.pill-vo {
+  font-size: 0.6rem;
+  background: var(--border-dim);
+  color: var(--text-black);
+  padding: 0 3px;
+}
+
+.film-time:hover .pill-vo {
+  background: #000;
+  color: #fff;
+}
+
+/* === EMPTY STATE & FOOTER === */
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  border: 2px dashed var(--border-hard);
+  color: var(--text-gray);
+  text-transform: uppercase;
+}
+
+.footer {
+  border-top: 3px solid #000;
+  padding: 20px 0;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-gray);
+  text-transform: uppercase;
+}
+
+/* === POSTER OVERLAY (mobile) === */
+/* <dialog> nativo: centratura, display e chiusura con Esc arrivano gratis
+   dal browser via showModal() (vedi JS), qui serve solo azzerare lo stile
+   di default del <dialog> e disegnare lo sfondo scuro tramite ::backdrop. */
+.poster-overlay {
+  border: none;
+  padding: 20px;
+  background: transparent;
+  max-width: 840px;
+  width: calc(100% - 40px);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.poster-overlay::backdrop {
+  background: rgba(0, 0, 0, 0.92);
+}
+
+.poster-overlay-content {
+  display: flex;
+  gap: 24px;
+  max-width: 800px;
+  width: 100%;
+  cursor: default;
+}
+
+.poster-overlay-img {
+  width: 260px;
+  min-width: 200px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  align-self: flex-start;
+}
+
+.poster-overlay-meta {
+  color: #fff;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.poster-overlay-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.poster-overlay-rating {
+  font-size: 0.9rem;
+  color: var(--accent-orange);
+}
+
+.poster-overlay-genres {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.poster-overlay-genres .genre-chip {
+  background: var(--accent-orange);
+  color: #000;
+  border: 1px solid #fff;
+  font-size: 0.7rem;
+  padding: 3px 8px;
+}
+
+.poster-overlay-info {
+  font-size: 0.85rem;
+  color: #ccc;
+}
+
+.poster-overlay-overview {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #ddd;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.poster-overlay-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: var(--accent-orange);
+  color: #000;
+  border: 2px solid #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* === MOBILE === */
+@media (max-width: 768px) {
+  body {
+    padding: 12px 8px;
+  }
+
+  .container {
+    padding: 0;
+  }
+
+  .film-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .film-card { flex-direction: row; }
+
+  .film-poster {
+    width: 115px;
+    aspect-ratio: 2/3;
+    flex-shrink: 0;
+    border-bottom: none;
+    border-right: 2px solid var(--border-hard);
+    cursor: pointer;
+  }
+
+  .film-rating { display: none; }
+  .film-genres-overlay { display: none; }
+
+  .card-body {
+    flex: 1;
+    min-width: 0;
+    padding: 10px;
+  }
+
+  .title-tape { font-size: 0.85rem; }
+
+  .film-time {
+    padding: 8px 10px;
+    min-height: 36px;
+  }
+
+  .poster-overlay-content {
+    flex-direction: column;
+    align-items: center;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .poster-overlay-img {
+    width: 180px;
+    min-width: unset;
+  }
+
+  .poster-overlay-meta {
+    text-align: center;
+    align-items: center;
+  }
+
+  .poster-overlay-genres {
+    justify-content: center;
+  }
+
+  .poster-overlay-overview {
+    max-height: 150px;
+  }
+}
+
+/* === STICKERS === */
+/* Trattamento "fanzine": duotono nero/arancio (blend su .sticker-tint),
+   bordo strappato (clip-path condiviso) e striscia di nastro (::after). */
+.sticker-layer {
+  position: absolute;
+  inset: 0;
+  overflow-x: visible;
+  overflow-y: clip;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Due colonne (sinistra/destra) larghe 0 alle estremita' del body: gli sticker
+   sono in flusso verticale, quindi non possono sovrapporsi; il margine
+   negativo di ciascuno li fa sporgere oltre il bordo del body (il taglio
+   orizzontale e' lasciato a html, non al layer, cosi' su schermi piu' larghi
+   di 1400px gli sticker non vengono troncati a meta' sfondo). Se la pagina e'
+   piu' corta della colonna, i piu' in basso vengono tagliati in verticale. */
+.sticker-rail {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 60px;
+  padding: 50px 0;
+}
+.sticker-rail-left { left: 0; align-items: flex-start; }
+.sticker-rail-right { right: 0; align-items: flex-end; padding-top: 80px; }
+
+.sticker {
+  position: relative;
+  flex: none;
+  pointer-events: none;
+  opacity: 0.7;
+  isolation: isolate;
+}
+
+.sticker img,
+.sticker-tint {
+  clip-path: polygon(3% 0%, 97% 3%, 100% 16%, 93% 28%, 100% 42%, 91% 55%, 100% 70%, 96% 86%, 100% 100%, 2% 97%, 0% 83%, 7% 66%, 0% 50%, 8% 34%, 1% 14%);
+}
+
+.sticker img {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: grayscale(1) contrast(1.2) brightness(1.05) drop-shadow(3px 3px 0px #000);
+}
+
+.sticker-tint {
+  position: absolute;
+  inset: 0;
+  background: #FF3500;
+  mix-blend-mode: color;
+  opacity: 0.9;
+}
+
+.sticker::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  width: 34%;
+  height: 20px;
+  opacity: 0.9;
+  box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.35);
+}
+
+.sticker-neon { width: 500px; margin-left: -175.9px; margin-top: -6.6px; transform: rotate(8deg); }
+.sticker-neon::after { left: 15%; background: #000; transform: rotate(-8deg); }
+
+.sticker-aguirre { width: 538.1px; margin-left: -249.9px; margin-top: -749.5px; transform: rotate(-7deg); }
+.sticker-aguirre::after { left: 40%; background: #FF3500; transform: rotate(-4deg); }
+
+.sticker-lighthouse { width: 600px; margin-left: 1131.1px; margin-top: -347.7px; transform: rotate(15deg); }
+.sticker-lighthouse::after { left: 20%; background: #FF3500; transform: rotate(9deg); }
+
+.sticker-cabinet { width: 627.4px; margin-left: -200.8px; margin-top: -266.4px; transform: rotate(-5deg); }
+.sticker-cabinet::after { left: 30%; background: #000; transform: rotate(5deg); }
+
+.sticker-princess { width: 500px; margin-left: -165.1px; margin-top: -124.3px; transform: rotate(6deg); }
+.sticker-princess::after { left: 25%; background: #FF3500; transform: rotate(4deg); }
+
+.sticker-ran { width: 887px; margin-right: -98.8px; margin-top: -7.1px; transform: rotate(-5deg); }
+.sticker-ran::after { left: 55%; background: #FF3500; transform: rotate(6deg); }
+
+.sticker-space { width: 560px; margin-right: -105.6px; margin-top: -516.2px; transform: rotate(-3deg); }
+.sticker-space::after { left: 50%; background: #000; transform: rotate(-6deg); }
+
+.sticker-rohmer { width: 716.9px; margin-right: 994.1px; margin-top: -652.6px; transform: rotate(-12deg); }
+.sticker-rohmer::after { left: 30%; background: #000; transform: rotate(-5deg); }
+
+.sticker-travolti { width: 480px; margin-right: -130.2px; margin-top: -121.7px; transform: rotate(9deg); }
+.sticker-travolti::after { left: 35%; background: #000; transform: rotate(7deg); }
+
+.sticker-portrait { width: 578.7px; margin-right: -145.2px; margin-top: -694.4px; transform: rotate(-8deg); }
+.sticker-portrait::after { left: 45%; background: #000; transform: rotate(-10deg); }
+
+.sticker-off { display: none; }
+
+/* Modalita' di modifica (?stickers=edit): sticker trascinabili, vedi script in fondo */
+.sticker-edit .sticker-layer { z-index: 5; }
+.sticker-edit .sticker {
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  outline: 2px dashed #FF3500;
+}
+.sticker-edit .sticker.dragging { cursor: grabbing; outline-color: #000; z-index: 2; }
+.sticker-editor {
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
+  z-index: 10001;
+  width: min(360px, calc(100vw - 20px));
+  background: #fff;
+  border: 2px solid #000;
+  box-shadow: 3px 3px 0 #000;
+  padding: 10px;
+  font-size: 0.7rem;
+}
+.sticker-editor p { margin-bottom: 6px; line-height: 1.4; }
+.sticker-editor textarea { width: 100%; height: 160px; font-size: 0.65rem; resize: vertical; }
+.sticker-editor button {
+  margin-top: 6px;
+  padding: 4px 10px;
+  font-weight: 700;
+  background: #FF3500;
+  border: 2px solid #000;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .sticker-rail { gap: 30px; padding: 30px 0; }
+  .sticker-rail-right { padding-top: 30px; }
+  .sticker-neon { width: 100px; margin-left: 10px; }
+  .sticker-aguirre { width: 80px; margin-left: 4px; }
+  .sticker-lighthouse { width: 80px; margin-left: 2%; }
+  .sticker-cabinet { width: 80px; margin-left: 4px; }
+  .sticker-princess { width: 75px; margin-left: 5px; }
+  .sticker-ran { width: 110px; margin-right: 10px; }
+  .sticker-space { width: 70px; margin-right: 5px; margin-top: 100px; }
+  .sticker-rohmer { width: 90px; margin-right: 2%; }
+  .sticker-travolti { width: 75px; margin-right: 6px; }
+  .sticker-portrait { width: 85px; margin-right: 3%; }
+
+  .sticker::after {
+    height: 9px;
+    top: -5px;
+  }
+}
+
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <header class="header">
+    <a href="/" class="logo">
+      <span class="tape-label tape-black">BOS</span>
+      <span class="tape-label tape-orange">BOLOGNA ON SCREEN</span>
+    </a>
+    <nav class="nav">
+      <a href="/">OGGI</a>
+      <a href="https://t.me/bolocinescraperbot" target="_blank">TELEGRAM</a>
+      <a href="/docs">API</a>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <h2>// PROGRAMMAZIONE CINEMA</h2>
+  </section>
+
+  <!-- DATE BAR -->
+  <div class="date-bar" id="dateBar">
+    {% for i in range(7) %}
+      {% set d = today.fromordinal(today.toordinal() + i) %}
+      {% set is_today = (d == today) %}
+      {% set active_class = "active" if d.isoformat() == date else "" %}
+      <a href="/{{ d.isoformat() }}"
+         class="date-card {{ active_class }}"
+         data-date="{{ d.isoformat() }}"
+         onclick="switchDay(event, '{{ d.isoformat() }}')">
+        <span class="date-day">{{ "OGGI" if is_today else day_map[d.strftime("%A")][:3].upper() }}</span>
+        <span class="date-num">{{ d.day }}</span>
+        <span class="date-month">{{ month_map[d.strftime("%B")][:3] }}</span>
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <div class="filter-wrapper" id="filterWrapper">
+      <button class="filter-btn active" id="filterToggle">
+        <span id="filterLabel">■ TUTTI I CINEMA</span>
+        <span>▾</span>
+      </button>
+      <div class="dropdown-menu" id="filterMenu">
+        {{ day.filter_items(cinema_names) }}
+      </div>
+    </div>
+
+    {% if genres %}
+    <div class="filter-wrapper" id="genreWrapper">
+      <button class="filter-btn" id="genreToggle">
+        <span id="genreLabel">// GENERE</span>
+        <span>▾</span>
+      </button>
+      <div class="dropdown-menu" id="genreMenu">
+        {{ day.genre_items(genres) }}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="filter-wrapper" id="hourWrapper">
+      <button class="filter-btn" id="hourToggle">
+        <span id="hourLabel">// ORARIO</span>
+        <span>▾</span>
+      </button>
+      <div class="dropdown-menu" id="hourMenu">
+        <button class="dropdown-item active" data-hour="00:00">Tutti gli orari</button>
+        <button class="dropdown-item" data-hour="18:00">Dopo le 18</button>
+        <button class="dropdown-item" data-hour="19:00">Dopo le 19</button>
+        <button class="dropdown-item" data-hour="20:00">Dopo le 20</button>
+        <button class="dropdown-item" data-hour="21:00">Dopo le 21</button>
+        <button class="dropdown-item" data-hour="22:00">Dopo le 22</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAY HEADER -->
+  <div class="day-header" id="dayHeader">
+    {{ day.day_header(d_obj, day_map, month_map) }}
+  </div>
+
+  <!-- FILM GRID -->
+  <main class="film-grid" id="filmGrid">
+    {{ day.film_grid(films) }}
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>DATI FORNITI DAI CIRCUITI CINEMATOGRAFICI DI BOLOGNA &middot; AGGIORNATO: <span id="updatedAt">{{ updated_at if updated_at else "—" }}</span></p>
+  </footer>
+
+</div>
+
+<!-- POSTER OVERLAY -->
+<dialog class="poster-overlay" id="posterOverlay" aria-labelledby="posterTitle">
+  <button class="poster-overlay-close" id="posterClose" aria-label="Chiudi">&times;</button>
+  <div class="poster-overlay-content">
+    <img class="poster-overlay-img" id="posterImg" src="" alt="">
+    <div class="poster-overlay-meta">
+      <div class="poster-overlay-title" id="posterTitle"></div>
+      <div class="poster-overlay-rating" id="posterRating"></div>
+      <div class="poster-overlay-genres" id="posterGenres"></div>
+      <div class="poster-overlay-info" id="posterInfo"></div>
+      <div class="poster-overlay-overview" id="posterOverview"></div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(function() {
+  var currentDate = '{{ date }}';
+
+  // ---- Cambio giorno: fetch di un frammento HTML gia' pronto lato server
+  // (/partials/{date}), estratto in 5 pezzi via data-slot e iniettato nei
+  // container esistenti. Nessuna ricostruzione delle card in JS: l'unica
+  // fonte di verita' per il markup e' Jinja (bot/templates/_day_fragments.html).
+
+  function slotHtml(root, name) {
+    var el = root.querySelector('[data-slot="' + name + '"]');
+    return el ? el.innerHTML : '';
+  }
+
+  function loadDay(dateStr, pushHistory) {
+    return fetch('/partials/' + dateStr)
+      .then(function(r) {
+        if (!r.ok) throw new Error('partial fetch failed');
+        return r.text();
+      })
+      .then(function(html) {
+        var tmp = document.createElement('template');
+        tmp.innerHTML = html;
+        document.getElementById('dayHeader').innerHTML = slotHtml(tmp.content, 'day-header');
+        document.getElementById('filterMenu').innerHTML = slotHtml(tmp.content, 'filter-items');
+        document.getElementById('genreMenu').innerHTML = slotHtml(tmp.content, 'genre-items');
+        document.getElementById('filmGrid').innerHTML = slotHtml(tmp.content, 'grid');
+        document.getElementById('updatedAt').innerHTML = slotHtml(tmp.content, 'updated-at');
+
+        // I filtri cinema/genere si resettano su "Tutti" ad ogni cambio
+        // giorno (le voci sono rigenerate e potrebbero non includere piu'
+        // la selezione precedente). Il filtro orario non dipende dal
+        // frammento ma si resetta comunque, cosi' non nasconde film del
+        // nuovo giorno senza che l'utente se ne accorga.
+        if (filterLabel) filterLabel.textContent = '\u25A0 TUTTI I CINEMA';
+        if (genreLabel) genreLabel.textContent = '// TUTTI I GENERI';
+        if (hourLabel) hourLabel.textContent = '// ORARIO';
+        if (hourMenu) {
+          hourMenu.querySelectorAll('.dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+          var hourDefault = hourMenu.querySelector('[data-hour="00:00"]');
+          if (hourDefault) hourDefault.classList.add('active');
+        }
+
+        applyFilters();
+
+        if (pushHistory) history.pushState({date: dateStr}, '', '/' + dateStr);
+        document.querySelectorAll('.date-card').forEach(function(card) {
+          card.classList.toggle('active', card.dataset.date === dateStr);
+        });
+        currentDate = dateStr;
+      });
+  }
+
+  window.switchDay = function(e, dateStr) {
+    e.preventDefault();
+    if (dateStr === currentDate) return;
+    loadDay(dateStr, true).catch(function() { window.location.href = '/' + dateStr; });
+  };
+
+  window.addEventListener('popstate', function(e) {
+    var dateStr = (e.state && e.state.date) || currentDate;
+    loadDay(dateStr, false).catch(function() {});
+  });
+
+  function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+  // Dropdown toggle
+  function setupDropdown(btnId, menuId) {
+    var btn = document.getElementById(btnId);
+    var menu = document.getElementById(menuId);
+    if (!btn || !menu) return;
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.querySelectorAll('.dropdown-menu.open').forEach(function(m) { if (m !== menu) m.classList.remove('open'); });
+      menu.classList.toggle('open');
+    });
+    document.addEventListener('click', function() { menu.classList.remove('open'); });
+    menu.addEventListener('click', function(e) { e.stopPropagation(); });
+  }
+  setupDropdown('filterToggle', 'filterMenu');
+  setupDropdown('genreToggle', 'genreMenu');
+  setupDropdown('hourToggle', 'hourMenu');
+
+  // Filtri. filterMenu e genreMenu vengono riscritti ad ogni cambio
+  // giorno (loadDay()): i listener sono in delegation sul contenitore, che
+  // non viene mai sostituito, cosi' non serve ri-agganciarli dopo ogni swap.
+  // hourMenu invece non fa parte del frammento sostituito, resta statico.
+  var filterMenu = document.getElementById('filterMenu');
+  var filterLabel = document.getElementById('filterLabel');
+  var genreMenu = document.getElementById('genreMenu');
+  var genreLabel = document.getElementById('genreLabel');
+  var hourMenu = document.getElementById('hourMenu');
+  var hourLabel = document.getElementById('hourLabel');
+
+  if (filterMenu) {
+    filterMenu.addEventListener('click', function(e) {
+      var item = e.target.closest('.dropdown-item');
+      if (!item) return;
+      filterMenu.querySelectorAll('.dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+      item.classList.add('active');
+      filterLabel.textContent = '\u25A0 ' + item.textContent.trim().toUpperCase();
+      applyFilters();
+    });
+  }
+
+  if (genreMenu) {
+    genreMenu.addEventListener('click', function(e) {
+      var item = e.target.closest('.dropdown-item');
+      if (!item) return;
+      genreMenu.querySelectorAll('.dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+      item.classList.add('active');
+      genreLabel.textContent = '// ' + item.textContent.trim().toUpperCase();
+      applyFilters();
+    });
+  }
+
+  if (hourMenu) {
+    hourMenu.addEventListener('click', function(e) {
+      var item = e.target.closest('.dropdown-item');
+      if (!item) return;
+      hourMenu.querySelectorAll('.dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+      item.classList.add('active');
+      hourLabel.textContent = '// ' + item.textContent.trim().toUpperCase();
+      applyFilters();
+    });
+  }
+
+  function applyFilters() {
+    var activeFilter = document.querySelector('#filterMenu .dropdown-item.active');
+    var filter = activeFilter ? activeFilter.dataset.filter : 'all';
+    var activeGenre = document.querySelector('#genreMenu .dropdown-item.active');
+    var genre = activeGenre ? activeGenre.dataset.genre : 'all';
+    var activeHour = document.querySelector('#hourMenu .dropdown-item.active');
+    var hour = activeHour ? activeHour.dataset.hour : '00:00';
+    var cards = document.querySelectorAll('.film-card');
+    var parent = document.getElementById('filmGrid');
+    var emptyState = parent.querySelector('.empty-state');
+    var visible = 0;
+    var visibleCards = [];
+    cards.forEach(function(card) {
+      var cinemas = card.dataset.cinemas || '';
+      var filmGenre = card.dataset.genre || '';
+      var filmHasCinema = (filter === 'all' || cinemas.includes(filter));
+      var filmHasGenre = (genre === 'all' || filmGenre.includes(genre));
+      var rows = card.querySelectorAll('.film-cinema-row');
+      var cardHasVisibleTime = false;
+      rows.forEach(function(row) {
+        var rowMatchesCinema = (filter === 'all' || row.dataset.cinema.includes(filter));
+        var rowHasVisibleTime = false;
+        row.querySelectorAll('.film-time').forEach(function(t) {
+          var timeVisible = rowMatchesCinema && (t.dataset.time || '00:00') >= hour;
+          t.style.display = timeVisible ? '' : 'none';
+          if (timeVisible) rowHasVisibleTime = true;
+        });
+        row.style.display = rowHasVisibleTime ? '' : 'none';
+        if (rowHasVisibleTime) cardHasVisibleTime = true;
+      });
+      if (filmHasCinema && filmHasGenre && cardHasVisibleTime) { visibleCards.push(card); visible++; }
+    });
+    cards.forEach(function(c) { c.style.display = 'none'; });
+    visibleCards.forEach(function(c) { c.style.display = ''; });
+    if (emptyState) emptyState.style.display = (visible === 0 && cards.length > 0) ? 'block' : 'none';
+  }
+
+  // Poster overlay
+  var overlay = document.getElementById('posterOverlay');
+  var overlayImg = document.getElementById('posterImg');
+  var overlayTitle = document.getElementById('posterTitle');
+  var overlayRating = document.getElementById('posterRating');
+  var overlayGenres = document.getElementById('posterGenres');
+  var overlayInfo = document.getElementById('posterInfo');
+  var overlayOverview = document.getElementById('posterOverview');
+
+  function openPoster(poster) {
+    var card = poster.closest('.film-card');
+    if (!card) return;
+    var style = poster.getAttribute('style') || '';
+    var match = style.match(/url\(['"]?(.+?)['"]?\)/);
+    if (!match) return;
+    overlayImg.src = match[1];
+    overlayTitle.textContent = card.querySelector('.title-tape').textContent.trim();
+    var ratingEl = card.querySelector('.film-rating');
+    if (ratingEl) { overlayRating.textContent = ratingEl.textContent.trim(); overlayRating.style.display = ''; }
+    else { overlayRating.style.display = 'none'; }
+    var genre = card.dataset.genre || '';
+    if (genre) {
+      overlayGenres.innerHTML = genre.split('/').slice(0, 3).map(function(g) { return '<span class="genre-chip">' + esc(g.trim()) + '</span>'; }).join('');
+      overlayGenres.style.display = '';
+    } else { overlayGenres.innerHTML = ''; overlayGenres.style.display = 'none'; }
+    var infoParts = [];
+    var regista = card.dataset.regista || '';
+    if (regista) infoParts.push('Regia: ' + regista);
+    var runtime = parseInt(card.dataset.runtime) || 0;
+    if (runtime > 0) infoParts.push(runtime + ' min');
+    if (infoParts.length > 0) { overlayInfo.textContent = infoParts.join(' \u00B7 '); overlayInfo.style.display = ''; }
+    else { overlayInfo.style.display = 'none'; }
+    var overview = card.dataset.overview || '';
+    if (overview) { overlayOverview.textContent = overview; overlayOverview.style.display = ''; }
+    else { overlayOverview.style.display = 'none'; }
+    overlay.showModal();
+  }
+
+  // showModal() gestisce gratis focus trap, chiusura con Esc e ripristino
+  // del focus sul bottone che ha aperto il dialog: non serve reimplementarli.
+  function closePoster() { overlay.close(); }
+
+  // Delegation su #filmGrid: il contenuto viene sostituito ad ogni cambio
+  // giorno (loadDay()), ma il contenitore resta lo stesso, quindi non serve
+  // ri-agganciare il listener dopo ogni swap.
+  var filmGrid = document.getElementById('filmGrid');
+  if (filmGrid) {
+    filmGrid.addEventListener('click', function(e) {
+      var poster = e.target.closest('.film-poster');
+      if (poster) openPoster(poster);
+    });
+  }
+  document.getElementById('posterClose').addEventListener('click', closePoster);
+  // Light-dismiss: chiude solo se il click e' sullo sfondo/padding del
+  // dialog stesso, non sui suoi contenuti (prima qualunque click dentro
+  // l'overlay, trama inclusa, lo chiudeva).
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closePoster();
+  });
+
+  // Auto-refresh: rilegge la cache (già aggiornata dallo scheduler lato server)
+  // e ri-renderizza senza full page reload. Non deve mai far ripartire uno
+  // scraping: quello è responsabilità esclusiva dello scheduler server-side.
+  setInterval(function() {
+    loadDay(currentDate, false).catch(function() {});
+  }, {{ refresh_interval_minutes }} * 60 * 1000);
+
+})();
+</script>
+
+<!-- STICKERS (fissi allo sfondo, in due colonne senza sovrapposizioni) -->
+<div class="sticker-layer">
+<div class="sticker-rail sticker-rail-left">
+<div class="sticker sticker-neon" data-priority="1"><img src="/static/stickers/neon.webp" width="625" height="399" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-aguirre" data-priority="2"><img src="/static/stickers/aguirre.webp" width="1434" height="1097" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-lighthouse" data-priority="4"><img src="/static/stickers/lighthouse.webp" width="1435" height="1096" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-cabinet" data-priority="3"><img src="/static/stickers/cabinet.webp" width="576" height="433" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-princess" data-priority="5"><img src="/static/stickers/princess.webp" width="680" height="367" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+</div>
+<div class="sticker-rail sticker-rail-right">
+<div class="sticker sticker-ran" data-priority="1"><img src="/static/stickers/ran.webp" width="1554" height="1012" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-space" data-priority="5"><img src="/static/stickers/space.webp" width="641" height="389" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-rohmer" data-priority="3"><img src="/static/stickers/rohmer.webp" width="584" height="427" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-travolti" data-priority="2"><img src="/static/stickers/travolti.webp" width="1405" height="1119" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+<div class="sticker sticker-portrait" data-priority="4"><img src="/static/stickers/portrait.webp" width="1474" height="1067" alt="" loading="lazy" decoding="async" aria-hidden="true"><div class="sticker-tint"></div></div>
+</div>
+</div>
+
+<script>
+// Sticker: su schermi stretti o pagine corte ne mostra solo alcuni per colonna
+// (data-priority: 1 = l'ultimo a sparire) invece di riempire lo sfondo.
+(function() {
+  if (new URLSearchParams(location.search).get('stickers') === 'edit') return;
+  var layer = document.querySelector('.sticker-layer');
+  var all = Array.prototype.slice.call(document.querySelectorAll('.sticker'));
+  var rails = document.querySelectorAll('.sticker-rail');
+  var TOLLERANZA = 24;
+
+  function maxPerRail(w) {
+    return w >= 1300 ? 5 : w >= 1100 ? 4 : w >= 900 ? 3 : 2;
+  }
+
+  function priority(el) { return Number(el.dataset.priority); }
+
+  // Meno importante = priorita' piu' alta; a parita', quello piu' in basso.
+  function worse(a, b) {
+    if (priority(a) !== priority(b)) return priority(a) > priority(b) ? a : b;
+    return a.getBoundingClientRect().top > b.getBoundingClientRect().top ? a : b;
+  }
+
+  // Uno sticker da nascondere: quello che sporge sotto la pagina (verrebbe
+  // tagliato) o uno di due sticker che si sovrappongono. null se e' tutto a posto.
+  function problem() {
+    var shown = all.filter(function(el) { return !el.classList.contains('sticker-off'); });
+    var box = layer.getBoundingClientRect();
+    var rects = shown.map(function(el) { return el.getBoundingClientRect(); });
+    var bad = null;
+    function flag(el) { bad = bad ? worse(bad, el) : el; }
+    shown.forEach(function(el, i) {
+      if (rects[i].bottom - box.top > box.height + 40) flag(el);
+      for (var j = i + 1; j < shown.length; j++) {
+        var ix = Math.min(rects[i].right, rects[j].right) - Math.max(rects[i].left, rects[j].left);
+        var iy = Math.min(rects[i].bottom, rects[j].bottom) - Math.max(rects[i].top, rects[j].top);
+        if (ix > TOLLERANZA && iy > TOLLERANZA) flag(worse(el, shown[j]));
+      }
+    });
+    return bad;
+  }
+
+  function fit() {
+    all.forEach(function(el) { el.classList.remove('sticker-off'); });
+    var max = maxPerRail(window.innerWidth);
+    rails.forEach(function(rail) {
+      var keep = Array.prototype.slice.call(rail.querySelectorAll('.sticker'))
+        .sort(function(a, b) { return priority(a) - priority(b); });
+      while (keep.length > max) keep.pop().classList.add('sticker-off');
+    });
+    // Nascondere uno sticker ridistribuisce gli altri nella colonna: si
+    // ricontrolla ad ogni passo.
+    for (var guard = 0; guard < all.length; guard++) {
+      var bad = problem();
+      if (!bad) break;
+      bad.classList.add('sticker-off');
+    }
+  }
+
+  var queued = false;
+  function schedule() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function() { queued = false; fit(); }, 80);
+  }
+
+  new ResizeObserver(schedule).observe(document.body);
+  window.addEventListener('resize', schedule);
+  fit();
+})();
+</script>
+
+<script>
+(function() {
+  if (new URLSearchParams(location.search).get('stickers') !== 'edit') return;
+  document.body.classList.add('sticker-edit');
+
+  var stickers = Array.prototype.slice.call(document.querySelectorAll('.sticker'));
+  var state = new Map();
+
+  function name(el) {
+    return Array.prototype.find.call(el.classList, function(c) { return c.indexOf('sticker-') === 0 && c !== 'sticker-tint'; });
+  }
+  function isLeft(el) { return el.parentElement.classList.contains('sticker-rail-left'); }
+
+  stickers.forEach(function(el) {
+    var cs = getComputedStyle(el);
+    var m = new DOMMatrixReadOnly(cs.transform);
+    state.set(el, {
+      w: parseFloat(cs.width),
+      h: isLeft(el) ? parseFloat(cs.marginLeft) : parseFloat(cs.marginRight),
+      t: parseFloat(cs.marginTop) || 0,
+      r: Math.round(Math.atan2(m.b, m.a) * 180 / Math.PI * 10) / 10
+    });
+  });
+
+  var box = document.createElement('div');
+  box.className = 'sticker-editor';
+  box.innerHTML = '<p><b>EDIT STICKER</b> — trascina: sposta (x = sporgenza, y = spazio sopra). Rotella: dimensione. Shift+rotella: rotazione.</p>' +
+    '<textarea readonly></textarea><button type="button">Copia CSS</button>';
+  document.body.appendChild(box);
+  var out = box.querySelector('textarea');
+
+  function r(n) { return Math.round(n * 10) / 10; }
+
+  function render() {
+    var mobile = window.matchMedia('(max-width: 768px)').matches;
+    var lines = stickers.map(function(el) {
+      var st = state.get(el);
+      var side = isLeft(el) ? 'margin-left' : 'margin-right';
+      var top = Math.abs(st.t) > 0.5 ? ' margin-top: ' + r(st.t) + 'px;' : '';
+      return '.' + name(el) + ' { width: ' + r(st.w) + 'px; ' + side + ': ' + r(st.h) + 'px;' + top + ' transform: rotate(' + st.r + 'deg); }';
+    });
+    out.value = (mobile ? '/* valori MOBILE (<=768px): vanno dentro @media (max-width: 768px), senza transform */\n' : '/* valori DESKTOP */\n') + lines.join('\n');
+  }
+
+  function apply(el) {
+    var st = state.get(el);
+    el.style.width = st.w + 'px';
+    el.style[isLeft(el) ? 'marginLeft' : 'marginRight'] = st.h + 'px';
+    el.style.marginTop = st.t + 'px';
+    el.style.transform = 'rotate(' + st.r + 'deg)';
+    render();
+  }
+
+  stickers.forEach(function(el) {
+    var drag = null;
+    el.addEventListener('pointerdown', function(e) {
+      var st = state.get(el);
+      drag = { x: e.clientX, y: e.clientY, h: st.h, t: st.t };
+      el.setPointerCapture(e.pointerId);
+      el.classList.add('dragging');
+      e.preventDefault();
+    });
+    el.addEventListener('pointermove', function(e) {
+      if (!drag) return;
+      var st = state.get(el);
+      var dx = e.clientX - drag.x;
+      st.h = drag.h + (isLeft(el) ? dx : -dx);
+      st.t = drag.t + (e.clientY - drag.y);
+      apply(el);
+    });
+    function end() { drag = null; el.classList.remove('dragging'); }
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
+    el.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      var st = state.get(el);
+      var d = e.deltaY || e.deltaX;
+      if (e.shiftKey) st.r = r(st.r - d * 0.05);
+      else st.w = Math.max(40, st.w * (1 - d * 0.001));
+      apply(el);
+    }, { passive: false });
+  });
+
+  box.querySelector('button').addEventListener('click', function() {
+    out.select();
+    if (navigator.clipboard) navigator.clipboard.writeText(out.value).catch(function() {});
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>

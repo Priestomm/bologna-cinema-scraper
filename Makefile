@@ -1,32 +1,36 @@
-.PHONY: help install test lint format typecheck run scrape broadcast docker-build docker-up docker-down docker-logs
+.PHONY: help install lock test lint format typecheck run scrape broadcast docker-build docker-up docker-down docker-logs
 
 help: ## Mostra tutti i comandi disponibili
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
-install: ## Installa le dipendenze (dev incluse)
-	pip install -r requirements.txt
+install: ## Installa le dipendenze (dev incluse) in .venv via uv
+	uv sync
+
+lock: ## Aggiorna uv.lock e rigenera requirements.txt (per il deploy PM2/Oracle)
+	uv lock
+	uv export --format requirements.txt --no-hashes -o requirements.txt
 
 test: ## Esegui tutti i test
-	python -m pytest tests/ -v
+	uv run pytest tests/ -v
 
 lint: ## Rileva errori di stile (ruff)
-	ruff check .
+	uv run ruff check .
 
 format: ## Formatta il codice
-	ruff format .
-	ruff check . --fix
+	uv run ruff format .
+	uv run ruff check . --fix
 
 typecheck: ## Controllo tipi con mypy
-	mypy --ignore-missing-imports .
+	uv run mypy .
 
 run: ## Avvia il bot in foreground
-	python main.py
+	uv run python main.py
 
 scrape: ## Esegui solo uno scrape
-	python main.py --scrape
+	uv run python main.py --scrape
 
 broadcast: ## Esegui scrape + invio messaggio
-	python main.py --broadcast
+	uv run python main.py --broadcast
 
 docker-build: ## Build dell'immagine Docker
 	docker build -t cinema-bologna-bot .

@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 
 import pytz
 from bs4 import BeautifulSoup, Tag
@@ -40,7 +40,7 @@ _SALA_RE = re.compile(
 
 
 def _ms_to_local_date(ms: int) -> date:
-    return datetime.fromtimestamp(ms / 1000, tz=timezone.utc).astimezone(_TZ).date()
+    return datetime.fromtimestamp(ms / 1000, tz=UTC).astimezone(_TZ).date()
 
 
 def _extract_lang_note(text: str) -> str:
@@ -154,7 +154,7 @@ def _extract_movie_all_dates(
             d = _ms_to_local_date(ms)
             if d < after_date or d >= cutoff:
                 continue
-            ts = datetime.fromtimestamp(ms / 1000, tz=timezone.utc).astimezone(_TZ)
+            ts = datetime.fromtimestamp(ms / 1000, tz=UTC).astimezone(_TZ)
             formatted = ts.strftime("%H:%M")
             if formatted not in orari_by_date[d]:
                 orari_by_date[d].append(formatted)

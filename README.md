@@ -1,9 +1,14 @@
-# Cinema Bologna Bot
+# BOS — Bologna on Screen
 
 ![CI](https://github.com/Priestomm/bologna-cinema-scraper/actions/workflows/ci.yml/badge.svg)
+![License](https://img.shields.io/github/license/Priestomm/bologna-cinema-scraper)
 ![Status](https://img.shields.io/badge/status-%20active-success?logo=oracle)
 
-Bot Telegram + mini-sito web con la programmazione cinematografica giornaliera di Bologna per cinque circuiti, attivo 24/7 su Oracle Cloud:
+![Screenshot del mini-sito BOS](docs/screenshot.jpg)
+
+Mini-sito con la programmazione cinematografica giornaliera di Bologna per cinque
+circuiti, aggiornata automaticamente ogni giorno — più un bot Telegram compagno per
+consultarla senza aprire il sito. Attivo 24/7 su Oracle Cloud:
 
 - **Cineteca di Bologna** (Lumiere, Modernissimo)
 - **Pop Up Cinema** (Jolly, Arlecchino, Medica)
@@ -13,18 +18,20 @@ Bot Telegram + mini-sito web con la programmazione cinematografica giornaliera d
 
 ## Funzionalita'
 
-- **Mini-sito web**: card film con locandina, rating, generi e orari; filtri per cinema/genere; ordinamento per ora/titolo; navigazione tra 7 giorni; auto-refresh ogni 15 min
+- **Mini-sito web**: card film con locandina, rating, generi e orari; filtri per cinema/genere; ordinamento per ora/titolo; navigazione tra 7 giorni; rilegge la cache ogni 15 min senza rilanciare lo scraping (che resta esclusivo dello scheduler server-side)
 - **Enrichment TMDb**: rating, genere, poster ad alta risoluzione, sinossi, durata (cache locale TTL 7 giorni)
 - **Link di acquisto**: 18tickets (Cineteca, Pop Up, Circuito, Nosadella) + UCI Cinemas (API diretta)
 - **Bot Telegram**: broadcast giornaliero + comando `/cinema` per consultazione istantanea
 
 ## Quick start
 
+Richiede [uv](https://docs.astral.sh/uv/getting-started/installation/) (gestisce venv, dipendenze e
+interprete Python automaticamente — non serve creare una virtualenv a mano).
+
 ```bash
 git clone https://github.com/Priestomm/bologna-cinema-scraper.git
 cd scraper-cinema-bologna
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+uv sync  # crea .venv e installa tutte le dipendenze, incluse quelle di sviluppo
 cp .env.example .env  # poi inserisci le 3 chiavi
 make run
 ```
@@ -45,13 +52,13 @@ Le chiavi si ottengono da:
 | `BROADCAST_CRON_HOUR` / `MINUTE` | 8:00 | Orario broadcast Telegram |
 | `SCRAPER_TIMEOUT` | 15 | Timeout per singolo scraper (secondi) |
 | `HEALTH_PORT` | 8080 | Porta del server web (0 = disabilitato) |
-| `REFRESH_INTERVAL_MINUTES` | 15 | Intervallo auto-refresh mini-sito |
+| `REFRESH_INTERVAL_MINUTES` | 15 | Intervallo scraping periodico (scheduler) e rilettura cache lato mini-sito |
 
 ## Uso
 
 ```bash
 make help              # tutti i comandi
-make run               # bot in foreground
+make run               # bot + sito in foreground
 make scrape            # scraping singolo giorno
 python main.py --scrape --days 7  # scraping 7 giorni
 make broadcast         # test invio reale
@@ -68,7 +75,7 @@ pm2 start ecosystem.config.js
 pm2 save && pm2 startup
 ```
 
-Il bot e' attualmente ospitato su Oracle Cloud (always-free tier) con PM2.
+Il sito e' attualmente ospitato su Oracle Cloud (always-free tier) con PM2.
 
 ### Health check
 
@@ -84,14 +91,16 @@ open http://localhost:8080/2026-09-15    # data specifica
 |---|---|
 | `GET /` | Mini-sito HTML — programmazione di oggi |
 | `GET /{YYYY-MM-DD}` | Mini-sito HTML — data specifica |
+| `GET /robots.txt` | Direttive per i crawler |
+| `GET /sitemap.xml` | Sitemap (oggi + prossimi 7 giorni) |
 | `GET /health` | Stato del bot (uptime, conteggio film, avvisi) |
 | `GET /api/screenings?date=YYYY-MM-DD` | Programmazione per data |
 | `GET /api/cinemas` | Elenco cinema con conteggio film |
 | `GET /api/cinemas/{name}` | Film di un cinema specifico |
 | `GET /api/history?days=N` | Storico ultimi N giorni (max 90) |
 | `GET /api/stats` | Statistiche generali |
-| `POST /api/refresh` | Forza refresh dati |
-| `GET /api/refresh/status` | Stato del refresh |
+| `POST /api/refresh` | Forza uno scraping manuale (non chiamato dal mini-sito, che rilegge solo la cache) |
+| `GET /api/refresh/status` | Stato del refresh manuale |
 
 Documentazione interattiva: `http://localhost:8080/docs`
 
@@ -107,14 +116,21 @@ scrapers/            # scraper per circuito + client TMDb
   cineteca.py, circuito.py, nosadella.py, popup.py, uci.py
   tmdb.py            # client TMDb con cache SQLite
 database/cache.py    # cache SQLite snapshot giornalieri
-bot/
+core/                # infrastruttura condivisa da bot Telegram e sito
   pipeline.py        # orchestratore scraper -> enrichment -> cache
-  scheduler.py       # APScheduler (scrape + broadcast)
-  formatter.py       # rendering messaggi Telegram
-  health.py          # FastAPI: mini-sito + API REST
-  telegram_bot.py    # handler /cinema + lifecycle
-  templates/         # template Jinja2 per il mini-sito
-tests/               # test unitari (pytest)
+  scheduler.py       # APScheduler (scrape + broadcast + refresh)
+  timeslots.py       # fasce orarie condivise, usate dal digest Telegram
+web/                 # health check + API REST + mini-sito
+  server.py          # app FastAPI, assembla api.py + site.py
+  api.py             # /health, /api/*
+  site.py            # /, /{date}, /partials/{date}, logica di business del mini-sito
+  web_utils.py        # accesso condiviso alla cache
+  templates/          # template Jinja2 per il mini-sito
+  static/              # asset statici (favicon, poster placeholder, sticker)
+bot/                  # solo il bot Telegram
+  telegram_bot.py     # handler /cinema + lifecycle
+  formatter.py         # rendering messaggi Telegram
+tests/                 # test unitari (pytest)
 ```
 
 Gli scraper girano in parallelo con timeout configurabile. Il formatter aggiunge automaticamente una sezione "Avvisi" con i circuiti non disponibili.

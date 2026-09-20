@@ -11,29 +11,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v10.1.0
         with:
-          python-version: "3.12"
-      - run: pip install ruff==0.16.5
-      - run: ruff check .
-      - run: ruff format --check .
+          version: "0.12.16"
+          enable-cache: true
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
 
   typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v10.1.0
         with:
-          python-version: "3.12"
-      - run: pip install -r requirements.txt
-      - run: mypy --ignore-missing-imports .
+          version: "0.12.16"
+          enable-cache: true
+      - run: uv sync
+      - run: uv run mypy .
 
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v10.1.0
         with:
-          python-version: "3.12"
-      - run: pip install -r requirements.txt
-      - run: python -m pytest tests/ -v
+          version: "0.12.16"
+          enable-cache: true
+      - run: uv sync
+      - run: uv run pytest tests/ -v
