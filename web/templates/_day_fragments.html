@@ -47,19 +47,19 @@
          due pezzi combaciano lungo la linea dello strappo. #}
       <div class="film-poster-zone"{% if film.poster_url %} style="background-image: url('{{ film.poster_url }}')"{% endif %}>
 
+        {# tabindex="-1": a card strappata il poster sparisce, il focus da
+           tastiera si sposta qui e Esc riporta tutto al suo posto. #}
         {% if has_back %}
-        <div class="film-back" id="film-back-{{ loop.index }}">
+        <div class="film-back" id="film-back-{{ loop.index }}" tabindex="-1">
           {% if film.regista %}<p class="film-back-row"><span>Regia</span> {{ film.regista }}</p>{% endif %}
           {% if film.runtime %}<p class="film-back-row"><span>Durata</span> {{ film.runtime }} min</p>{% endif %}
           {% if film.overview %}<p class="film-back-overview">{{ film.overview }}</p>{% endif %}
         </div>
-        <button type="button" class="poster-reattach" aria-label="Riattacca il poster di {{ film.titolo }}">&times; Riattacca</button>
         {% endif %}
 
-        {# Striscia che resta incollata sotto il nastro: fuori dal tab order,
-           e' solo una scorciatoia col mouse per richiudere (il controllo vero
-           e' .poster-reattach). #}
-        <button type="button" class="poster-remnant" tabindex="-1" aria-hidden="true"></button>
+        {# Striscia che resta incollata sotto il nastro: solo decorazione,
+           i click su di lei li gestisce la zona poster (vedi JS). #}
+        <span class="poster-remnant" aria-hidden="true"></span>
 
         <button type="button" class="film-poster"
                 {% if has_back %}aria-expanded="false" aria-controls="film-back-{{ loop.index }}"{% else %}aria-haspopup="dialog"{% endif %}
@@ -72,8 +72,6 @@
             {% endfor %}
           </span>
           {% endif %}
-
-          {% if has_back %}<span class="tear-hint">{{ "Strappa ↗" if tear_dir == "tear-r" else "↖ Strappa" }}</span>{% endif %}
         </button>
 
         {# Il voto non fa parte del foglio: resta visibile anche dopo lo strappo. #}

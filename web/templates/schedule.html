@@ -425,6 +425,7 @@ body::after {
 .film-poster {
   position: absolute;
   inset: 0;
+  display: block;
   background-image: inherit;
   background-color: #fff;
   background-position: center;
@@ -437,12 +438,9 @@ body::after {
 
 .poster-remnant {
   z-index: 3;
-  pointer-events: none;
   clip-path: polygon(0 0, 100% 0, 100% 9%, 94% 7%, 86% 10%, 78% 6.5%, 70% 9.5%, 62% 6%, 54% 9%, 46% 5.5%, 38% 8.5%, 30% 5%, 22% 8.5%, 14% 6%, 7% 9%, 0 7%);
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
 }
-
-.film-card.torn .poster-remnant { pointer-events: auto; }
 
 .film-poster {
   z-index: 2;
@@ -464,48 +462,6 @@ body::after {
 
 .film-card.torn.tear-r .film-poster { transform: translate(74%, -10%) rotate(19deg) scale(0.93); }
 .film-card.torn.tear-l .film-poster { transform: translate(-74%, -10%) rotate(-19deg) scale(0.93); }
-
-.tear-hint {
-  position: absolute;
-  bottom: 6px;
-  left: 6px;
-  z-index: 2;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  padding: 3px 6px;
-}
-
-.poster-reattach {
-  position: absolute;
-  top: 7px;
-  right: 7px;
-  z-index: 4;
-  background: #fff;
-  color: var(--text-black);
-  border: 2px solid var(--border-hard);
-  box-shadow: 2px 2px 0px #000;
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  padding: 5px 8px;
-  cursor: pointer;
-  opacity: 0;
-  /* visibility fuori dalla transizione: il bottone deve essere subito
-     focusabile quando la card si apre, anche se compare in dissolvenza. */
-  visibility: hidden;
-  transition: opacity 0.2s ease 0.3s;
-}
-
-.film-card.torn .poster-reattach { opacity: 1; visibility: visible; }
-
-.poster-reattach:hover {
-  background: var(--accent-orange);
-  border-color: var(--accent-orange);
-}
 
 @media (prefers-reduced-motion: reduce) {
   .film-poster,
@@ -793,9 +749,7 @@ body::after {
   }
 
   .film-back,
-  .poster-remnant,
-  .poster-reattach,
-  .tear-hint { display: none; }
+  .poster-remnant { display: none; }
 
   .film-poster {
     clip-path: none;
@@ -1374,8 +1328,8 @@ body::after {
       if (!card) return;
 
       // Card gia' strappata: si richiude cliccando ovunque sulla card
-      // (retro, moncone, bottone "Riattacca", titolo...), tranne che sugli
-      // orari, che restano link alla biglietteria.
+      // (retro, moncone, titolo...), tranne che sugli orari, che restano
+      // link alla biglietteria.
       if (card.classList.contains('torn')) {
         if (e.target.closest('.film-time')) return;
         setTorn(card, false);
@@ -1383,15 +1337,18 @@ body::after {
         return;
       }
 
-      if (!e.target.closest('.film-poster')) return;
+      // Tutta la zona poster strappa: pezzo grande, moncone o badge del voto.
+      if (!e.target.closest('.film-poster-zone')) return;
 
       if (!isTearable(card)) {
         openPoster(card);
         return;
       }
       setTorn(card, true);
-      var reattach = card.querySelector('.poster-reattach');
-      if (reattach) reattach.focus();
+      // Il poster strappato esce dal tab order: il focus si sposta sul retro
+      // appena scoperto, cosi' da tastiera non finisce nel vuoto.
+      var back = card.querySelector('.film-back');
+      if (back) back.focus({ preventScroll: true });
     });
   }
   document.getElementById('posterClose').addEventListener('click', closePoster);
