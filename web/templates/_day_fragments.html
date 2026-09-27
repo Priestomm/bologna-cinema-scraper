@@ -30,7 +30,7 @@
        TMDb) resta la vecchia scheda a comparsa. #}
     {% set has_back = film.overview or film.regista %}
     {% set tear_dir = "tear-r" if loop.index0 is even else "tear-l" %}
-    <article class="film-card tilt-{{ loop.index0 % 6 }} {{ tear_dir }}"
+    <article class="film-card tilt-{{ loop.index0 % 6 }} {{ tear_dir }} rip-{{ loop.index0 % 3 + 1 }}"
          data-title="{{ film.titolo|lower }}"
          data-times="{{ film.earliest_time or '99:99' }}"
          data-cinemas="{{ film.cinemas|map(attribute='name')|join(',')|lower }}"

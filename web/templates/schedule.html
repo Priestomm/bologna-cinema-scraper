@@ -55,6 +55,8 @@
   --text-gray: #6B6660;
   --border-dim: #C4BFB8;
   --border-hard: #000000;
+  /* Bianco della carta che affiora lungo lo strappo. */
+  --paper-edge: #F4F1EA;
 }
 
 html {
@@ -436,32 +438,71 @@ body::after {
   cursor: pointer;
 }
 
+/* Da fermo e' solo una piega sul poster; a strappo avvenuto affiora il
+   bianco della carta e l'ombra si stacca dal muro. */
 .poster-remnant {
   z-index: 3;
-  clip-path: polygon(0 0, 100% 0, 100% 9%, 94% 7%, 86% 10%, 78% 6.5%, 70% 9.5%, 62% 6%, 54% 9%, 46% 5.5%, 38% 8.5%, 30% 5%, 22% 8.5%, 14% 6%, 7% 9%, 0 7%);
-  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
 }
 
+.film-card.torn .poster-remnant {
+  filter: drop-shadow(0 1.5px 0 var(--paper-edge)) drop-shadow(0 5px 4px rgba(0, 0, 0, 0.35));
+}
+
+/* drop-shadow segue il clip-path: la prima ombra, a offset negativo e senza
+   sfocatura, disegna il bianco della carta lungo la linea dello strappo. */
 .film-poster {
   z-index: 2;
-  clip-path: polygon(0 7%, 7% 9%, 14% 6%, 22% 8.5%, 30% 5%, 38% 8.5%, 46% 5.5%, 54% 9%, 62% 6%, 70% 9.5%, 78% 6.5%, 86% 10%, 94% 7%, 100% 9%, 100% 100%, 0 100%);
-  transform-origin: 50% 8%;
-  transition: transform 0.62s cubic-bezier(0.22, 0.85, 0.3, 1), opacity 0.45s ease 0.08s;
-  filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.3));
+  transform-origin: 50% 4%;
+  filter: drop-shadow(0 -2.5px 0 var(--paper-edge)) drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.28));
+  /* L'easing parte lenta: la carta resiste un attimo, poi cede di colpo. */
+  transition: transform 0.72s cubic-bezier(0.55, 0.03, 0.25, 1),
+              filter 0.72s ease,
+              opacity 0.5s ease 0.16s;
 }
 
-/* Strappato: il pezzo vola via di lato e verso l'alto (mai sugli orari) e
-   sparisce anche dal tab order a animazione finita. */
+/* Strappato: il pezzo ruota attorno alla linea di strappo, cade di lato
+   sollevandosi dal muro (ombra piu' lunga) e sparisce dal tab order a
+   movimento finito. */
 .film-card.torn .film-poster {
   opacity: 0;
   visibility: hidden;
-  transition: transform 0.62s cubic-bezier(0.22, 0.85, 0.3, 1),
-              opacity 0.45s ease 0.08s,
-              visibility 0s linear 0.62s;
+  filter: drop-shadow(0 -2.5px 0 var(--paper-edge)) drop-shadow(12px 20px 12px rgba(0, 0, 0, 0.4));
+  transition: transform 0.72s cubic-bezier(0.55, 0.03, 0.25, 1),
+              filter 0.72s ease,
+              opacity 0.5s ease 0.16s,
+              visibility 0s linear 0.72s;
 }
 
-.film-card.torn.tear-r .film-poster { transform: translate(74%, -10%) rotate(19deg) scale(0.93); }
-.film-card.torn.tear-l .film-poster { transform: translate(-74%, -10%) rotate(-19deg) scale(0.93); }
+.film-card.torn.tear-r .film-poster { transform: translate(66%, 20%) rotate(24deg) skewY(-5deg) scale(0.9); }
+.film-card.torn.tear-l .film-poster { transform: translate(-66%, 20%) rotate(-24deg) skewY(5deg) scale(0.9); }
+
+/* Linea dello strappo: tre varianti irregolari, assegnate a rotazione, cosi'
+   due card vicine non si strappano mai uguali. Le due meta' usano gli stessi
+   punti in ordine opposto, quindi combaciano esattamente. */
+.rip-1 .poster-remnant {
+  clip-path: polygon(0 0, 100% 0, 100% 7.59%, 99.8% 7.99%, 95.9% 8.48%, 92.8% 8.47%, 89.2% 8.69%, 86.5% 8.98%, 84.4% 8.88%, 81.3% 7.89%, 79.8% 8.31%, 75.8% 8.45%, 73% 8.13%, 70.7% 8.14%, 68% 8.6%, 65.9% 8.61%, 63.3% 8.74%, 61.1% 8.26%, 57.8% 8.57%, 55.7% 9.2%, 54.2% 8.96%, 52.7% 8.6%, 50.1% 8.97%, 46.7% 8.73%, 45.2% 8.92%, 42.9% 8.41%, 40.3% 8.15%, 38% 8.76%, 35.9% 7.94%, 33.9% 7.54%, 30.2% 7.65%, 27.5% 8.45%, 24.7% 8.2%, 21.8% 8.07%, 18.7% 8.18%, 16.3% 8.77%, 13.5% 8.81%, 12% 8.92%, 9% 8.64%, 6.2% 8%, 3.8% 9.84%, 1.5% 7.15%, 0% 6.87%);
+}
+
+.rip-1 .film-poster {
+  clip-path: polygon(0% 6.87%, 1.5% 7.15%, 3.8% 9.84%, 6.2% 8%, 9% 8.64%, 12% 8.92%, 13.5% 8.81%, 16.3% 8.77%, 18.7% 8.18%, 21.8% 8.07%, 24.7% 8.2%, 27.5% 8.45%, 30.2% 7.65%, 33.9% 7.54%, 35.9% 7.94%, 38% 8.76%, 40.3% 8.15%, 42.9% 8.41%, 45.2% 8.92%, 46.7% 8.73%, 50.1% 8.97%, 52.7% 8.6%, 54.2% 8.96%, 55.7% 9.2%, 57.8% 8.57%, 61.1% 8.26%, 63.3% 8.74%, 65.9% 8.61%, 68% 8.6%, 70.7% 8.14%, 73% 8.13%, 75.8% 8.45%, 79.8% 8.31%, 81.3% 7.89%, 84.4% 8.88%, 86.5% 8.98%, 89.2% 8.69%, 92.8% 8.47%, 95.9% 8.48%, 99.8% 7.99%, 100% 7.59%, 100% 100%, 0 100%);
+}
+
+.rip-2 .poster-remnant {
+  clip-path: polygon(0 0, 100% 0, 100% 5.93%, 99.7% 6.16%, 96.3% 6.79%, 94.2% 7.44%, 91% 7.14%, 87.9% 7.76%, 85.6% 7.43%, 81.9% 7.84%, 79.1% 7.76%, 76.4% 7.91%, 72.6% 7.64%, 70% 7.44%, 66.1% 7.73%, 62.8% 7.97%, 59.3% 5.92%, 57.4% 7.81%, 56% 8.17%, 53.7% 8.2%, 51.5% 8.23%, 48% 8.28%, 46.2% 8.3%, 42.4% 8.13%, 39.6% 7.34%, 35.7% 8.84%, 33.9% 7.09%, 31.7% 7.37%, 29.2% 7.6%, 26% 7.45%, 22.9% 7.57%, 20.6% 7.69%, 17.6% 7.26%, 14.7% 7.16%, 11.4% 7.32%, 9% 7.31%, 6.5% 7.14%, 4% 7.22%, 1.5% 7.51%, 0% 8.08%);
+}
+
+.rip-2 .film-poster {
+  clip-path: polygon(0% 8.08%, 1.5% 7.51%, 4% 7.22%, 6.5% 7.14%, 9% 7.31%, 11.4% 7.32%, 14.7% 7.16%, 17.6% 7.26%, 20.6% 7.69%, 22.9% 7.57%, 26% 7.45%, 29.2% 7.6%, 31.7% 7.37%, 33.9% 7.09%, 35.7% 8.84%, 39.6% 7.34%, 42.4% 8.13%, 46.2% 8.3%, 48% 8.28%, 51.5% 8.23%, 53.7% 8.2%, 56% 8.17%, 57.4% 7.81%, 59.3% 5.92%, 62.8% 7.97%, 66.1% 7.73%, 70% 7.44%, 72.6% 7.64%, 76.4% 7.91%, 79.1% 7.76%, 81.9% 7.84%, 85.6% 7.43%, 87.9% 7.76%, 91% 7.14%, 94.2% 7.44%, 96.3% 6.79%, 99.7% 6.16%, 100% 5.93%, 100% 100%, 0 100%);
+}
+
+.rip-3 .poster-remnant {
+  clip-path: polygon(0 0, 100% 0, 100% 7.34%, 99.7% 7.19%, 95.9% 6.92%, 92.7% 6.73%, 90.4% 6.41%, 87% 6.75%, 83.7% 7.64%, 81.4% 7.78%, 78.8% 7.8%, 76.8% 7.16%, 74.9% 6.83%, 72.4% 6.26%, 69% 7.1%, 66.7% 7.34%, 62.9% 6.93%, 59.4% 6.26%, 56.9% 6.35%, 55.3% 6.01%, 52.6% 5.57%, 48.9% 6.16%, 44.9% 4.08%, 42.7% 7.94%, 41.4% 5.47%, 37.5% 5.44%, 36% 5.42%, 34.6% 5.41%, 33% 5.45%, 30.6% 3.87%, 28.6% 7.18%, 24.9% 4.17%, 22.1% 5.84%, 18.8% 5.39%, 16.3% 4.04%, 14.6% 6.32%, 12.9% 6.76%, 9.8% 6.44%, 6.9% 6.58%, 3.8% 7.01%, 0% 6.73%);
+}
+
+.rip-3 .film-poster {
+  clip-path: polygon(0% 6.73%, 3.8% 7.01%, 6.9% 6.58%, 9.8% 6.44%, 12.9% 6.76%, 14.6% 6.32%, 16.3% 4.04%, 18.8% 5.39%, 22.1% 5.84%, 24.9% 4.17%, 28.6% 7.18%, 30.6% 3.87%, 33% 5.45%, 34.6% 5.41%, 36% 5.42%, 37.5% 5.44%, 41.4% 5.47%, 42.7% 7.94%, 44.9% 4.08%, 48.9% 6.16%, 52.6% 5.57%, 55.3% 6.01%, 56.9% 6.35%, 59.4% 6.26%, 62.9% 6.93%, 66.7% 7.34%, 69% 7.1%, 72.4% 6.26%, 74.9% 6.83%, 76.8% 7.16%, 78.8% 7.8%, 81.4% 7.78%, 83.7% 7.64%, 87% 6.75%, 90.4% 6.41%, 92.7% 6.73%, 95.9% 6.92%, 99.7% 7.19%, 100% 7.34%, 100% 100%, 0 100%);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .film-poster,
@@ -751,7 +792,9 @@ body::after {
   .film-back,
   .poster-remnant { display: none; }
 
-  .film-poster {
+  /* Stessa specificita' delle varianti .rip-N, ma piu' in basso nel foglio. */
+  .film-card .film-poster,
+  .film-card .poster-remnant {
     clip-path: none;
     filter: none;
   }
