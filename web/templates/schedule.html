@@ -420,12 +420,23 @@ body::after {
   margin-top: 4px;
 }
 
+/* Barra di scorrimento della trama, in tinta con la carta. */
+.film-back {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-dim) transparent;
+}
+
 /* Ogni pezzo sta dentro un contenitore: il ritaglio va sul pezzo, l'ombra
    sul contenitore. Al contrario non funziona: il browser applica il
    clip-path DOPO il filtro, quindi taglierebbe via anche l'ombra. */
+/* Il contenitore e' grande quanto tutto il poster: se intercettasse il
+   puntatore coprirebbe il retro anche da strappato, e la trama non si
+   potrebbe piu' scorrere. I click li prendono i due lembi, che sono
+   ritagliati e quindi rispondono solo dove c'e' davvero carta. */
 .poster-piece {
   position: absolute;
   inset: 0;
+  pointer-events: none;
 }
 
 .piece-remnant {
@@ -462,6 +473,7 @@ body::after {
   border: none;
   padding: 0;
   cursor: pointer;
+  pointer-events: auto;
 }
 
 /* Anima bianca della carta lungo lo strappo: una fascia ritagliata dalla
@@ -1430,6 +1442,10 @@ body::after {
       // link alla biglietteria.
       if (card.classList.contains('torn')) {
         if (e.target.closest('.film-time')) return;
+        // Se si stava selezionando la trama, il rilascio non e' un click
+        // per chiudere.
+        var selezione = window.getSelection();
+        if (selezione && !selezione.isCollapsed && card.contains(selezione.anchorNode)) return;
         setTorn(card, false);
         focusPoster(card);
         return;
