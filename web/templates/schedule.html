@@ -322,41 +322,195 @@ body::after {
 }
 
 /* === CARD === */
+/* La card e' un volantino incollato al muro: nastro in cima, leggera
+   rotazione e poster che si strappa (vedi POSTER STRAPPABILE). */
 .film-card {
+  --tilt: 0deg;
+  position: relative;
+  z-index: 1;
   background: var(--surface-card);
   border: 2px solid var(--border-hard);
   display: flex;
   flex-direction: column;
   box-shadow: 4px 4px 0px #000;
   transition: none;
-  cursor: pointer;
+  transform: rotate(var(--tilt));
 }
 
 .film-card:hover {
   box-shadow: 6px 6px 0px #000;
-  transform: translate(-2px, -2px);
+  transform: translate(-2px, -2px) rotate(var(--tilt));
 }
 
-.film-poster {
-  aspect-ratio: 2/3;
-  width: 100%;
-  display: block;
+/* Il pezzo strappato esce dai bordi della card: chi e' aperto sta sopra. */
+.film-card.torn { z-index: 5; }
+
+.tilt-0 { --tilt: -1.6deg; }
+.tilt-1 { --tilt: 1.2deg; }
+.tilt-2 { --tilt: -0.8deg; }
+.tilt-3 { --tilt: 1.8deg; }
+.tilt-4 { --tilt: -1.2deg; }
+.tilt-5 { --tilt: 0.9deg; }
+
+.card-tape {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  width: 84px;
+  height: 24px;
+  margin-left: -42px;
+  background: rgba(20, 20, 20, 0.82);
+  box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.35);
+  transform: rotate(-2deg);
+  z-index: 6;
+  pointer-events: none;
+}
+
+.card-tape.tape-accent { background: rgba(255, 53, 0, 0.85); }
+
+/* === POSTER STRAPPABILE === */
+/* Tre strati sovrapposti dentro .film-poster-zone: il retro (.film-back, in
+   fondo), il moncone che resta incollato sotto il nastro (.poster-remnant) e
+   il pezzo che si strappa (.film-poster). I due pezzi hanno clip-path
+   complementari sugli stessi punti, quindi da fermi sembrano un poster solo.
+   Il contenitore non ritaglia niente: il pezzo deve poter volare fuori. */
+.film-poster-zone {
   position: relative;
-  background-color: #fff;
-  border: none;
+  width: 100%;
+  aspect-ratio: 2/3;
   border-bottom: 2px solid var(--border-hard);
+  background-color: #fff;
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
-  cursor: pointer;
-  padding: 0;
 }
 
-.film-poster:focus-visible {
+.film-poster-zone:has(:focus-visible) {
   outline: 3px solid var(--accent-orange);
-  outline-offset: -3px;
+  outline-offset: 2px;
 }
 
+/* Il padding alto lascia libera la fascia coperta dal moncone. */
+.film-back {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--surface-card);
+  padding: 52px 13px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+
+.film-back-row {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.film-back-row span { color: var(--text-gray); }
+
+.film-back-overview {
+  font-size: 0.72rem;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.poster-remnant,
+.film-poster {
+  position: absolute;
+  inset: 0;
+  background-image: inherit;
+  background-color: #fff;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.poster-remnant {
+  z-index: 3;
+  pointer-events: none;
+  clip-path: polygon(0 0, 100% 0, 100% 9%, 94% 7%, 86% 10%, 78% 6.5%, 70% 9.5%, 62% 6%, 54% 9%, 46% 5.5%, 38% 8.5%, 30% 5%, 22% 8.5%, 14% 6%, 7% 9%, 0 7%);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+}
+
+.film-card.torn .poster-remnant { pointer-events: auto; }
+
+.film-poster {
+  z-index: 2;
+  clip-path: polygon(0 7%, 7% 9%, 14% 6%, 22% 8.5%, 30% 5%, 38% 8.5%, 46% 5.5%, 54% 9%, 62% 6%, 70% 9.5%, 78% 6.5%, 86% 10%, 94% 7%, 100% 9%, 100% 100%, 0 100%);
+  transform-origin: 50% 8%;
+  transition: transform 0.62s cubic-bezier(0.22, 0.85, 0.3, 1), opacity 0.45s ease 0.08s;
+  filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.3));
+}
+
+/* Strappato: il pezzo vola via di lato e verso l'alto (mai sugli orari) e
+   sparisce anche dal tab order a animazione finita. */
+.film-card.torn .film-poster {
+  opacity: 0;
+  visibility: hidden;
+  transition: transform 0.62s cubic-bezier(0.22, 0.85, 0.3, 1),
+              opacity 0.45s ease 0.08s,
+              visibility 0s linear 0.62s;
+}
+
+.film-card.torn.tear-r .film-poster { transform: translate(74%, -10%) rotate(19deg) scale(0.93); }
+.film-card.torn.tear-l .film-poster { transform: translate(-74%, -10%) rotate(-19deg) scale(0.93); }
+
+.tear-hint {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 3px 6px;
+}
+
+.poster-reattach {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 4;
+  background: #fff;
+  color: var(--text-black);
+  border: 2px solid var(--border-hard);
+  box-shadow: 2px 2px 0px #000;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 5px 8px;
+  cursor: pointer;
+  opacity: 0;
+  /* visibility fuori dalla transizione: il bottone deve essere subito
+     focusabile quando la card si apre, anche se compare in dissolvenza. */
+  visibility: hidden;
+  transition: opacity 0.2s ease 0.3s;
+}
+
+.film-card.torn .poster-reattach { opacity: 1; visibility: visible; }
+
+.poster-reattach:hover {
+  background: var(--accent-orange);
+  border-color: var(--accent-orange);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .film-poster,
+  .film-card.torn .film-poster { transition: opacity 0.15s linear, visibility 0s linear 0.15s; }
+  .film-card.torn.tear-r .film-poster,
+  .film-card.torn.tear-l .film-poster { transform: none; }
+}
+
+/* Sopra i due pezzi del poster: il voto resta leggibile anche da strappato. */
 .film-rating {
   position: absolute;
   top: 0;
@@ -366,7 +520,7 @@ body::after {
   font-weight: 700;
   font-size: 0.8rem;
   padding: 3px 8px;
-  z-index: 2;
+  z-index: 4;
 }
 
 .film-genres-overlay {
@@ -610,15 +764,44 @@ body::after {
     gap: 12px;
   }
 
-  .film-card { flex-direction: row; }
+  .film-card {
+    flex-direction: row;
+    --tilt: 0deg;
+  }
 
-  .film-poster {
+  .film-card:hover { transform: none; }
+
+  .card-tape {
+    width: 58px;
+    height: 17px;
+    top: -8px;
+    margin-left: -29px;
+  }
+
+  /* Qui il poster e' alto ~170px: il retro non sarebbe leggibile, quindi
+     niente strappo e si torna alla scheda a comparsa (vedi JS). */
+  .film-poster-zone {
     width: 115px;
     aspect-ratio: 2/3;
     flex-shrink: 0;
     border-bottom: none;
     border-right: 2px solid var(--border-hard);
-    cursor: pointer;
+  }
+
+  .film-back,
+  .poster-remnant,
+  .poster-reattach,
+  .tear-hint { display: none; }
+
+  .film-poster {
+    clip-path: none;
+    filter: none;
+  }
+
+  .film-card.torn .film-poster {
+    transform: none;
+    opacity: 1;
+    visibility: visible;
   }
 
   .film-rating { display: none; }
@@ -1104,13 +1287,15 @@ body::after {
   var overlayInfo = document.getElementById('posterInfo');
   var overlayOverview = document.getElementById('posterOverview');
 
-  function openPoster(poster) {
-    var card = poster.closest('.film-card');
-    if (!card) return;
-    var style = poster.getAttribute('style') || '';
-    var match = style.match(/url\(['"]?(.+?)['"]?\)/);
-    if (!match) return;
-    overlayImg.src = match[1];
+  function openPoster(card) {
+    var posterUrl = card.dataset.poster || '';
+    if (posterUrl) {
+      overlayImg.src = posterUrl;
+      overlayImg.style.display = '';
+    } else {
+      overlayImg.removeAttribute('src');
+      overlayImg.style.display = 'none';
+    }
     overlayTitle.textContent = card.querySelector('.title-tape').textContent.trim();
     var ratingEl = card.querySelector('.film-rating');
     if (ratingEl) { overlayRating.textContent = ratingEl.textContent.trim(); overlayRating.style.display = ''; }
@@ -1137,14 +1322,68 @@ body::after {
   // del focus sul bottone che ha aperto il dialog: non serve reimplementarli.
   function closePoster() { overlay.close(); }
 
+  // Strappo del poster: il pezzo vola via e scopre il retro (regia, durata,
+  // trama). Solo da 769px in su — sotto, il poster e' alto ~170px e il retro
+  // non sarebbe leggibile, quindi resta la scheda a comparsa qui sopra.
+  var mqTear = window.matchMedia('(min-width: 769px)');
+
+  function isTearable(card) {
+    return mqTear.matches && card.querySelector('.film-back') !== null;
+  }
+
+  function setTorn(card, torn) {
+    card.classList.toggle('torn', torn);
+    var poster = card.querySelector('.film-poster');
+    if (poster) poster.setAttribute('aria-expanded', torn ? 'true' : 'false');
+  }
+
+  function focusPoster(card) {
+    var poster = card.querySelector('.film-poster');
+    if (poster) poster.focus();
+  }
+
+  function closeAllTorn() {
+    document.querySelectorAll('.film-card.torn').forEach(function(c) { setTorn(c, false); });
+  }
+
+  // Scendendo sotto la soglia mobile il CSS rimette a posto il poster, ma la
+  // classe .torn (e aria-expanded) resterebbe: si richiude tutto.
+  mqTear.addEventListener('change', closeAllTorn);
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    var active = document.activeElement;
+    var focusedCard = active ? active.closest('.film-card.torn') : null;
+    closeAllTorn();
+    if (focusedCard) focusPoster(focusedCard);
+  });
+
   // Delegation su #filmGrid: il contenuto viene sostituito ad ogni cambio
   // giorno (loadDay()), ma il contenitore resta lo stesso, quindi non serve
   // ri-agganciare il listener dopo ogni swap.
   var filmGrid = document.getElementById('filmGrid');
   if (filmGrid) {
     filmGrid.addEventListener('click', function(e) {
-      var poster = e.target.closest('.film-poster');
-      if (poster) openPoster(poster);
+      var card = e.target.closest('.film-card');
+      if (!card) return;
+
+      // Richiusura: bottone "Riattacca" o click sul moncone rimasto incollato
+      // (che riceve i click solo a card strappata, vedi pointer-events).
+      if (e.target.closest('.poster-reattach') || e.target.closest('.poster-remnant')) {
+        setTorn(card, false);
+        focusPoster(card);
+        return;
+      }
+
+      if (!e.target.closest('.film-poster')) return;
+
+      if (!isTearable(card)) {
+        openPoster(card);
+        return;
+      }
+      setTorn(card, true);
+      var reattach = card.querySelector('.poster-reattach');
+      if (reattach) reattach.focus();
     });
   }
   document.getElementById('posterClose').addEventListener('click', closePoster);

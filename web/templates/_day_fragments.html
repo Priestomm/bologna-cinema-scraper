@@ -25,31 +25,65 @@
 {% macro film_grid(films) -%}
 {% if films %}
   {% for film in films %}
-    <article class="film-card"
+    {# Il poster si strappa solo se dietro c'e' davvero qualcosa da leggere:
+       la sola durata lascerebbe un retro vuoto, quindi in quel caso (e senza
+       TMDb) resta la vecchia scheda a comparsa. #}
+    {% set has_back = film.overview or film.regista %}
+    {% set tear_dir = "tear-r" if loop.index0 is even else "tear-l" %}
+    <article class="film-card tilt-{{ loop.index0 % 6 }} {{ tear_dir }}"
          data-title="{{ film.titolo|lower }}"
          data-times="{{ film.earliest_time or '99:99' }}"
          data-cinemas="{{ film.cinemas|map(attribute='name')|join(',')|lower }}"
          data-genre="{{ (film.genre or '')|lower }}"
+         data-poster="{{ film.poster_url or '' }}"
          data-overview="{{ (film.overview or '')|e }}"
          data-runtime="{{ film.runtime or 0 }}"
          data-regista="{{ (film.regista or '')|e }}">
 
-      <button type="button" class="film-poster"{% if film.poster_url %} style="background-image: url('{{ film.poster_url }}')"{% endif %} aria-haspopup="dialog" aria-label="Apri dettagli: {{ film.titolo }}">
+      <span class="card-tape{{ ' tape-accent' if loop.index0 % 3 == 0 else '' }}" aria-hidden="true"></span>
+
+      {# L'immagine sta sul contenitore: moncone e pezzo strappato la ereditano
+         (background-image: inherit), cosi' l'URL compare una volta sola e i
+         due pezzi combaciano lungo la linea dello strappo. #}
+      <div class="film-poster-zone"{% if film.poster_url %} style="background-image: url('{{ film.poster_url }}')"{% endif %}>
+
+        {% if has_back %}
+        <div class="film-back" id="film-back-{{ loop.index }}">
+          {% if film.regista %}<p class="film-back-row"><span>Regia</span> {{ film.regista }}</p>{% endif %}
+          {% if film.runtime %}<p class="film-back-row"><span>Durata</span> {{ film.runtime }} min</p>{% endif %}
+          {% if film.overview %}<p class="film-back-overview">{{ film.overview }}</p>{% endif %}
+        </div>
+        <button type="button" class="poster-reattach" aria-label="Riattacca il poster di {{ film.titolo }}">&times; Riattacca</button>
+        {% endif %}
+
+        {# Striscia che resta incollata sotto il nastro: fuori dal tab order,
+           e' solo una scorciatoia col mouse per richiudere (il controllo vero
+           e' .poster-reattach). #}
+        <button type="button" class="poster-remnant" tabindex="-1" aria-hidden="true"></button>
+
+        <button type="button" class="film-poster"
+                {% if has_back %}aria-expanded="false" aria-controls="film-back-{{ loop.index }}"{% else %}aria-haspopup="dialog"{% endif %}
+                aria-label="Apri dettagli: {{ film.titolo }}">
+          {% if film.genre %}
+          <span class="film-genres-overlay">
+            {% for g in film.genre.split("/")[:3] %}
+              {% set g = g.strip() %}
+              <span class="genre-chip">{{ g }}</span>
+            {% endfor %}
+          </span>
+          {% endif %}
+
+          {% if has_back %}<span class="tear-hint">{{ "Strappa ↗" if tear_dir == "tear-r" else "↖ Strappa" }}</span>{% endif %}
+        </button>
+
+        {# Il voto non fa parte del foglio: resta visibile anche dopo lo strappo. #}
         {% if film.rating and film.rating != "0.0" %}
           <span class="film-rating">★ {{ film.rating }}</span>
         {% else %}
           <span class="film-rating" style="background: var(--border-dim); color: #000;">N/D</span>
         {% endif %}
 
-        {% if film.genre %}
-        <div class="film-genres-overlay">
-          {% for g in film.genre.split("/")[:3] %}
-            {% set g = g.strip() %}
-            <span class="genre-chip">{{ g }}</span>
-          {% endfor %}
-        </div>
-        {% endif %}
-      </button>
+      </div>
 
       <div class="card-body">
         <div class="title-tape">{{ film.titolo }}</div>
