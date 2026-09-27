@@ -343,7 +343,11 @@ body::after {
 }
 
 /* Il pezzo strappato esce dai bordi della card: chi e' aperto sta sopra. */
-.film-card.torn { z-index: 5; }
+/* Aperta: sta sopra le vicine (il pezzo strappato esce dai bordi) e si
+   richiude da tutta la superficie, non solo dal bottone. */
+.film-card.torn { z-index: 5; cursor: pointer; }
+
+.film-card.torn .film-time { cursor: pointer; }
 
 .tilt-0 { --tilt: -1.6deg; }
 .tilt-1 { --tilt: 1.2deg; }
@@ -1339,7 +1343,9 @@ body::after {
 
   function focusPoster(card) {
     var poster = card.querySelector('.film-poster');
-    if (poster) poster.focus();
+    // preventScroll: la richiusura puo' partire da un click in fondo alla
+    // card, e rimettere il focus sul poster non deve far saltare la pagina.
+    if (poster) poster.focus({ preventScroll: true });
   }
 
   function closeAllTorn() {
@@ -1367,9 +1373,11 @@ body::after {
       var card = e.target.closest('.film-card');
       if (!card) return;
 
-      // Richiusura: bottone "Riattacca" o click sul moncone rimasto incollato
-      // (che riceve i click solo a card strappata, vedi pointer-events).
-      if (e.target.closest('.poster-reattach') || e.target.closest('.poster-remnant')) {
+      // Card gia' strappata: si richiude cliccando ovunque sulla card
+      // (retro, moncone, bottone "Riattacca", titolo...), tranne che sugli
+      // orari, che restano link alla biglietteria.
+      if (card.classList.contains('torn')) {
+        if (e.target.closest('.film-time')) return;
         setTorn(card, false);
         focusPoster(card);
         return;
