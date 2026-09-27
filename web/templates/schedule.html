@@ -334,14 +334,16 @@ body::after {
   border: 2px solid var(--border-hard);
   display: flex;
   flex-direction: column;
-  box-shadow: 4px 4px 0px #000;
+  /* Incollata al muro, non sollevata: solo l'ombra di contatto del bordo. */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.16);
   transition: none;
   transform: rotate(var(--tilt));
 }
 
-.film-card:hover {
-  box-shadow: 6px 6px 0px #000;
-  transform: translate(-2px, -2px) rotate(var(--tilt));
+/* Niente sollevamento in hover: si accenna lo scollamento lungo la piega,
+   che e' anche l'unico invito rimasto a strappare. */
+.film-card:hover .piece-remnant {
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.4));
 }
 
 /* Il pezzo strappato esce dai bordi della card: chi e' aperto sta sopra. */
@@ -366,7 +368,7 @@ body::after {
   height: 24px;
   margin-left: -42px;
   background: rgba(20, 20, 20, 0.82);
-  box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   transform: rotate(-2deg);
   z-index: 6;
   pointer-events: none;
