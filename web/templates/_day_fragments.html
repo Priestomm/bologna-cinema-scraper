@@ -42,10 +42,10 @@
 
       <span class="card-tape{{ ' tape-accent' if loop.index0 % 3 == 0 else '' }}" aria-hidden="true"></span>
 
-      {# L'immagine sta sul contenitore: moncone e pezzo strappato la ereditano
-         (background-image: inherit), cosi' l'URL compare una volta sola e i
-         due pezzi combaciano lungo la linea dello strappo. #}
-      <div class="film-poster-zone"{% if film.poster_url %} style="background-image: url('{{ film.poster_url }}')"{% endif %}>
+      {# L'URL sta sul contenitore in una variabile CSS: i due lembi la
+         ereditano senza che nessun contenitore intermedio disegni il poster
+         intero, e nel markup compare una volta sola. #}
+      <div class="film-poster-zone"{% if film.poster_url %} style="--poster: url('{{ film.poster_url }}')"{% endif %}>
 
         {# tabindex="-1": a card strappata il poster sparisce, il focus da
            tastiera si sposta qui e Esc riporta tutto al suo posto. #}
@@ -59,8 +59,11 @@
 
         {# Striscia che resta incollata sotto il nastro: solo decorazione,
            i click su di lei li gestisce la zona poster (vedi JS). #}
-        <span class="poster-remnant" aria-hidden="true"></span>
+        <span class="poster-piece piece-remnant" aria-hidden="true">
+          <span class="poster-remnant"></span>
+        </span>
 
+        <span class="poster-piece piece-sheet">
         <button type="button" class="film-poster"
                 {% if has_back %}aria-expanded="false" aria-controls="film-back-{{ loop.index }}"{% else %}aria-haspopup="dialog"{% endif %}
                 aria-label="Apri dettagli: {{ film.titolo }}">
@@ -73,6 +76,7 @@
           </span>
           {% endif %}
         </button>
+        </span>
 
         {# Il voto non fa parte del foglio: resta visibile anche dopo lo strappo. #}
         {% if film.rating and film.rating != "0.0" %}
