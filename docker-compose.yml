@@ -1,12 +1,15 @@
-# Bot e sito in due container separati, dalla stessa immagine: se il sito
+# Bot e sito in due container separati, dallo stesso Dockerfile: se il sito
 # si pianta e termina, Docker riavvia solo lui e il bot continua (e viceversa).
 # Condividono ./data, dove sta la cache SQLite (in modalita' WAL): il bot la
 # scrive, il sito la legge.
 #
 # Deploy / aggiornamento:  git pull && docker compose up -d --build
+#
+# Niente `image:` comune: con `--build` i due servizi vengono costruiti in
+# parallelo e, con lo stesso nome d'immagine, il secondo fallisce ("image
+# already exists"). Cosi' ognuno ha la sua (i layer sono condivisi in cache).
 x-common: &common
   build: .
-  image: cinema-bologna-bot
   restart: unless-stopped
   env_file: .env
   volumes:
