@@ -6,19 +6,21 @@
 - GET /api/cinemas/{name} film di un cinema
 - GET /api/history        storico ultimi N giorni
 - GET /api/stats          statistiche generali
-- POST /api/refresh       forza uno scraping manuale
+- POST /api/refresh       forza uno scraping manuale (header X-Refresh-Token)
 - GET /api/refresh/status stato del refresh manuale
 """
 
 from __future__ import annotations
 
+import secrets
 import threading
 import time
 from datetime import timedelta
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Header, HTTPException, Query
 
+from config import settings
 from core.pipeline import today
 from scrapers.base import Screening
 from utils import get_logger
@@ -181,19 +183,34 @@ def get_stats() -> dict[str, Any]:
 # ---- refresh -----------------------------------------------------------
 
 
+# Tenuto per tutta la durata dello scraping: e' anche lo stato esposto da
+# /api/refresh/status, cosi' non serve un flag separato da tenere allineato.
 _refresh_lock = threading.Lock()
-_refresh_in_progress = False
 
 
 @router.post("/api/refresh")
-def trigger_refresh() -> dict[str, Any]:
-    """Trigger uno scraping multi-giorno in background e restituisce il risultato."""
-    if _refresh_in_progress:
+def trigger_refresh(
+    x_refresh_token: str | None = Header(None),
+) -> dict[str, Any]:
+    """Avvia uno scraping multi-giorno in background.
+
+    Ogni chiamata colpisce i siti di tutti i circuiti: senza token chiunque
+    potrebbe farci bannare per 429. Se REFRESH_TOKEN non e' configurato
+    l'endpoint e' disabilitato.
+    """
+    if not settings.refresh_token:
+        raise HTTPException(404, "Refresh manuale disabilitato")
+    if not x_refresh_token or not secrets.compare_digest(
+        x_refresh_token, settings.refresh_token
+    ):
+        raise HTTPException(401, "Token mancante o non valido")
+
+    # acquire non bloccante: due richieste ravvicinate non possono partire
+    # entrambe (il controllo e l'acquisizione sono un'unica operazione).
+    if not _refresh_lock.acquire(blocking=False):
         return {"status": "already_running", "message": "Scraping già in corso"}
 
     def _run() -> None:
-        global _refresh_in_progress
-        _refresh_in_progress = True
         try:
             from core.pipeline import run_multi_day_pipeline
 
@@ -202,10 +219,7 @@ def trigger_refresh() -> dict[str, Any]:
         except Exception:
             logger.exception("Refresh fallito")
         finally:
-            _refresh_in_progress = False
-
-    if _refresh_lock.locked():
-        return {"status": "already_running", "message": "Scraping già in corso"}
+            _refresh_lock.release()
 
     threading.Thread(target=_run, daemon=True).start()
     return {"status": "started", "message": "Scraping avviato"}
@@ -214,7 +228,7 @@ def trigger_refresh() -> dict[str, Any]:
 @router.get("/api/refresh/status")
 def refresh_status() -> dict[str, Any]:
     """Stato del refresh in corso."""
-    return {"in_progress": _refresh_in_progress}
+    return {"in_progress": _refresh_lock.locked()}
 
 
 # ---- helpers ------------------------------------------------------------

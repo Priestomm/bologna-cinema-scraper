@@ -1,6 +1,6 @@
 """Layer scrapers: ognuno restituisce list[Screening] per la giornata richiesta."""
 
-from .base import BaseScraper, ScraperResult, Screening
+from .base import BaseScraper, MultiDayResult, ScraperResult, Screening
 from .chaplin import ChaplinScraper
 from .cineteca import CinetecaScraper
 from .circuito import CircuitoCinemaScraper
@@ -28,6 +28,7 @@ __all__ = [
     "CinetecaScraper",
     "CircuitoCinemaScraper",
     "GallieraScraper",
+    "MultiDayResult",
     "NosadellaScraper",
     "PopUpCinemaScraper",
     "ScraperResult",

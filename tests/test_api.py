@@ -237,3 +237,57 @@ class TestStats:
         assert body["days_with_data"] == 1
         assert body["unique_cinemas"] == 2
         assert "Rialto" in body["cinemas"]
+
+
+class TestRefresh:
+    @pytest.fixture
+    def with_token(self) -> Iterator[str]:
+        from dataclasses import replace
+
+        from config import settings
+
+        with patch("web.api.settings", replace(settings, refresh_token="s3cret")):
+            yield "s3cret"
+
+    def test_disabilitato_senza_token_configurato(self, client: TestClient) -> None:
+        with patch("web.api.settings") as s:
+            s.refresh_token = ""
+            resp = client.post("/api/refresh", headers={"X-Refresh-Token": "x"})
+        assert resp.status_code == 404
+
+    def test_token_mancante_o_sbagliato(
+        self, client: TestClient, with_token: str
+    ) -> None:
+        assert client.post("/api/refresh").status_code == 401
+        resp = client.post("/api/refresh", headers={"X-Refresh-Token": "nope"})
+        assert resp.status_code == 401
+
+    def test_avvio_e_seconda_richiesta_in_corso(
+        self, client: TestClient, with_token: str
+    ) -> None:
+        import threading
+
+        release = threading.Event()
+        headers = {"X-Refresh-Token": with_token}
+        with patch(
+            "core.pipeline.run_multi_day_pipeline",
+            side_effect=lambda **_: release.wait(5),
+        ):
+            first = client.post("/api/refresh", headers=headers).json()
+            second = client.post("/api/refresh", headers=headers).json()
+            status = client.get("/api/refresh/status").json()
+            release.set()
+
+        assert first["status"] == "started"
+        assert second["status"] == "already_running"
+        assert status["in_progress"] is True
+
+    def test_cors_non_permette_post_da_altri_domini(self, client: TestClient) -> None:
+        resp = client.options(
+            "/api/refresh",
+            headers={
+                "Origin": "https://evil.example",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+        assert resp.status_code == 400

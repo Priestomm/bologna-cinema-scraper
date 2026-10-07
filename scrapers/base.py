@@ -5,14 +5,16 @@ Ogni scraper concreto deve:
 - impostare attributi `name` (etichetta cinema) e `slug`
 - implementare `_fetch(target_date)` restituendo list[Screening]
 
-`run(target_date)` esegue lo scraper in un thread isolato con timeout rigido
-e cattura qualunque eccezione. Il chiamante riceve sempre uno ScraperResult,
-non solleva mai. Cosi un cinema rotto non puo far cadere la pipeline.
+`run(target_date)` e `run_all_dates(start, days)` eseguono lo scraper in un
+thread isolato con timeout rigido e catturano qualunque eccezione. Il
+chiamante riceve sempre un risultato, non solleva mai. Cosi un cinema rotto
+non puo far cadere la pipeline.
 """
 
 from __future__ import annotations
 
 import abc
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FuturesTimeout
 from dataclasses import asdict, dataclass, field
@@ -46,6 +48,11 @@ class Screening:
     overview: str = ""
     runtime: int = 0
     times_urls: dict[str, str] = field(default_factory=dict)
+    # Slug dello scraper che l'ha prodotto (lo imposta BaseScraper, non il
+    # singolo scraper): `cinema` e' la sala ("Cineteca - Lumiere"), questo e'
+    # il circuito, usato dalla pipeline per ripescare dalla cache i dati di un
+    # circuito quando il suo scraping fallisce.
+    circuito: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -60,6 +67,41 @@ class ScraperResult:
     screenings: list[Screening]
     success: bool
     error: str | None = None
+
+
+@dataclass
+class MultiDayResult:
+    """Esito di uno scraping multi-giorno: proiezioni raggruppate per data."""
+
+    name: str
+    slug: str
+    by_date: dict[date, list[Screening]]
+    success: bool
+    error: str | None = None
+
+
+def _call_with_timeout[T](fn: Callable[..., T], *args: Any, timeout: float) -> T:
+    """Esegue fn in un thread dedicato e smette di aspettarlo dopo `timeout`.
+
+    Niente `with ThreadPoolExecutor(...)`: all'uscita dal blocco il context
+    manager chiama shutdown(wait=True), che aspetterebbe comunque la fine di
+    fn rendendo il timeout inutile. Il thread scaduto non si puo' uccidere:
+    resta in background finche' le sue richieste HTTP (ognuna col proprio
+    timeout) non terminano, ma la pipeline va avanti.
+    """
+    pool = ThreadPoolExecutor(max_workers=1)
+    try:
+        return pool.submit(fn, *args).result(timeout=timeout)
+    finally:
+        pool.shutdown(wait=False)
+
+
+def _clean(screenings: list[Screening], slug: str) -> list[Screening]:
+    """Difesa: tiene solo Screening validi e li marca col circuito."""
+    clean = [s for s in screenings if isinstance(s, Screening) and s.titolo]
+    for s in clean:
+        s.circuito = slug
+    return clean
 
 
 class BaseScraper(abc.ABC):
@@ -77,9 +119,9 @@ class BaseScraper(abc.ABC):
         """Esegue lo scraping con timeout rigido e isolamento errori."""
         self.logger.info("Avvio scraping per %s", target_date.isoformat())
         try:
-            with ThreadPoolExecutor(max_workers=1) as pool:
-                future = pool.submit(self._fetch, target_date)
-                screenings = future.result(timeout=settings.scraper_timeout)
+            screenings = _call_with_timeout(
+                self._fetch, target_date, timeout=settings.scraper_timeout
+            )
         except FuturesTimeout:
             msg = f"timeout dopo {settings.scraper_timeout}s"
             self.logger.warning("Scraper %s fallito: %s", self.slug, msg)
@@ -90,10 +132,36 @@ class BaseScraper(abc.ABC):
                 self.name, self.slug, [], success=False, error=str(exc)
             )
 
-        # Difesa: assicura che ogni elemento sia uno Screening valido.
-        clean = [s for s in screenings if isinstance(s, Screening) and s.titolo]
+        clean = _clean(screenings, self.slug)
         self.logger.info("Scraper %s OK: %d film", self.slug, len(clean))
         return ScraperResult(self.name, self.slug, clean, success=True)
+
+    def run_all_dates(self, after_date: date, max_days: int = 7) -> MultiDayResult:
+        """Come run(), ma per fetch_all_dates: N giorni con un'unica chiamata.
+
+        Il timeout e' settings.scraper_total_timeout (non scraper_timeout):
+        qui uno scraper puo' fare piu' richieste HTTP e retry su 429.
+        """
+        timeout = settings.scraper_total_timeout
+        self.logger.info("Avvio scraping multi-giorno da %s", after_date.isoformat())
+        try:
+            by_date = _call_with_timeout(
+                self.fetch_all_dates, after_date, max_days, timeout=timeout
+            )
+        except FuturesTimeout:
+            msg = f"timeout dopo {timeout}s"
+            self.logger.warning("Scraper %s fallito: %s", self.slug, msg)
+            return MultiDayResult(self.name, self.slug, {}, success=False, error=msg)
+        except Exception as exc:
+            self.logger.exception("Scraper %s fallito", self.slug)
+            return MultiDayResult(
+                self.name, self.slug, {}, success=False, error=str(exc)
+            )
+
+        clean = {d: _clean(screenings, self.slug) for d, screenings in by_date.items()}
+        total = sum(len(v) for v in clean.values())
+        self.logger.info("Scraper %s OK: %d proiezioni", self.slug, total)
+        return MultiDayResult(self.name, self.slug, clean, success=True)
 
     # ---- da implementare ---------------------------------------------
 

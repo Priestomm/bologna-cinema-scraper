@@ -102,7 +102,7 @@ open http://localhost:8080/2026-09-15    # data specifica
 | `GET /api/cinemas/{name}` | Film di un cinema specifico |
 | `GET /api/history?days=N` | Storico ultimi N giorni (max 90) |
 | `GET /api/stats` | Statistiche generali |
-| `POST /api/refresh` | Forza uno scraping manuale (non chiamato dal mini-sito, che rilegge solo la cache) |
+| `POST /api/refresh` | Forza uno scraping manuale; richiede l'header `X-Refresh-Token` uguale a `REFRESH_TOKEN` (se non configurato l'endpoint risponde 404). Non chiamato dal mini-sito, che rilegge solo la cache |
 | `GET /api/refresh/status` | Stato del refresh manuale |
 
 Documentazione interattiva: `http://localhost:8080/docs`

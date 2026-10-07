@@ -40,6 +40,12 @@ class Settings:
     health_port: int = 8080
     timezone: str = "Europe/Rome"
     tmdb_api_key: str = ""
+    # Timeout complessivo di uno scraping multi-giorno (piu' richieste HTTP,
+    # retry su 429 compresi): SCRAPER_TIMEOUT vale per la singola richiesta.
+    scraper_total_timeout: int = 90
+    # Token richiesto da POST /api/refresh (header X-Refresh-Token).
+    # Vuoto = endpoint disabilitato.
+    refresh_token: str = ""
 
 
 def _load() -> Settings:
@@ -61,6 +67,8 @@ def _load() -> Settings:
         refresh_interval_minutes=_int("REFRESH_INTERVAL_MINUTES", 15),
         health_port=_int("HEALTH_PORT", 8080),
         tmdb_api_key=_env("TMDB_API_KEY"),
+        scraper_total_timeout=_int("SCRAPER_TOTAL_TIMEOUT", 90),
+        refresh_token=_env("REFRESH_TOKEN"),
     )
 
 

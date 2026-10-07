@@ -28,11 +28,13 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# API in sola lettura aperta a qualunque origine; l'unico POST
+# (/api/refresh) e' un comando amministrativo da chiamare server-to-server,
+# non da un browser su un altro dominio.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["GET", "POST"],
-    allow_headers=["*"],
+    allow_methods=["GET"],
 )
 
 app.mount("/static", StaticFiles(directory="web/static"), name="static")

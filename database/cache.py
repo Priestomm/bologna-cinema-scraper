@@ -95,6 +95,17 @@ class Cache:
             else:
                 warnings.append(f"Circuito non disponibile: {r.name} ({r.error}).")
 
+        return self.store_snapshot(target_date, screenings, warnings)
+
+    def store_snapshot(
+        self, target_date: date, screenings: list[Screening], warnings: list[str]
+    ) -> CacheSnapshot:
+        """Salva proiezioni e avvisi gia' pronti, senza derivarne altri.
+
+        Usato dalla pipeline multi-giorno, che gli avvisi li calcola per
+        circuito sull'intera finestra: "nessuna proiezione" per un singolo
+        giorno, li', e' normale e non va segnalato.
+        """
         payload = {
             "screenings": [s.to_dict() for s in screenings],
             "warnings": warnings,
