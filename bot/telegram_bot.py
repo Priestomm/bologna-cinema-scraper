@@ -52,7 +52,10 @@ _MODE_KEYBOARDS: dict[str, InlineKeyboardMarkup] = {
 
 
 class CinemaBot:
-    def __init__(self) -> None:
+    def __init__(self, *, start_web: bool = True) -> None:
+        # start_web=False quando il sito gira in un processo separato
+        # (`main.py --bot` + `main.py --web`, vedi ecosystem.config.js).
+        self._start_web = start_web
         self._cache = Cache()
         self._app: Application = (
             ApplicationBuilder().token(settings.telegram_token).build()
@@ -201,7 +204,8 @@ class CinemaBot:
 
     async def _post_init(self, _app: Application) -> None:
         self._scheduler.start()
-        start_api_server()
+        if self._start_web:
+            start_api_server()
 
         # All'avvio, recupera eventuali job persi (es. crash/restart)
         target = today()

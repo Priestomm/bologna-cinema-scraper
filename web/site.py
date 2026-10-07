@@ -4,16 +4,25 @@
 - GET /{YYYY-MM-DD}       mini-sito HTML (programmazione per data)
 - GET /partials/{date}    frammento HTML per il cambio giorno via JS (uso interno)
 - GET /robots.txt         direttive per i crawler
-- GET /sitemap.xml        sitemap (oggi + prossimi 7 giorni)
+- GET /sitemap.xml        sitemap (oggi + prossimi giorni con programmazione)
+
+Le pagine rispondono anche a HEAD (monitor di uptime, alcuni crawler):
+le route FastAPI dichiarate con @router.get rispondono 405 a HEAD.
+
+SEO: title/description per giorno, canonical e URL assoluti da
+settings.public_base_url, JSON-LD schema.org (ScreeningEvent per ogni
+orario), noindex sui giorni passati o senza programmazione.
 """
 
 from __future__ import annotations
 
+import json
 import re
 import unicodedata
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 from typing import Any
 
+import pytz
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse, PlainTextResponse, Response
 from fastapi.templating import Jinja2Templates
@@ -22,11 +31,16 @@ from starlette.requests import Request
 from config import settings
 from core.pipeline import today
 from database.cache import CacheSnapshot
+from scrapers import ALL_SCRAPERS
 from web import web_utils
 
 templates = Jinja2Templates(directory="web/templates")
 
 router = APIRouter(tags=["site"])
+
+_TZ = pytz.timezone(settings.timezone)
+_SITE_NAME = "BOS // Bologna on Screen"
+_GET_HEAD = ["GET", "HEAD"]
 
 # Unica fonte di verita' per le etichette giorno/mese in italiano, condivisa
 # dal rendering pagina intera e dal frammento /partials/{date}.
@@ -253,6 +267,118 @@ def _build_film_list(
     return film_list, genres_sorted, cinema_names_sorted
 
 
+def _day_label(d: date) -> str:
+    """ "mercoledi' 7 ottobre": per title, description e h1."""
+    weekday = _DAY_MAP[d.strftime("%A")].lower()
+    return f"{weekday} {d.day} {_MONTH_MAP[d.strftime('%B')].lower()}"
+
+
+def _seo_title(target: date) -> str:
+    label = _day_label(target)
+    if target == today():
+        return f"Cinema a Bologna oggi, {label}: film e orari | BOS"
+    return f"Cinema a Bologna {label}: film e orari | BOS"
+
+
+def _seo_description(target: date, film_count: int) -> str:
+    when = "oggi" if target == today() else _day_label(target)
+    circuits = ", ".join(cls.name for cls in ALL_SCRAPERS[:-1])
+    circuits += f" e {ALL_SCRAPERS[-1].name}"
+    if film_count:
+        return (
+            f"{film_count} film in programmazione a Bologna {when}: "
+            f"tutti gli orari di {circuits}."
+        )
+    return f"Programmazione dei cinema di Bologna {when}: {circuits}."
+
+
+def _page_path(target: date) -> str:
+    """Path canonico: oggi e' "/", gli altri giorni "/YYYY-MM-DD"."""
+    return "/" if target == today() else f"/{target.isoformat()}"
+
+
+def _jsonld(request: Request, target: date, films: list[dict]) -> str:
+    """JSON-LD schema.org: il sito + un ScreeningEvent per ogni orario.
+
+    L'indirizzo e' solo provincia/paese: le sale non hanno (ancora) un
+    indirizzo nei dati, e uno inventato sarebbe peggio di uno parziale.
+    """
+    graph: list[dict[str, Any]] = [
+        {
+            "@type": "WebSite",
+            "name": _SITE_NAME,
+            "url": web_utils.absolute_url(request, "/"),
+            "inLanguage": "it-IT",
+        }
+    ]
+    page_url = web_utils.absolute_url(request, _page_path(target))
+    theater_ids: dict[str, str] = {}
+
+    def theater_ref(name: str) -> dict[str, str]:
+        """Sala descritta una volta sola, poi richiamata per @id."""
+        if name not in theater_ids:
+            theater_ids[name] = f"{page_url}#sala-{len(theater_ids)}"
+            graph.append(
+                {
+                    "@type": "MovieTheater",
+                    "@id": theater_ids[name],
+                    "name": name,
+                    "address": {
+                        "@type": "PostalAddress",
+                        "addressRegion": "BO",
+                        "addressCountry": "IT",
+                    },
+                }
+            )
+        return {"@id": theater_ids[name]}
+
+    for i, film in enumerate(films):
+        # Il film e' descritto una volta sola e ogni orario lo richiama per
+        # @id: ripeterlo per proiezione triplicava il peso del JSON-LD.
+        movie_id = f"{page_url}#film-{i}"
+        movie: dict[str, Any] = {
+            "@type": "Movie",
+            "@id": movie_id,
+            "name": film["titolo"],
+        }
+        if film["poster_url"]:
+            movie["image"] = film["poster_url"]
+        directors = [d.strip() for d in (film["regista"] or "").split(",")]
+        if any(directors):
+            movie["director"] = [{"@type": "Person", "name": d} for d in directors if d]
+        if film["runtime"]:
+            movie["duration"] = f"PT{film['runtime']}M"
+        if film["genre"]:
+            movie["genre"] = [g.strip() for g in film["genre"].split("/") if g.strip()]
+        graph.append(movie)
+
+        for cinema in film["cinemas"]:
+            for t in cinema["times"]:
+                try:
+                    hh, mm = (int(x) for x in t["ora"].split(":"))
+                    start = _TZ.localize(datetime.combine(target, time(hh, mm)))
+                except ValueError:
+                    continue
+                event: dict[str, Any] = {
+                    "@type": "ScreeningEvent",
+                    "name": film["titolo"],
+                    "startDate": start.isoformat(),
+                    "eventStatus": "https://schema.org/EventScheduled",
+                    "eventAttendanceMode": (
+                        "https://schema.org/OfflineEventAttendanceMode"
+                    ),
+                    "location": theater_ref(cinema["name"]),
+                    "workPresented": {"@id": movie_id},
+                }
+                if t["url"]:
+                    event["offers"] = {"@type": "Offer", "url": t["url"]}
+                graph.append(event)
+
+    payload = {"@context": "https://schema.org", "@graph": graph}
+    # "</" spezzato: un titolo con "</script>" non deve chiudere il tag.
+    return json.dumps(payload, ensure_ascii=False).replace("</", "<\\/")
+
+
 def _build_day_context(target: date) -> dict[str, Any]:
     """Contesto Jinja per un giorno: usato sia dalla pagina piena
     (_schedule_page) sia dal frammento servito da /partials/{date_param},
@@ -265,6 +391,8 @@ def _build_day_context(target: date) -> dict[str, Any]:
         "today": today(),
         "day_map": _DAY_MAP,
         "month_map": _MONTH_MAP,
+        "day_label": _day_label(target),
+        "seo_title": _seo_title(target),
     }
     if snapshot is None:
         context.update(
@@ -298,16 +426,31 @@ def _date_params(target: date) -> dict[str, str]:
     return {"prev": prev, "next": nxt, "label": label}
 
 
+def _seo_context(request: Request, target: date, films: list[dict]) -> dict[str, Any]:
+    # I giorni passati restano navigabili ma non indicizzati: orari scaduti,
+    # e pagine che crescerebbero all'infinito. Idem i giorni senza dati.
+    indexable = target >= today() and bool(films)
+    return {
+        "title": _seo_title(target),
+        "description": _seo_description(target, len(films)),
+        "canonical": web_utils.absolute_url(request, _page_path(target)),
+        "image": web_utils.absolute_url(request, "/static/og-image.jpg"),
+        "robots": "" if indexable else "noindex, follow",
+        "jsonld": _jsonld(request, target, films) if indexable else "",
+    }
+
+
 def _schedule_page(request: Request, target: date) -> HTMLResponse:
     context = _build_day_context(target)
     context.update(_date_params(target))
     context["refresh_interval_minutes"] = settings.refresh_interval_minutes
+    context["seo"] = _seo_context(request, target, context["films"])
     return templates.TemplateResponse(
         request=request, name="schedule.html", context=context
     )
 
 
-@router.get("/", response_class=HTMLResponse)
+@router.api_route("/", methods=_GET_HEAD, response_class=HTMLResponse)
 def schedule_today(request: Request) -> HTMLResponse:
     return _schedule_page(request, today())
 
@@ -338,29 +481,59 @@ def schedule_partial(request: Request, date_param: str) -> HTMLResponse:
 # cui sono registrate), trattandoli come una data non valida.
 
 
-@router.get("/robots.txt", response_class=PlainTextResponse, include_in_schema=False)
+@router.api_route(
+    "/robots.txt",
+    methods=_GET_HEAD,
+    response_class=PlainTextResponse,
+    include_in_schema=False,
+)
 def robots_txt(request: Request) -> PlainTextResponse:
-    body = f"User-agent: *\nAllow: /\nSitemap: {request.url_for('sitemap_xml')}\n"
+    # /partials/ duplica le pagine dei giorni; API e Swagger non sono pagine.
+    body = (
+        "User-agent: *\n"
+        "Disallow: /partials/\n"
+        "Disallow: /api/\n"
+        "Disallow: /docs\n"
+        "Disallow: /redoc\n"
+        "Disallow: /openapi.json\n"
+        f"Sitemap: {web_utils.absolute_url(request, '/sitemap.xml')}\n"
+    )
     return PlainTextResponse(body)
 
 
-@router.get("/sitemap.xml", response_class=Response, include_in_schema=False)
+@router.api_route(
+    "/sitemap.xml",
+    methods=_GET_HEAD,
+    response_class=Response,
+    include_in_schema=False,
+)
 def sitemap_xml(request: Request) -> Response:
+    """Solo le pagine indicizzabili: oggi ("/") e i prossimi giorni con
+    programmazione, con lastmod = ultimo aggiornamento della cache."""
     today_ = today()
-    urls = [str(request.url_for("schedule_today"))] + [
-        str(
-            request.url_for(
-                "schedule_date", date_param=(today_ + timedelta(days=i)).isoformat()
-            )
-        )
-        for i in range(7)
-    ]
-    entries = "".join(f"<url><loc>{u}</loc></url>" for u in urls)
-    xml = f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{entries}</urlset>'
+    entries = []
+    for i in range(7):
+        d = today_ + timedelta(days=i)
+        snapshot = web_utils.get_cache().load(d)
+        if snapshot is None or snapshot.is_empty:
+            continue
+        loc = web_utils.absolute_url(request, _page_path(d))
+        lastmod = snapshot.updated_at.isoformat(timespec="seconds")
+        entries.append(f"<url><loc>{loc}</loc><lastmod>{lastmod}</lastmod></url>")
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        f"{''.join(entries)}</urlset>"
+    )
     return Response(content=xml, media_type="application/xml")
 
 
-@router.get("/{date_param}", response_class=HTMLResponse, name="schedule_date")
+@router.api_route(
+    "/{date_param}",
+    methods=_GET_HEAD,
+    response_class=HTMLResponse,
+    name="schedule_date",
+)
 def schedule_date(request: Request, date_param: str) -> HTMLResponse:
     try:
         target = web_utils.parse_date(date_param)

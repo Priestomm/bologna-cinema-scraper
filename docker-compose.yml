@@ -4,8 +4,12 @@ services:
     container_name: cinema-bologna-bot
     restart: unless-stopped
     env_file: .env
+    environment:
+      # Dentro il container deve ascoltare su tutte le interfacce; e' la
+      # mappatura qui sotto a esporlo solo su localhost (per nginx).
+      WEB_HOST: 0.0.0.0
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs

@@ -9,6 +9,9 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+from starlette.requests import Request
+
+from config import settings
 from core.pipeline import today
 from database import Cache
 
@@ -43,3 +46,13 @@ DAYS_FUTURE = 14
 def in_window(d: date) -> bool:
     t = today()
     return t - timedelta(days=DAYS_PAST) <= d <= t + timedelta(days=DAYS_FUTURE)
+
+
+def absolute_url(request: Request, path: str) -> str:
+    """URL assoluto pubblico per `path` (che inizia con "/").
+
+    Usa settings.public_base_url quando c'e': dietro nginx la richiesta
+    arriva come http://127.0.0.1:8080 e request.url darebbe quello.
+    """
+    base = settings.public_base_url or str(request.base_url).rstrip("/")
+    return base + path

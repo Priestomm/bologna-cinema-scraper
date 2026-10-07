@@ -1,7 +1,9 @@
 """Entry point dell'applicazione.
 
 Uso:
-    python main.py            # avvia il bot + scheduler (modalita' normale)
+    python main.py            # bot + scheduler + sito in un solo processo (Docker)
+    python main.py --bot      # solo bot + scheduler (produzione, con --web a parte)
+    python main.py --web      # solo sito + API (produzione, con --bot a parte)
     python main.py --scrape   # esegue solo un ciclo di scraping e termina
     python main.py --broadcast# esegue uno scraping e invia il messaggio (dry-run)
 """
@@ -79,14 +81,30 @@ def main() -> int:
         action="store_true",
         help="Scrape + invio messaggio nella chat configurata (test)",
     )
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--bot",
+        action="store_true",
+        help="Solo bot + scheduler, senza server web (che gira con --web)",
+    )
+    mode.add_argument(
+        "--web",
+        action="store_true",
+        help="Solo server web (mini-sito + API), senza bot ne' scheduler",
+    )
     args = parser.parse_args()
 
+    if args.web:
+        from web.server import run_api_server
+
+        run_api_server()
+        return 0
     if args.scrape:
         return _run_scrape_only(days=args.days)
     if args.broadcast:
         return _run_broadcast_test()
 
-    bot = CinemaBot()
+    bot = CinemaBot(start_web=not args.bot)
     bot.run()
     return 0
 

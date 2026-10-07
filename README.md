@@ -60,7 +60,9 @@ Le chiavi si ottengono da:
 | `ALERT_AFTER_FAILURES` | 3 | Fallimenti consecutivi di un circuito prima dell'alert |
 | `BACKUP_DIR` / `BACKUP_KEEP` | `data/backups` / 14 | Cartella e numero di backup notturni della cache |
 | `BACKUP_CRON_HOUR` | 3 | Ora del backup notturno |
-| `HEALTH_PORT` | 8080 | Porta del server web (0 = disabilitato) |
+| `HEALTH_PORT` | 8080 | Porta del server web |
+| `WEB_HOST` | `127.0.0.1` | Interfaccia del server web: solo localhost dietro nginx; `0.0.0.0` in Docker |
+| `PUBLIC_BASE_URL` | *(vuoto)* | URL pubblico (`https://bolognaonscreen.it`) per canonical, sitemap, og:image; vuoto = URL della richiesta |
 | `REFRESH_INTERVAL_MINUTES` | 15 | Intervallo scraping periodico (scheduler) e rilettura cache lato mini-sito |
 
 ## Uso
@@ -79,10 +81,28 @@ make broadcast         # test invio reale
 # Docker
 docker compose up -d
 
-# PM2
+# PM2: due processi, bot (main.py --bot) e sito (main.py --web)
 pm2 start ecosystem.config.js
 pm2 save && pm2 startup
 ```
+
+In produzione bot e sito girano in due processi PM2 separati (`cinema-bologna-bot`,
+`cinema-bologna-web`) che condividono la cache SQLite in modalita' WAL: se il sito
+cade il bot continua, e viceversa. `python main.py` senza flag fa ancora tutto in un
+solo processo (usato da Docker).
+
+Migrazione dal vecchio processo unico:
+
+```bash
+git pull && .venv/bin/pip install -r requirements.txt
+# nel .env: PUBLIC_BASE_URL=https://bolognaonscreen.it (e WEB_HOST se serve)
+grep proxy_pass /etc/nginx/sites-enabled/*   # deve puntare a 127.0.0.1 o localhost
+pm2 delete cinema-bologna-bot
+pm2 start ecosystem.config.js && pm2 save
+```
+
+Davanti c'e' nginx con HTTPS: vedi `deploy/nginx.conf.example` per redirect da
+`www`, rate limit e header del proxy. La porta 8080 non va esposta su internet.
 
 Il sito e' attualmente ospitato su Oracle Cloud (always-free tier) con PM2.
 

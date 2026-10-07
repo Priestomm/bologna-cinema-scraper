@@ -38,6 +38,15 @@ class Settings:
     log_level: str
     refresh_interval_minutes: int = 15
     health_port: int = 8080
+    # Interfaccia su cui ascolta il server web. In produzione c'e' nginx
+    # davanti: 127.0.0.1 evita che la porta sia raggiungibile da internet
+    # scavalcando il proxy. In Docker va 0.0.0.0 (vedi docker-compose.yml).
+    web_host: str = "127.0.0.1"
+    # URL pubblico del sito (es. https://bolognaonscreen.it), usato per
+    # canonical, sitemap, robots.txt e og:image. Dietro nginx l'app vede
+    # http://127.0.0.1:8080: senza questo gli URL assoluti escono sbagliati.
+    # Vuoto = si usa l'URL della richiesta (sviluppo locale).
+    public_base_url: str = ""
     timezone: str = "Europe/Rome"
     tmdb_api_key: str = ""
     # Timeout complessivo di uno scraping multi-giorno (piu' richieste HTTP,
@@ -76,6 +85,8 @@ def _load() -> Settings:
         log_level=_env("LOG_LEVEL", "INFO"),
         refresh_interval_minutes=_int("REFRESH_INTERVAL_MINUTES", 15),
         health_port=_int("HEALTH_PORT", 8080),
+        web_host=_env("WEB_HOST", "127.0.0.1"),
+        public_base_url=_env("PUBLIC_BASE_URL").rstrip("/"),
         tmdb_api_key=_env("TMDB_API_KEY"),
         scraper_total_timeout=_int("SCRAPER_TOTAL_TIMEOUT", 90),
         refresh_token=_env("REFRESH_TOKEN"),

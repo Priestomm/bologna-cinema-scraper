@@ -35,7 +35,7 @@ router = APIRouter(tags=["api"])
 # ---- health check -----------------------------------------------------
 
 
-@router.get("/health")
+@router.api_route("/health", methods=["GET", "HEAD"])
 def health() -> dict[str, Any]:
     """Stato del bot: uptime, conteggio film, avvisi."""
     try:

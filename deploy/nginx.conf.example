@@ -1,0 +1,55 @@
+# Esempio di configurazione nginx per bolognaonscreen.it (produzione Oracle).
+# Da confrontare con /etc/nginx/sites-enabled/* sul server: i certificati
+# (righe ssl_*) li gestisce certbot, qui sono solo indicativi.
+#
+# Cosa aggiunge rispetto a un proxy minimale:
+# - www -> dominio nudo con 301 (oggi www risponde 200: contenuto duplicato)
+# - rate limit per IP davanti all'app
+# - proxy verso 127.0.0.1: l'app ascolta solo li' (WEB_HOST), la porta 8080
+#   non va aperta nella security list Oracle ne' in iptables
+
+# Nel blocco http (es. /etc/nginx/conf.d/ratelimit.conf):
+limit_req_zone $binary_remote_addr zone=bos:10m rate=10r/s;
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name bolognaonscreen.it www.bolognaonscreen.it;
+    return 301 https://bolognaonscreen.it$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name www.bolognaonscreen.it;
+    ssl_certificate     /etc/letsencrypt/live/bolognaonscreen.it/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/bolognaonscreen.it/privkey.pem;
+    return 301 https://bolognaonscreen.it$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name bolognaonscreen.it;
+    ssl_certificate     /etc/letsencrypt/live/bolognaonscreen.it/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/bolognaonscreen.it/privkey.pem;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json application/xml image/svg+xml;
+
+    location / {
+        limit_req zone=bos burst=40 nodelay;
+        limit_req_status 429;
+
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /static/ {
+        proxy_pass http://127.0.0.1:8080;
+        expires 30d;
+    }
+}

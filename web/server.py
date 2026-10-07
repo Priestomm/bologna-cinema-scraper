@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import threading
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -43,20 +44,33 @@ app.include_router(api.router)
 app.include_router(site.router)
 
 
-def start_api_server() -> threading.Thread | None:
-    """Avvia il server FastAPI in un thread daemon."""
-    import uvicorn
-
-    port = settings.health_port
+def _uvicorn_server() -> uvicorn.Server:
     config = uvicorn.Config(
         app,
-        host="0.0.0.0",
-        port=port,
+        host=settings.web_host,
+        port=settings.health_port,
         log_level="warning",
         access_log=False,
     )
-    server = uvicorn.Server(config)
+    return uvicorn.Server(config)
+
+
+def start_api_server() -> threading.Thread:
+    """Avvia il server in un thread daemon dentro il processo del bot
+    (modalita' tutto-in-uno: `python main.py` senza flag, usata da Docker)."""
+    server = _uvicorn_server()
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()
-    logger.info("API server in ascolto su http://0.0.0.0:%d", port)
+    logger.info(
+        "API server in ascolto su http://%s:%d", settings.web_host, settings.health_port
+    )
     return thread
+
+
+def run_api_server() -> None:
+    """Avvia il server in primo piano, come processo a se' (`main.py --web`):
+    se muore, PM2 lo vede e lo riavvia senza toccare il bot."""
+    logger.info(
+        "API server in ascolto su http://%s:%d", settings.web_host, settings.health_port
+    )
+    _uvicorn_server().run()

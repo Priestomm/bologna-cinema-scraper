@@ -55,6 +55,10 @@ class Cache:
 
     def _init_schema(self) -> None:
         with self._conn() as conn:
+            # WAL: bot (che scrive a ogni refresh) e sito girano in processi
+            # separati; cosi' le letture del sito non si bloccano durante
+            # le scritture. L'impostazione resta salvata nel file.
+            conn.execute("PRAGMA journal_mode=WAL")
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS snapshots (

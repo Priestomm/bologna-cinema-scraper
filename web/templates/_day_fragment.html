@@ -7,4 +7,6 @@
 <div data-slot="filter-items">{{ day.filter_items(cinema_names) }}</div>
 <div data-slot="genre-items">{{ day.genre_items(genres) }}</div>
 <div data-slot="grid">{{ day.film_grid(films) }}</div>
+<div data-slot="title">{{ seo_title }}</div>
+<div data-slot="day-label">{{ day_label }}</div>
 <div data-slot="updated-at">{{ updated_at if updated_at else "—" }}</div>

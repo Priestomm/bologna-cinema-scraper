@@ -4,34 +4,36 @@
    di verita' condivisa anche con /partials/{date}. #}
 
 {% set d_obj = date_obj if date_obj is defined else today %}
-{% set is_today = (d_obj == today) %}
-{% set page_day_label = "Oggi" if is_today else (day_map[d_obj.strftime("%A")] ~ " " ~ d_obj.day ~ " " ~ month_map[d_obj.strftime("%B")]|capitalize) %}
-{% set tab_title = "BOS - BOLOGNA ON SCREEN" %}
-{% set page_title = "BOS // Bologna on Screen — " ~ page_day_label %}
-{% set page_description = "Programmazione cinematografica di Bologna per " ~ page_day_label ~ ": Cineteca, Pop Up Cinema, Circuito Cinema, Nosadella, UCI Meridiana." %}
-{% set page_image = request.url_for('static', path='og-image.jpg') %}
+{# Title, description, canonical, robots e JSON-LD arrivano da
+   web/site.py (_seo_context): URL assoluti da PUBLIC_BASE_URL. #}
 <html lang="it">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ tab_title }}</title>
-<meta name="description" content="{{ page_description }}">
+<title>{{ seo.title }}</title>
+<meta name="description" content="{{ seo.description }}">
+{% if seo.robots %}<meta name="robots" content="{{ seo.robots }}">
+{% endif %}
 <meta name="theme-color" content="#FF3500">
-<link rel="canonical" href="{{ request.url }}">
+<link rel="canonical" href="{{ seo.canonical }}">
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 
 <meta property="og:type" content="website">
+<meta property="og:locale" content="it_IT">
 <meta property="og:site_name" content="BOS // Bologna on Screen">
-<meta property="og:title" content="{{ page_title }}">
-<meta property="og:description" content="{{ page_description }}">
-<meta property="og:url" content="{{ request.url }}">
-<meta property="og:image" content="{{ page_image }}">
+<meta property="og:title" content="{{ seo.title }}">
+<meta property="og:description" content="{{ seo.description }}">
+<meta property="og:url" content="{{ seo.canonical }}">
+<meta property="og:image" content="{{ seo.image }}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="{{ page_title }}">
-<meta name="twitter:description" content="{{ page_description }}">
-<meta name="twitter:image" content="{{ page_image }}">
+<meta name="twitter:title" content="{{ seo.title }}">
+<meta name="twitter:description" content="{{ seo.description }}">
+<meta name="twitter:image" content="{{ seo.image }}">
+{% if seo.jsonld %}
+<script type="application/ld+json">{{ seo.jsonld|safe }}</script>
+{% endif %}
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -174,12 +176,23 @@ body::after {
 /* === HERO === */
 .hero { margin-bottom: 16px; }
 
-.hero h2 {
+.hero h1 {
   font-size: 1.1rem;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--text-gray);
   letter-spacing: -0.5px;
+}
+
+/* Testo per crawler e screen reader, invisibile a schermo: completa l'h1
+   ("// PROGRAMMAZIONE CINEMA") con citta' e giorno. */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 /* === DATE BAR === */
@@ -1092,7 +1105,7 @@ body::after {
 
   <!-- HERO -->
   <section class="hero">
-    <h2>// PROGRAMMAZIONE CINEMA</h2>
+    <h1>// PROGRAMMAZIONE CINEMA<span class="visually-hidden"> a Bologna, <span id="heroDay">{{ day_label }}</span></span></h1>
   </section>
 
   <!-- DATE BAR -->
@@ -1212,6 +1225,13 @@ body::after {
         document.getElementById('genreMenu').innerHTML = slotHtml(tmp.content, 'genre-items');
         document.getElementById('filmGrid').innerHTML = slotHtml(tmp.content, 'grid');
         document.getElementById('updatedAt').innerHTML = slotHtml(tmp.content, 'updated-at');
+        // Title e h1 contengono il giorno: senza questo la scheda del
+        // browser resterebbe sul giorno caricato per primo.
+        var titleSlot = tmp.content.querySelector('[data-slot="title"]');
+        if (titleSlot) document.title = titleSlot.textContent;
+        var daySlot = tmp.content.querySelector('[data-slot="day-label"]');
+        var heroDay = document.getElementById('heroDay');
+        if (daySlot && heroDay) heroDay.textContent = daySlot.textContent;
 
         // I filtri cinema/genere si resettano su "Tutti" ad ogni cambio
         // giorno (le voci sono rigenerate e potrebbero non includere piu'
