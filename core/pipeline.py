@@ -16,6 +16,7 @@ from datetime import date, datetime, timedelta
 import pytz
 
 from config import settings
+from core.alerts import circuit_health
 from core.timeslots import parse_time
 from database import Cache, CacheSnapshot
 from scrapers import ALL_SCRAPERS, MultiDayResult, ScraperResult
@@ -184,13 +185,16 @@ def run_multi_day_pipeline(
     for r in results:
         if not r.success:
             failures[r.slug] = f"Circuito non disponibile: {r.name} ({r.error})."
+            circuit_health.record(r.slug, r.name, r.error or "errore sconosciuto")
         elif not any(r.by_date.values()):
             failures[r.slug] = (
                 f"Nessuna proiezione trovata per {r.name} nei prossimi "
                 f"{days} giorni (controlla i selettori)."
             )
+            circuit_health.record(r.slug, r.name, "nessuna proiezione trovata")
         else:
             ok.append(r)
+            circuit_health.record(r.slug, r.name, None)
 
     _enrich([s for r in ok for screenings in r.by_date.values() for s in screenings])
 

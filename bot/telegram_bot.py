@@ -20,6 +20,8 @@ from telegram.ext import (
 
 from config import settings
 from core import CinemaScheduler, run_multi_day_pipeline, run_scrape_pipeline, today
+from core.alerts import circuit_health
+from core.backup import backup_cache
 from database import Cache
 from database.cache import CacheSnapshot
 from utils import get_logger
@@ -58,6 +60,7 @@ class CinemaBot:
         self._scheduler = CinemaScheduler(
             on_scrape=self._job_scrape,
             on_broadcast=self._job_broadcast,
+            on_backup=self._job_backup,
         )
         self._register_handlers()
 
@@ -150,6 +153,28 @@ class CinemaBot:
             await asyncio.to_thread(run_multi_day_pipeline, days=7)
         except Exception:
             logger.exception("Job scrape fallito (l'errore e' isolato dal bot)")
+        await self._send_alerts()
+
+    async def _send_alerts(self) -> None:
+        """Manda all'admin gli alert accumulati (anche da /api/refresh)."""
+        for alert in circuit_health.drain():
+            logger.warning("Alert circuito: %s %s", alert.kind, alert.name)
+            if not settings.admin_chat_id:
+                continue
+            try:
+                await self._app.bot.send_message(
+                    chat_id=settings.admin_chat_id,
+                    text=alert.to_html(),
+                    parse_mode=ParseMode.HTML,
+                )
+            except Exception:
+                logger.exception("Invio alert fallito")
+
+    async def _job_backup(self) -> None:
+        try:
+            await asyncio.to_thread(backup_cache, self._cache)
+        except Exception:
+            logger.exception("Backup cache fallito")
 
     async def _job_broadcast(self) -> None:
         logger.info("Job broadcast avviato verso chat %s", settings.telegram_chat_id)

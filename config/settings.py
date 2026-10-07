@@ -46,6 +46,16 @@ class Settings:
     # Token richiesto da POST /api/refresh (header X-Refresh-Token).
     # Vuoto = endpoint disabilitato.
     refresh_token: str = ""
+    # Chat Telegram (privata, NON quella del broadcast) per gli alert sui
+    # circuiti che falliscono. Vuoto = alert solo nei log.
+    admin_chat_id: str = ""
+    # Fallimenti consecutivi di un circuito prima dell'alert (3 = 45 minuti
+    # col refresh di default ogni 15).
+    alert_after_failures: int = 3
+    # Backup notturno della cache SQLite: cartella e quante copie tenere.
+    backup_dir: Path = PROJECT_ROOT / "data" / "backups"
+    backup_keep: int = 14
+    backup_cron_hour: int = 3
 
 
 def _load() -> Settings:
@@ -69,6 +79,11 @@ def _load() -> Settings:
         tmdb_api_key=_env("TMDB_API_KEY"),
         scraper_total_timeout=_int("SCRAPER_TOTAL_TIMEOUT", 90),
         refresh_token=_env("REFRESH_TOKEN"),
+        admin_chat_id=_env("ADMIN_CHAT_ID"),
+        alert_after_failures=_int("ALERT_AFTER_FAILURES", 3),
+        backup_dir=PROJECT_ROOT / _env("BACKUP_DIR", "data/backups"),
+        backup_keep=_int("BACKUP_KEEP", 14),
+        backup_cron_hour=_int("BACKUP_CRON_HOUR", 3),
     )
 
 

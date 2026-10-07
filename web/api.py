@@ -55,8 +55,11 @@ def health() -> dict[str, Any]:
             "warnings": len(snapshot.warnings),
             "uptime_seconds": int(time.time() - _start_time),
         }
-    except Exception as exc:  # noqa: BLE001
-        return {"status": "error", "message": str(exc)}
+    except Exception:
+        # Il dettaglio va nei log, non a chiunque interroghi /health:
+        # un'eccezione puo' contenere path, query o configurazione.
+        logger.exception("Health check fallito")
+        return {"status": "error"}
 
 
 # ---- API endpoints ----------------------------------------------------

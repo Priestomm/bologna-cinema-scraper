@@ -54,6 +54,12 @@ Le chiavi si ottengono da:
 | `SCRAPE_CRON_HOUR` / `MINUTE` | 7:30 | Orario scraping giornaliero |
 | `BROADCAST_CRON_HOUR` / `MINUTE` | 8:00 | Orario broadcast Telegram |
 | `SCRAPER_TIMEOUT` | 15 | Timeout per singolo scraper (secondi) |
+| `SCRAPER_TOTAL_TIMEOUT` | 90 | Timeout complessivo di uno scraping multi-giorno per circuito (secondi) |
+| `REFRESH_TOKEN` | *(vuoto)* | Token per `POST /api/refresh`; vuoto = endpoint disabilitato |
+| `ADMIN_CHAT_ID` | *(vuoto)* | Chat privata per gli alert sui circuiti in errore; vuoto = solo log |
+| `ALERT_AFTER_FAILURES` | 3 | Fallimenti consecutivi di un circuito prima dell'alert |
+| `BACKUP_DIR` / `BACKUP_KEEP` | `data/backups` / 14 | Cartella e numero di backup notturni della cache |
+| `BACKUP_CRON_HOUR` | 3 | Ora del backup notturno |
 | `HEALTH_PORT` | 8080 | Porta del server web (0 = disabilitato) |
 | `REFRESH_INTERVAL_MINUTES` | 15 | Intervallo scraping periodico (scheduler) e rilettura cache lato mini-sito |
 
@@ -79,6 +85,28 @@ pm2 save && pm2 startup
 ```
 
 Il sito e' attualmente ospitato su Oracle Cloud (always-free tier) con PM2.
+
+#### Backup
+
+Ogni notte (`BACKUP_CRON_HOUR`) la cache viene copiata in
+`data/backups/cache-YYYY-MM-DD.sqlite3`, tenendo le ultime `BACKUP_KEEP` copie.
+Stanno sullo stesso disco: proteggono da corruzione e migrazioni sbagliate, non
+dalla perdita della VM. Per una copia fuori dalla macchina, un cron sul server
+(dopo il backup) verso Object Storage, ad esempio con `rclone`:
+
+```bash
+# crontab -e
+30 3 * * * rclone copy ~/scraper-cinema-bologna/data/backups oci:cinema-backups
+```
+
+Per ripristinare: fermare il bot, copiare il backup su `data/cache.sqlite3`, riavviare.
+
+#### Alert
+
+Con `ADMIN_CHAT_ID` impostato, il bot scrive in quella chat quando un circuito
+fallisce `ALERT_AFTER_FAILURES` refresh di fila (errore, timeout o zero
+proiezioni) e quando torna a funzionare. Nel frattempo il sito continua a
+mostrare gli orari dell'ultimo aggiornamento riuscito, con un avviso.
 
 ### Health check
 

@@ -324,6 +324,8 @@ def schedule_partial(request: Request, date_param: str) -> HTMLResponse:
         target = web_utils.parse_date(date_param)
     except ValueError:
         return HTMLResponse("Data non valida", status_code=400)
+    if not web_utils.in_window(target):
+        return HTMLResponse("Data fuori programmazione", status_code=404)
     context = _build_day_context(target)
     return templates.TemplateResponse(
         request=request, name="_day_fragment.html", context=context
@@ -364,4 +366,6 @@ def schedule_date(request: Request, date_param: str) -> HTMLResponse:
         target = web_utils.parse_date(date_param)
     except ValueError:
         return HTMLResponse("Data non valida", status_code=400)
+    if not web_utils.in_window(target):
+        return HTMLResponse("Data fuori programmazione", status_code=404)
     return _schedule_page(request, target)

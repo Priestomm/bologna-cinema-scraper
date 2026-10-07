@@ -118,6 +118,22 @@ class TestMultiDayFallback:
         assert _titles(snap) == {"Film alpha", "Film beta"}
 
 
+def test_la_pipeline_alimenta_gli_alert(cache: Cache) -> None:
+    from core.alerts import CircuitHealth
+
+    health = CircuitHealth(threshold=1)
+    _Beta.behaviour = "error"
+    with patch.object(pipeline, "circuit_health", health):
+        pipeline.run_multi_day_pipeline(START, days=1)
+        _Beta.behaviour = "ok"
+        pipeline.run_multi_day_pipeline(START, days=1)
+
+    assert [(a.kind, a.name) for a in health.drain()] == [
+        ("down", "Beta"),
+        ("recovered", "Beta"),
+    ]
+
+
 class TestFallbackOrariPassati:
     def _previous(self, d: date) -> CacheSnapshot:
         return CacheSnapshot(

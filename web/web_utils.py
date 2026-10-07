@@ -1,14 +1,15 @@
 """Utility condivise tra web/api.py e web/site.py.
 
-Solo le due cose che servono davvero a entrambi: l'accesso alla Cache
+Solo le cose che servono davvero a entrambi: l'accesso alla Cache
 condivisa (un'unica istanza, letta dagli stessi path indipendentemente da
 quale router gestisce la richiesta) e il parsing di una data da URL.
 """
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
+from core.pipeline import today
 from database import Cache
 
 _cache: Cache | None = None
@@ -30,3 +31,15 @@ def parse_date(s: str) -> date:
     if len(parts) != 3:
         raise ValueError
     return date(int(parts[0]), int(parts[1]), int(parts[2]))
+
+
+# Finestra delle date servite dal sito: lo storico in cache e i giorni gia'
+# scrapati, piu' un margine. Fuori da qui e' 404, cosi' un crawler non puo'
+# generare pagine all'infinito ("/1970-01-01", "/9999-12-31", ...).
+DAYS_PAST = 90
+DAYS_FUTURE = 14
+
+
+def in_window(d: date) -> bool:
+    t = today()
+    return t - timedelta(days=DAYS_PAST) <= d <= t + timedelta(days=DAYS_FUTURE)

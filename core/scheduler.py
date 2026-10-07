@@ -1,4 +1,5 @@
-"""Scheduler interno: 07:30 scraping, 08:00 broadcast, refresh periodico.
+"""Scheduler interno: 07:30 scraping, 08:00 broadcast, refresh periodico,
+backup notturno della cache.
 
 Tutto orario locale Europe/Rome. Gli scheduler non si sovrappongono:
 il broadcast legge dalla cache popolata dal job di scraping.
@@ -24,9 +25,11 @@ class CinemaScheduler:
         self,
         on_scrape: Callable[[], Awaitable[None]],
         on_broadcast: Callable[[], Awaitable[None]],
+        on_backup: Callable[[], Awaitable[None]],
     ) -> None:
         self._on_scrape = on_scrape
         self._on_broadcast = on_broadcast
+        self._on_backup = on_backup
         self._scheduler = AsyncIOScheduler(timezone=settings.timezone)
 
     def start(self) -> None:
@@ -65,15 +68,28 @@ class CinemaScheduler:
             max_instances=1,
             coalesce=True,
         )
+        self._scheduler.add_job(
+            self._on_backup,
+            CronTrigger(
+                hour=settings.backup_cron_hour,
+                minute=0,
+                timezone=settings.timezone,
+            ),
+            id="daily_backup",
+            replace_existing=True,
+            max_instances=1,
+            coalesce=True,
+        )
         self._scheduler.start()
         logger.info(
             "Scheduler avviato: scrape %02d:%02d, broadcast %02d:%02d, "
-            "refresh ogni %d min (%s)",
+            "refresh ogni %d min, backup %02d:00 (%s)",
             settings.scrape_cron_hour,
             settings.scrape_cron_minute,
             settings.broadcast_cron_hour,
             settings.broadcast_cron_minute,
             settings.refresh_interval_minutes,
+            settings.backup_cron_hour,
             settings.timezone,
         )
 

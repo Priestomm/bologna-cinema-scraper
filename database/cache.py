@@ -131,6 +131,23 @@ class Cache:
             warnings=warnings,
         )
 
+    def backup(self, dest: Path) -> None:
+        """Copia consistente del database in `dest`.
+
+        Usa l'API di backup di SQLite invece di copiare il file: una copia
+        a meta' di una scrittura del refresh sarebbe corrotta.
+        """
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        src = sqlite3.connect(self.path)
+        try:
+            dst = sqlite3.connect(dest)
+            try:
+                src.backup(dst)
+            finally:
+                dst.close()
+        finally:
+            src.close()
+
     # ---- lettura ------------------------------------------------------
 
     def load(self, target_date: date) -> CacheSnapshot | None:

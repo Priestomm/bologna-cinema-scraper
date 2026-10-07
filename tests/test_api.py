@@ -173,9 +173,17 @@ class TestSchedulePartial:
         assert 'data-filter="rialto"' in body
 
     def test_empty_day(self, client: TestClient) -> None:
-        resp = client.get("/partials/2099-01-01")
+        from datetime import timedelta
+
+        from core.pipeline import today
+
+        empty = (today() + timedelta(days=10)).isoformat()
+        resp = client.get(f"/partials/{empty}")
         assert resp.status_code == 200
         assert "NESSUNA PROGRAMMAZIONE" in resp.text
+
+    def test_fuori_finestra(self, client: TestClient) -> None:
+        assert client.get("/partials/2099-01-01").status_code == 404
 
     def test_invalid_date(self, client: TestClient) -> None:
         resp = client.get("/partials/not-a-date")
@@ -291,3 +299,23 @@ class TestRefresh:
             },
         )
         assert resp.status_code == 400
+
+
+class TestFinestraDate:
+    @pytest.mark.parametrize("path", ["/2099-01-01", "/1970-01-01"])
+    def test_pagina_fuori_finestra(self, client: TestClient, path: str) -> None:
+        assert client.get(path).status_code == 404
+
+    def test_pagina_nella_finestra(self, client: TestClient) -> None:
+        from core.pipeline import today
+
+        assert client.get(f"/{today().isoformat()}").status_code == 200
+
+
+def test_health_non_espone_le_eccezioni(client: TestClient) -> None:
+    with patch(
+        "web.web_utils.get_cache",
+        side_effect=RuntimeError("/srv/segreto/cache.sqlite3 illeggibile"),
+    ):
+        resp = client.get("/health")
+    assert resp.json() == {"status": "error"}
