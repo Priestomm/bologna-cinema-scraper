@@ -78,20 +78,33 @@ make broadcast         # test invio reale
 ### Deploy
 
 ```bash
-# Docker
-docker compose up -d
+# Docker (produzione): due container, bot e sito
+docker compose up -d --build
 
-# PM2: due processi, bot (main.py --bot) e sito (main.py --web)
+# PM2 (alternativa senza Docker): due processi, bot (main.py --bot) e sito (main.py --web)
 pm2 start ecosystem.config.js
 pm2 save && pm2 startup
 ```
 
-In produzione bot e sito girano in due processi PM2 separati (`cinema-bologna-bot`,
-`cinema-bologna-web`) che condividono la cache SQLite in modalita' WAL: se il sito
-cade il bot continua, e viceversa. `python main.py` senza flag fa ancora tutto in un
-solo processo (usato da Docker).
+Bot e sito girano separati, come container Docker (`cinema-bologna-bot`,
+`cinema-bologna-web`) o come processi PM2 con gli stessi nomi, e condividono la
+cache SQLite in modalita' WAL: se il sito cade il bot continua, e viceversa.
+`python main.py` senza flag fa ancora tutto in un solo processo (sviluppo locale).
 
-Migrazione dal vecchio processo unico:
+Il sito e' pubblicato solo su `127.0.0.1:8080`, raggiungibile da nginx sulla stessa
+macchina: con `ports: "8080:8080"` Docker lo esporrebbe su internet scavalcando
+anche il firewall della VM.
+
+Aggiornamento con Docker:
+
+```bash
+git pull
+# solo la prima volta, nel .env: PUBLIC_BASE_URL=https://bolognaonscreen.it
+docker compose up -d --build
+docker compose ps        # cinema-bologna-bot e cinema-bologna-web "Up", il web "healthy"
+```
+
+Migrazione PM2 dal vecchio processo unico:
 
 ```bash
 git pull && .venv/bin/pip install -r requirements.txt

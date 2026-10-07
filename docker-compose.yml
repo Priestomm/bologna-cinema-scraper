@@ -1,18 +1,39 @@
+# Bot e sito in due container separati, dalla stessa immagine: se il sito
+# si pianta e termina, Docker riavvia solo lui e il bot continua (e viceversa).
+# Condividono ./data, dove sta la cache SQLite (in modalita' WAL): il bot la
+# scrive, il sito la legge.
+#
+# Deploy / aggiornamento:  git pull && docker compose up -d --build
+x-common: &common
+  build: .
+  image: cinema-bologna-bot
+  restart: unless-stopped
+  env_file: .env
+  volumes:
+    - ./data:/app/data
+    - ./logs:/app/logs
+
 services:
+  # Nome del servizio e del container invariati rispetto al vecchio setup a
+  # container unico: `docker compose up` lo aggiorna invece di trovarselo in
+  # conflitto.
   cinema-bot:
-    build: .
+    <<: *common
     container_name: cinema-bologna-bot
-    restart: unless-stopped
-    env_file: .env
+    command: ["python", "main.py", "--bot"]
+
+  cinema-web:
+    <<: *common
+    container_name: cinema-bologna-web
+    command: ["python", "main.py", "--web"]
     environment:
       # Dentro il container deve ascoltare su tutte le interfacce; e' la
-      # mappatura qui sotto a esporlo solo su localhost (per nginx).
+      # mappatura qui sotto a esporlo solo su localhost, cioe' a nginx.
+      # Con "8080:8080" Docker la pubblicava su internet, scavalcando anche
+      # il firewall della VM.
       WEB_HOST: 0.0.0.0
     ports:
       - "127.0.0.1:8080:8080"
-    volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 60s

@@ -1,7 +1,7 @@
 """Entry point dell'applicazione.
 
 Uso:
-    python main.py            # bot + scheduler + sito in un solo processo (Docker)
+    python main.py            # bot + scheduler + sito in un solo processo (sviluppo)
     python main.py --bot      # solo bot + scheduler (produzione, con --web a parte)
     python main.py --web      # solo sito + API (produzione, con --bot a parte)
     python main.py --scrape   # esegue solo un ciclo di scraping e termina

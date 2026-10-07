@@ -57,7 +57,7 @@ def _uvicorn_server() -> uvicorn.Server:
 
 def start_api_server() -> threading.Thread:
     """Avvia il server in un thread daemon dentro il processo del bot
-    (modalita' tutto-in-uno: `python main.py` senza flag, usata da Docker)."""
+    (modalita' tutto-in-uno: `python main.py` senza flag, per lo sviluppo)."""
     server = _uvicorn_server()
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()
